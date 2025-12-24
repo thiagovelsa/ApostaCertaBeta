@@ -90,8 +90,9 @@ docker-compose logs -f backend
 
 ## 📚 Documentação
 
-Documentação técnica completa está em `/docs`:
+**Documentação técnica completa** em `/docs` (14+ documentos):
 
+### Backend (FastAPI)
 | Documento | Descrição |
 |-----------|-----------|
 | **[ARQUITETURA_BACKEND.md](docs/ARQUITETURA_BACKEND.md)** | Arquitetura em camadas, padrões, estrutura de pastas |
@@ -99,7 +100,21 @@ Documentação técnica completa está em `/docs`:
 | **[API_SPECIFICATION.md](docs/API_SPECIFICATION.md)** | Endpoints, request/response, exemplos |
 | **[LOCAL_SETUP.md](docs/LOCAL_SETUP.md)** | Setup local passo-a-passo, troubleshooting |
 | **[TESTING_STRATEGY.md](docs/TESTING_STRATEGY.md)** | Estratégia de testes, fixtures, mocks |
-| **[DOCUMENTACAO_VSTATS_COMPLETA.md](DOCUMENTACAO_VSTATS_COMPLETA.md)** | Referência completa da API VStats (externa) |
+| **[CONTRIBUTING.md](CONTRIBUTING.md)** | Guia de contribuição (workflow, padrões) |
+
+### Frontend (React + TypeScript)
+| Documento | Descrição |
+|-----------|-----------|
+| **[docs/frontend/DESIGN_SYSTEM.md](docs/frontend/DESIGN_SYSTEM.md)** | Design tokens, cores, tipografia, componentes visuais |
+| **[docs/frontend/COMPONENTES_REACT.md](docs/frontend/COMPONENTES_REACT.md)** | Catálogo de 19 componentes (Atomic Design) |
+| **[docs/frontend/INTEGRACAO_API.md](docs/frontend/INTEGRACAO_API.md)** | Services, React Query hooks, type mappings |
+| **[docs/frontend/ARQUITETURA_FRONTEND.md](docs/frontend/ARQUITETURA_FRONTEND.md)** | Folder structure, Zustand stores, React Router |
+| **[docs/frontend/RESPONSIVIDADE_E_ACESSIBILIDADE.md](docs/frontend/RESPONSIVIDADE_E_ACESSIBILIDADE.md)** | Mobile-first design, WCAG AA, PWA |
+
+### Sistema e APIs Externas
+| Documento | Descrição |
+|-----------|-----------|
+| **[DOCUMENTACAO_VSTATS_COMPLETA.md](DOCUMENTACAO_VSTATS_COMPLETA.md)** | Referência completa da API VStats (fornecedor) |
 | **[PROJETO_SISTEMA_ANALISE.md](PROJETO_SISTEMA_ANALISE.md)** | Requisitos, design, fluxos, cálculos |
 
 ---
@@ -123,12 +138,12 @@ API Backend (FastAPI)
 
 | Layer | Technology |
 |-------|------------|
-| **Frontend** | React + TypeScript (planejado) |
-| **Backend** | Python + FastAPI |
+| **Frontend** | React 18 + TypeScript 5 + Vite 5 + TailwindCSS + Zustand + React Query |
+| **Backend** | Python 3.11+ + FastAPI + Pydantic |
 | **Cache** | Redis |
 | **APIs Externas** | VStats + TheSportsDB |
-| **Tests** | Pytest |
-| **Container** | Docker |
+| **Tests** | Pytest (backend) + Vitest/React Testing Library (frontend) |
+| **Container** | Docker + Docker Compose |
 
 ---
 
@@ -349,9 +364,12 @@ Este projeto está licenciado sob MIT License - veja [LICENSE](LICENSE) para det
 
 ## 📊 Status do Projeto
 
-- ✅ Documentação técnica (✓ Completa)
+- ✅ **Documentação técnica** (✓ 14+ docs completamente interconectadas)
+  - ✅ Backend: 6 documentações + arquitetura profissional
+  - ✅ Frontend: 5 documentações + design system completo
+  - ✅ Cross-references: 10/10 engenharia de contexto
 - 🔄 Backend (Em desenvolvimento)
-- 🔄 Frontend (Planejado)
+- 🔄 Frontend (Pronto para implementação - specs completas)
 - 🔄 Deploy em produção (Próximo)
 
 **Última atualização:** 24 de dezembro de 2025

@@ -190,29 +190,58 @@ INFO:     Waiting for application startup.
 
 ---
 
-## 3. Setup Frontend (Opcional)
+## 3. Setup Frontend (Opcional - mas Recomendado!)
+
+**Importante:** Consulte a [documentação frontend](frontend/) para detalhes arquitetônicos antes de começar.
 
 ### 3.1 Pré-requisitos
 
 ```bash
-node --version   # Requer Node 18+
-npm --version    # Vem com Node
+node --version   # Requer Node 18+ (compat: Node 16+)
+npm --version    # npm 8+ (vem com Node)
 ```
 
 **Instalar Node:** https://nodejs.org/
 
-### 3.2 Instalar Dependências
+### 3.2 Criar Projeto Frontend (Se não existir)
 
 ```bash
+# Criar novo projeto Vite + React + TypeScript
+npm create vite@latest frontend -- --template react-ts
+
 cd frontend
 
+# Instalar dependências
 npm install
-
-# Ou com yarn
-yarn install
 ```
 
-### 3.3 Rodar Servidor Dev
+**Dependências Principais a Instalar:**
+```bash
+npm install react-router-dom @tanstack/react-query zustand axios
+npm install -D tailwindcss postcss autoprefixer
+```
+
+**Configuração Tailwind:**
+```bash
+npx tailwindcss init -p
+# Gera tailwind.config.js e postcss.config.js
+```
+
+Edite `tailwind.config.js` conforme especificado em [docs/frontend/DESIGN_SYSTEM.md](../frontend/DESIGN_SYSTEM.md#1-estrutura-de-pastas).
+
+### 3.3 Configurar Variáveis de Ambiente
+
+```bash
+# Copiar template
+cp .env.example .env
+
+# Editar .env
+VITE_API_URL=http://localhost:8000
+VITE_API_TIMEOUT=10000
+VITE_ENV=development
+```
+
+### 3.4 Rodar Servidor de Desenvolvimento
 
 ```bash
 npm run dev
@@ -221,15 +250,54 @@ npm run dev
 **Esperado:**
 
 ```
-  Local:    http://localhost:5173/
+  VITE v5.0.0  ready in XXX ms
+
+  ➜  Local:   http://localhost:5173/
+  ➜  press h to show help
 ```
 
-### 3.4 Build Produção
+**Acessar:**
+- Frontend: http://localhost:5173
+- Backend (Swagger): http://localhost:8000/docs (deve estar rodando em paralelo)
+
+### 3.5 Rodar Testes (Frontend)
 
 ```bash
+# Instalar testing dependencies
+npm install -D vitest @testing-library/react @testing-library/jest-dom
+
+# Rodar testes
+npm run test
+
+# Com coverage
+npm run test:coverage
+```
+
+### 3.6 Build Produção
+
+```bash
+# Build otimizado
 npm run build
 
 # Output em: ./dist/
+# Pronto para deploy em Vercel, Netlify, etc
+```
+
+### 3.7 Preview Build Local
+
+```bash
+npm run preview
+# Simula produção em http://localhost:4173
+```
+
+### 3.8 Linting e Formatação
+
+```bash
+# ESLint (verificar erros)
+npm run lint
+
+# Prettier (formatar código)
+npm run format
 ```
 
 ---
