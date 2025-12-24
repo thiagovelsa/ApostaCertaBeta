@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Detailed Match Statistics</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,typography"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet"/>
+<script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        primary: "#84cc16", // Lime-500 equivalent for that vibrant sport look
+                        "background-light": "#f3f4f6", // Gray-100
+                        "background-dark": "#0b0c0f", // Very dark charcoal, almost black
+                        "surface-light": "#ffffff",
+                        "surface-dark": "#18191c", // Slightly lighter dark for cards
+                        "secondary-text-light": "#6b7280",
+                        "secondary-text-dark": "#9ca3af",
+                    },
+                    fontFamily: {
+                        display: ["Inter", "sans-serif"],
+                    },
+                    borderRadius: {
+                        DEFAULT: "0.75rem", // rounded-xl
+                    },
+                },
+            },
+        };
+    </script>
+<style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #18191c; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #333; 
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #84cc16; 
+        }
+        .race-dot {
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: bold;
+            color: white;
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-gray-900 dark:text-white transition-colors duration-200 min-h-screen p-4 md:p-6 lg:p-8">
+<nav class="flex flex-col md:flex-row items-center justify-between mb-8 gap-4">
+<div class="flex items-center gap-2">
+<div class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center text-black font-bold">
+<span class="material-icons-outlined text-lg">sports_soccer</span>
+</div>
+<span class="text-xl font-bold tracking-tight">Ballerside</span>
+</div>
+<div class="hidden md:flex items-center gap-8 text-sm font-medium text-secondary-text-light dark:text-secondary-text-dark">
+<a class="text-primary" href="#">Football</a>
+<a class="hover:text-primary transition-colors" href="#">Futsal</a>
+<a class="hover:text-primary transition-colors" href="#">Volley</a>
+<a class="hover:text-primary transition-colors" href="#">Tennis</a>
+<a class="hover:text-primary transition-colors" href="#">Badminton</a>
+</div>
+<div class="flex items-center gap-4">
+<div class="relative hidden sm:block">
+<span class="material-icons-outlined absolute left-3 top-2.5 text-gray-400 text-sm">search</span>
+<input class="bg-white dark:bg-surface-dark border-none rounded-full py-2 pl-9 pr-4 text-sm focus:ring-1 focus:ring-primary w-64 shadow-sm text-gray-700 dark:text-gray-200 placeholder-gray-400" placeholder="Sports info" type="text"/>
+</div>
+<div class="flex items-center gap-3">
+<button class="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-800 transition">
+<span class="material-icons-outlined text-gray-500 dark:text-gray-400">notifications</span>
+</button>
+<img alt="User Profile" class="w-9 h-9 rounded-full border-2 border-surface-dark" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBioXok642L6ZYDMfKbTQmKlXzs_Ca_iiUjDI8pmMIoEpGG_rahmi_of8orpOs6RfnfRGbP02A_l9KqeQmsHzfUButjLdsssN29cAn0TARF1ZE_Vb8FVApM6seYAmZ6UOgdGFJaPCwLB-tTqxVhZgJRv4keC8IRa1IGjk15K5qSXLAe167nQi71caj-IX4WWOTznH0sU5lBDTe6KLnGlLHfL6H3SZbl6y_3upKLd7ki5kv1HSjmqrQ-iwVYnql0n04g9tb_e5pWISU"/>
+</div>
+</div>
+</nav>
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-6">
+<div class="lg:col-span-3 flex flex-col gap-6">
+<div class="bg-surface-light dark:bg-surface-dark rounded-xl p-6 shadow-lg h-full border border-gray-100 dark:border-gray-800">
+<div class="flex flex-col items-center mb-6">
+<div class="w-16 h-16 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center mb-3 shadow-inner">
+<img alt="Brazil Flag" class="w-10 h-10 object-contain rounded-sm shadow-md" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD9e0qsveWkkJGeZ1FgaytTCD406OrmUIGIcEwR7fwug7s5htRZtL-JSfiMgED4CbInrwVTK0KmThVDOp44BeNOzHZscAc425-2SY7gYpOk6S4G5yo4Rs5WNZEPwL8X6Q4YaKDyEkr8CTtSyPj9joKdQaFbfEdzqtDZ6J67_G79RKkmJBSXtPiWB8eKixqXeGiGfvg_ZV7HGH-FFrAT7xRV5Tq3Pqjoe9nM-Ru6Ri4xc842PIRv5TAnFtx8UagOfoUdnxlIP3Yuh4E"/>
+</div>
+<h2 class="text-xl font-bold mb-1">Brazil</h2>
+<p class="text-xs text-secondary-text-light dark:text-secondary-text-dark uppercase tracking-wider">Home Team</p>
+</div>
+<div class="mb-6">
+<p class="text-xs font-semibold mb-2 text-secondary-text-light dark:text-secondary-text-dark">Recent Form (Race)</p>
+<div class="flex justify-center gap-1.5">
+<div class="race-dot bg-green-500">W</div>
+<div class="race-dot bg-green-500">W</div>
+<div class="race-dot bg-green-500">W</div>
+<div class="race-dot bg-gray-500">D</div>
+<div class="race-dot bg-green-500">W</div>
+</div>
+</div>
+<div class="flex bg-gray-100 dark:bg-black rounded-lg p-1 mb-6">
+<button class="flex-1 py-1.5 text-xs font-medium rounded-md bg-white dark:bg-gray-800 shadow text-primary">General</button>
+<button class="flex-1 py-1.5 text-xs font-medium rounded-md text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">5 M</button>
+<button class="flex-1 py-1.5 text-xs font-medium rounded-md text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">10 M</button>
+</div>
+<div class="space-y-5">
+<div>
+<div class="flex justify-between text-xs mb-1">
+<span class="text-secondary-text-light dark:text-secondary-text-dark">Corners (Made/Suff)</span>
+<span class="font-bold">6.2 / 2.1</span>
+</div>
+<div class="h-1.5 w-full bg-gray-200 dark:bg-gray-800 rounded-full overflow-hidden flex">
+<div class="h-full bg-primary w-[75%]"></div>
+<div class="h-full bg-red-500 w-[25%]"></div>
+</div>
+</div>
+<div>
+<div class="flex justify-between text-xs mb-1">
+<span class="text-secondary-text-light dark:text-secondary-text-dark">Goals (Made/Suff)</span>
+<span class="font-bold">2.4 / 0.8</span>
+</div>
+<div class="h-1.5 w-full bg-gray-200 dark:bg-gray-800 rounded-full overflow-hidden flex">
+<div class="h-full bg-primary w-[80%]"></div>
+<div class="h-full bg-red-500 w-[20%]"></div>
+</div>
+</div>
+<div>
+<div class="flex justify-between text-xs mb-1">
+<span class="text-secondary-text-light dark:text-secondary-text-dark">Shots on Target</span>
+<span class="font-bold">8.5 / 3.2</span>
+</div>
+<div class="h-1.5 w-full bg-gray-200 dark:bg-gray-800 rounded-full overflow-hidden flex">
+<div class="h-full bg-primary w-[65%]"></div>
+<div class="h-full bg-red-500 w-[35%]"></div>
+</div>
+</div>
+<div>
+<div class="flex justify-between text-xs mb-1">
+<span class="text-secondary-text-light dark:text-secondary-text-dark">Cards (Y/R)</span>
+<span class="font-bold">1.2 / 0.1</span>
+</div>
+<div class="h-1.5 w-full bg-gray-200 dark:bg-gray-800 rounded-full overflow-hidden flex">
+<div class="h-full bg-yellow-500 w-[90%]"></div>
+<div class="h-full bg-red-600 w-[10%]"></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="lg:col-span-6 flex flex-col gap-6">
+<div class="bg-surface-light dark:bg-surface-dark rounded-xl p-0 shadow-lg overflow-hidden border border-gray-100 dark:border-gray-800 relative">
+<div class="absolute inset-0 opacity-20 bg-[url('https://images.unsplash.com/photo-1579952363873-27f3bde9be2e?ixlib=rb-4.0.3&amp;auto=format&amp;fit=crop&amp;w=1000&amp;q=80')] bg-cover bg-center"></div>
+<div class="absolute inset-0 bg-gradient-to-b from-transparent to-surface-light dark:to-surface-dark"></div>
+<div class="relative p-6 md:p-8 text-center z-10">
+<div class="inline-flex items-center gap-2 bg-black/40 backdrop-blur-sm px-3 py-1 rounded-full border border-white/10 mb-4">
+<span class="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
+<span class="text-xs font-bold text-white uppercase">Live Match</span>
+</div>
+<h1 class="text-3xl md:text-4xl font-black text-gray-900 dark:text-white mb-2">Brazil <span class="text-primary mx-2">VS</span> Swiss</h1>
+<p class="text-sm text-secondary-text-light dark:text-gray-300 mb-6 max-w-lg mx-auto">Group G • Stadium 974 • World Cup Qatar 2022</p>
+<div class="flex justify-center items-center gap-8 mb-8">
+<div class="text-center">
+<span class="block text-4xl font-bold">1</span>
+</div>
+<div class="bg-gray-200 dark:bg-gray-700 px-3 py-1 rounded text-xs font-mono">42:15</div>
+<div class="text-center">
+<span class="block text-4xl font-bold">0</span>
+</div>
+</div>
+<div class="flex justify-center gap-4">
+<button class="bg-primary hover:bg-lime-500 text-black font-semibold py-2 px-6 rounded-lg transition shadow-lg shadow-primary/20 flex items-center gap-2">
+<span class="material-icons-outlined text-sm">play_arrow</span> Watch Live
+                        </button>
+<button class="bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-900 dark:text-white font-semibold py-2 px-6 rounded-lg transition flex items-center gap-2">
+<span class="material-icons-outlined text-sm">add</span> Follow
+                        </button>
+</div>
+</div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6 h-full">
+<div class="bg-surface-light dark:bg-surface-dark rounded-xl p-6 shadow-lg border border-gray-100 dark:border-gray-800">
+<h3 class="font-bold mb-4 flex items-center gap-2">
+<span class="material-icons-outlined text-primary">sports</span> Referee
+                    </h3>
+<div class="flex items-center gap-4 mb-4">
+<img alt="Referee" class="w-12 h-12 rounded-full" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBaHJ-V8vYuvf97u8-CkHjLrAmMhuqqboV9Iev8nO1fziUdysL2dnPLBXJnZAkTB9p67gZx7sP07YgkXcubwTlXn00gO7iOORFce7ETxqXQ5xU2vAwtXvytP4lzBGG7vs5hNIQ9SedvV2NQCgu-Bb4vtaPT0j3kVFKxvBT055dPbVBctndPD343_ELhQmvBX8zaFz1yGi7XZ0Q9lrOTUclzbK6w4SEly3byDzpvO-fwZvM5qMqB-XBLUdIooJMGENlqmsR1rQQVdwg"/>
+<div>
+<p class="font-bold">Michael Oliver</p>
+<p class="text-xs text-secondary-text-light dark:text-secondary-text-dark">Premier League, England</p>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-4">
+<div class="bg-gray-50 dark:bg-black/30 p-3 rounded-lg text-center">
+<span class="block text-2xl font-bold text-yellow-500">3.4</span>
+<span class="text-[10px] uppercase text-gray-500">Avg Yellows</span>
+</div>
+<div class="bg-gray-50 dark:bg-black/30 p-3 rounded-lg text-center">
+<span class="block text-2xl font-bold text-red-500">0.12</span>
+<span class="text-[10px] uppercase text-gray-500">Avg Reds</span>
+</div>
+</div>
+</div>
+<div class="bg-surface-light dark:bg-surface-dark rounded-xl p-6 shadow-lg border border-gray-100 dark:border-gray-800">
+<h3 class="font-bold mb-4 flex items-center gap-2">
+<span class="material-icons-outlined text-primary">analytics</span> Overall Prediction
+                    </h3>
+<div class="space-y-4">
+<div class="flex items-center justify-between text-sm">
+<span class="text-gray-500 dark:text-gray-400">Total Shots Exp.</span>
+<span class="font-bold text-primary">Over 12.5</span>
+</div>
+<div class="w-full bg-gray-200 dark:bg-gray-700 h-2 rounded-full">
+<div class="bg-primary h-2 rounded-full" style="width: 75%"></div>
+</div>
+<div class="flex items-center justify-between text-sm mt-2">
+<span class="text-gray-500 dark:text-gray-400">Possession Dominance</span>
+<span class="font-bold text-blue-400">Brazil 60%</span>
+</div>
+<div class="w-full bg-gray-200 dark:bg-gray-700 h-2 rounded-full overflow-hidden flex">
+<div class="bg-blue-500 h-2" style="width: 60%"></div>
+<div class="bg-red-500 h-2" style="width: 40%"></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="lg:col-span-3 flex flex-col gap-6">
+<div class="bg-surface-light dark:bg-surface-dark rounded-xl p-6 shadow-lg h-full border border-gray-100 dark:border-gray-800">
+<div class="flex flex-col items-center mb-6">
+<div class="w-16 h-16 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center mb-3 shadow-inner">
+<img alt="Swiss Flag" class="w-10 h-10 object-contain rounded-sm shadow-md" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBWpY17NZdPM8FyUEOfjLz7bPy80RM5lV4SwNGjf_uI1Jp9yuYMzTwG1HDj_4F3dVTJFZalw6Zk6yeVa-3IG6ZW6COAHGY8BvoKi2dUzU2GKBsYAos2PFGDf-DAx9w4CvNrJ5mpoYFuVpbpHl1LG9QhJH_f8ljfh0fnxQcloQUGrIlJMLXE1khyKofprGvK5CPDoTJGCn_qZk9NSMagnVin869Q8gusShjnJ16CVwpjNlHDHVWbQE9rZQYWie9TQZMNuTy3rJtMMwM"/>
+</div>
+<h2 class="text-xl font-bold mb-1">Switzerland</h2>
+<p class="text-xs text-secondary-text-light dark:text-secondary-text-dark uppercase tracking-wider">Away Team</p>
+</div>
+<div class="mb-6">
+<p class="text-xs font-semibold mb-2 text-secondary-text-light dark:text-secondary-text-dark">Recent Form (Race)</p>
+<div class="flex justify-center gap-1.5">
+<div class="race-dot bg-green-500">W</div>
+<div class="race-dot bg-gray-500">D</div>
+<div class="race-dot bg-red-500">L</div>
+<div class="race-dot bg-green-500">W</div>
+<div class="race-dot bg-gray-500">D</div>
+</div>
+</div>
+<div class="flex bg-gray-100 dark:bg-black rounded-lg p-1 mb-6">
+<button class="flex-1 py-1.5 text-xs font-medium rounded-md bg-white dark:bg-gray-800 shadow text-primary">General</button>
+<button class="flex-1 py-1.5 text-xs font-medium rounded-md text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">5 M</button>
+<button class="flex-1 py-1.5 text-xs font-medium rounded-md text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">10 M</button>
+</div>
+<div class="space-y-5">
+<div>
+<div class="flex justify-between text-xs mb-1">
+<span class="text-secondary-text-light dark:text-secondary-text-dark">Corners (Made/Suff)</span>
+<span class="font-bold">4.1 / 5.5</span>
+</div>
+<div class="h-1.5 w-full bg-gray-200 dark:bg-gray-800 rounded-full overflow-hidden flex">
+<div class="h-full bg-primary w-[45%]"></div>
+<div class="h-full bg-red-500 w-[55%]"></div>
+</div>
+</div>
+<div>
+<div class="flex justify-between text-xs mb-1">
+<span class="text-secondary-text-light dark:text-secondary-text-dark">Goals (Made/Suff)</span>
+<span class="font-bold">1.2 / 1.1</span>
+</div>
+<div class="h-1.5 w-full bg-gray-200 dark:bg-gray-800 rounded-full overflow-hidden flex">
+<div class="h-full bg-primary w-[52%]"></div>
+<div class="h-full bg-red-500 w-[48%]"></div>
+</div>
+</div>
+<div>
+<div class="flex justify-between text-xs mb-1">
+<span class="text-secondary-text-light dark:text-secondary-text-dark">Shots on Target</span>
+<span class="font-bold">4.5 / 5.2</span>
+</div>
+<div class="h-1.5 w-full bg-gray-200 dark:bg-gray-800 rounded-full overflow-hidden flex">
+<div class="h-full bg-primary w-[48%]"></div>
+<div class="h-full bg-red-500 w-[52%]"></div>
+</div>
+</div>
+<div>
+<div class="flex justify-between text-xs mb-1">
+<span class="text-secondary-text-light dark:text-secondary-text-dark">Cards (Y/R)</span>
+<span class="font-bold">2.2 / 0.0</span>
+</div>
+<div class="h-1.5 w-full bg-gray-200 dark:bg-gray-800 rounded-full overflow-hidden flex">
+<div class="h-full bg-yellow-500 w-[100%]"></div>
+<div class="h-full bg-red-600 w-[0%]"></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="mb-6">
+<h3 class="text-lg font-bold mb-4 px-1">Statistical Probabilities</h3>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+<div class="bg-surface-light dark:bg-surface-dark rounded-xl p-5 shadow-lg border border-gray-100 dark:border-gray-800">
+<div class="flex justify-between items-center mb-4">
+<h4 class="font-bold text-sm">Goals Over/Under</h4>
+<span class="material-icons-outlined text-primary text-sm">sports_soccer</span>
+</div>
+<div class="space-y-4">
+<div>
+<div class="flex justify-between text-xs mb-1 text-gray-500 dark:text-gray-400">
+<span>Over 1.5 Goals</span>
+<span class="text-white font-mono">82%</span>
+</div>
+<div class="w-full bg-gray-200 dark:bg-gray-700 h-1.5 rounded-full">
+<div class="bg-green-500 h-1.5 rounded-full" style="width: 82%"></div>
+</div>
+</div>
+<div>
+<div class="flex justify-between text-xs mb-1 text-gray-500 dark:text-gray-400">
+<span>Over 2.5 Goals</span>
+<span class="text-white font-mono">54%</span>
+</div>
+<div class="w-full bg-gray-200 dark:bg-gray-700 h-1.5 rounded-full">
+<div class="bg-yellow-500 h-1.5 rounded-full" style="width: 54%"></div>
+</div>
+</div>
+<div>
+<div class="flex justify-between text-xs mb-1 text-gray-500 dark:text-gray-400">
+<span>Under 3.5 Goals</span>
+<span class="text-white font-mono">71%</span>
+</div>
+<div class="w-full bg-gray-200 dark:bg-gray-700 h-1.5 rounded-full">
+<div class="bg-blue-500 h-1.5 rounded-full" style="width: 71%"></div>
+</div>
+</div>
+</div>
+</div>
+<div class="bg-surface-light dark:bg-surface-dark rounded-xl p-5 shadow-lg border border-gray-100 dark:border-gray-800">
+<div class="flex justify-between items-center mb-4">
+<h4 class="font-bold text-sm">Corners Over/Under</h4>
+<span class="material-icons-outlined text-primary text-sm">outlined_flag</span>
+</div>
+<div class="space-y-4">
+<div>
+<div class="flex justify-between text-xs mb-1 text-gray-500 dark:text-gray-400">
+<span>Over 8.5 Corners</span>
+<span class="text-white font-mono">65%</span>
+</div>
+<div class="w-full bg-gray-200 dark:bg-gray-700 h-1.5 rounded-full">
+<div class="bg-primary h-1.5 rounded-full" style="width: 65%"></div>
+</div>
+</div>
+<div>
+<div class="flex justify-between text-xs mb-1 text-gray-500 dark:text-gray-400">
+<span>Over 9.5 Corners</span>
+<span class="text-white font-mono">45%</span>
+</div>
+<div class="w-full bg-gray-200 dark:bg-gray-700 h-1.5 rounded-full">
+<div class="bg-yellow-500 h-1.5 rounded-full" style="width: 45%"></div>
+</div>
+</div>
+<div>
+<div class="flex justify-between text-xs mb-1 text-gray-500 dark:text-gray-400">
+<span>Team 1 &gt; Team 2</span>
+<span class="text-white font-mono">78%</span>
+</div>
+<div class="w-full bg-gray-200 dark:bg-gray-700 h-1.5 rounded-full">
+<div class="bg-primary h-1.5 rounded-full" style="width: 78%"></div>
+</div>
+</div>
+</div>
+</div>
+<div class="bg-surface-light dark:bg-surface-dark rounded-xl p-5 shadow-lg border border-gray-100 dark:border-gray-800">
+<div class="flex justify-between items-center mb-4">
+<h4 class="font-bold text-sm">Cards &amp; Fouls</h4>
+<span class="material-icons-outlined text-primary text-sm">style</span>
+</div>
+<div class="space-y-4">
+<div>
+<div class="flex justify-between text-xs mb-1 text-gray-500 dark:text-gray-400">
+<span>Over 3.5 Yellow Cards</span>
+<span class="text-white font-mono">60%</span>
+</div>
+<div class="w-full bg-gray-200 dark:bg-gray-700 h-1.5 rounded-full">
+<div class="bg-yellow-500 h-1.5 rounded-full" style="width: 60%"></div>
+</div>
+</div>
+<div>
+<div class="flex justify-between text-xs mb-1 text-gray-500 dark:text-gray-400">
+<span>Red Card in Match</span>
+<span class="text-white font-mono">12%</span>
+</div>
+<div class="w-full bg-gray-200 dark:bg-gray-700 h-1.5 rounded-full">
+<div class="bg-red-500 h-1.5 rounded-full" style="width: 12%"></div>
+</div>
+</div>
+<div>
+<div class="flex justify-between text-xs mb-1 text-gray-500 dark:text-gray-400">
+<span>BTTS (Both Teams Score)</span>
+<span class="text-white font-mono">55%</span>
+</div>
+<div class="w-full bg-gray-200 dark:bg-gray-700 h-1.5 rounded-full">
+<div class="bg-orange-500 h-1.5 rounded-full" style="width: 55%"></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="bg-surface-light dark:bg-surface-dark rounded-xl p-6 shadow-lg border-l-4 border-primary">
+<div class="flex flex-col md:flex-row justify-between md:items-center gap-4">
+<div>
+<h3 class="text-lg font-bold flex items-center gap-2 text-gray-900 dark:text-white">
+<span class="material-icons-outlined text-primary">tips_and_updates</span>
+                    AI Betting Insights
+                </h3>
+<p class="text-sm text-secondary-text-light dark:text-secondary-text-dark mt-1">Based on last 10 matches and referee statistics.</p>
+</div>
+<div class="flex gap-3">
+<span class="px-3 py-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-xs font-bold rounded-full flex items-center border border-green-200 dark:border-green-800">
+                    High Confidence
+                 </span>
+</div>
+</div>
+<div class="mt-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+<div class="bg-gray-50 dark:bg-black/40 p-4 rounded-lg border border-gray-100 dark:border-gray-800 hover:border-primary/50 transition cursor-pointer group">
+<div class="flex justify-between items-start mb-2">
+<span class="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase">Main Pick</span>
+<span class="material-icons-outlined text-gray-400 group-hover:text-primary text-sm">arrow_forward</span>
+</div>
+<p class="text-lg font-bold text-gray-800 dark:text-gray-200">Brazil to Win</p>
+<p class="text-xs text-secondary-text-light dark:text-secondary-text-dark mt-1">Odds: 1.45</p>
+</div>
+<div class="bg-gray-50 dark:bg-black/40 p-4 rounded-lg border border-gray-100 dark:border-gray-800 hover:border-primary/50 transition cursor-pointer group">
+<div class="flex justify-between items-start mb-2">
+<span class="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase">Value Pick</span>
+<span class="material-icons-outlined text-gray-400 group-hover:text-primary text-sm">arrow_forward</span>
+</div>
+<p class="text-lg font-bold text-gray-800 dark:text-gray-200">Vinicius Jr. 1+ Shot on Target</p>
+<p class="text-xs text-secondary-text-light dark:text-secondary-text-dark mt-1">Odds: 1.62</p>
+</div>
+<div class="bg-gray-50 dark:bg-black/40 p-4 rounded-lg border border-gray-100 dark:border-gray-800 hover:border-primary/50 transition cursor-pointer group">
+<div class="flex justify-between items-start mb-2">
+<span class="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase">Risk Pick</span>
+<span class="material-icons-outlined text-gray-400 group-hover:text-primary text-sm">arrow_forward</span>
+</div>
+<p class="text-lg font-bold text-gray-800 dark:text-gray-200">Exact Score 2-0</p>
+<p class="text-xs text-secondary-text-light dark:text-secondary-text-dark mt-1">Odds: 6.50</p>
+</div>
+</div>
+</div>
+
+</body></html>

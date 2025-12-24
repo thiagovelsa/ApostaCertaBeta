@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Palpite Mestre // Terminal de Inteligência</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Saira+Condensed:wght@400;500;700;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: '#84cc16', // Lime
+                        dark: '#050505',
+                        surface: '#0F0F0F',
+                        border: '#1F1F1F',
+                        'accent-red': '#FF2A2A',
+                    },
+                    fontFamily: {
+                        sans: ['"Saira Condensed"', 'sans-serif'],
+                        mono: ['"JetBrains Mono"', 'monospace'],
+                    },
+                    backgroundImage: {
+                        'grid-pattern': "linear-gradient(to right, #1f1f1f 1px, transparent 1px), linear-gradient(to bottom, #1f1f1f 1px, transparent 1px)",
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        :root {
+            --noise-color: rgba(255, 255, 255, 0.035);
+        }
+
+        body {
+            background-color: #050505;
+            color: #e5e5e5;
+            overflow-x: hidden;
+        }
+
+        .noise-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: 50;
+            background: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyMDAiIGhlaWdodD0iMjAwIj48ZmlsdGVyIGlkPSJnoiPjxmZVR1cmJ1bGVuY2UgdHlwZT0iZnJhY3RhbE5vaXNlIiBiYXNlRnJlcXVlbmN5PSIwLjY1IiBudW1PY3RhdmVzPSIzIiBzdGl0Y2hUaWxlcz0ic3RpdGNoIi8+PC9maWx0ZXI+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsdGVyPSJ1cmwoI2cpIiBvcGFjaXR5PSIwLjA1Ii8+PC9zdmc+');
+            opacity: 0.4;
+        }
+
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #050505; }
+        ::-webkit-scrollbar-thumb { background: #333; }
+        ::-webkit-scrollbar-thumb:hover { background: #84cc16; }
+
+        .bento-card {
+            background: #0F0F0F;
+            border: 1px solid #1F1F1F;
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .bento-card:hover {
+            border-color: #333;
+            transform: translateY(-2px);
+            box-shadow: 0 20px 40px -10px rgba(0,0,0,0.5);
+        }
+
+        .bento-card::after {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 2px;
+            background: #84cc16;
+            transform: scaleX(0);
+            transform-origin: left;
+            transition: transform 0.4s ease;
+        }
+        
+        .bento-card:hover::after {
+            transform: scaleX(1);
+        }
+
+        .text-display {
+            font-size: clamp(2rem, 5vw, 4rem);
+            line-height: 0.9;
+            text-transform: uppercase;
+            letter-spacing: -0.02em;
+        }
+
+        .live-pulse {
+            width: 8px; height: 8px;
+            background: #FF2A2A;
+            border-radius: 50%;
+            box-shadow: 0 0 0 0 rgba(255, 42, 42, 0.7);
+            animation: pulse-red 1.5s infinite;
+        }
+        
+        @keyframes pulse-red {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(255, 42, 42, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(255, 42, 42, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(255, 42, 42, 0); }
+        }
+
+        .tech-btn {
+            position: relative;
+            overflow: hidden;
+        }
+        .tech-btn span { position: relative; z-index: 10; }
+        .tech-btn::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: #84cc16;
+            transform: translateX(-100%) skewX(-15deg);
+            transition: transform 0.3s ease;
+            z-index: 0;
+        }
+        .tech-btn:hover::before {
+            transform: translateX(0) skewX(-15deg);
+        }
+        .tech-btn:hover { color: black; }
+    </style>
+</head>
+
+<body class="antialiased selection:bg-brand selection:text-black">
+    <div class="noise-overlay"></div>
+
+    <div class="fixed inset-0 bg-grid-pattern opacity-[0.03] pointer-events-none"></div>
+
+    <div class="max-w-[1600px] mx-auto p-4 md:p-6 lg:p-8 min-h-screen flex flex-col">
+        
+        <header class="flex justify-between items-end mb-10 border-b border-white/5 pb-4">
+            <div>
+                <div class="flex items-center gap-2 mb-1">
+                    <span class="w-2 h-2 bg-brand"></span>
+                    <span class="font-mono text-xs text-brand tracking-widest uppercase">System Online v2.4</span>
+                </div>
+                <h1 class="font-sans font-black text-3xl md:text-4xl tracking-tight leading-none text-white">
+                    PALPITE<span class="text-brand">MESTRE</span>
+                </h1>
+            </div>
+            
+            <div class="flex items-center gap-6">
+                <div class="hidden md:flex flex-col items-end font-mono text-xs text-neutral-500">
+                    <span>SERVER: SA-EAST-1</span>
+                    <span>LATENCY: 12ms</span>
+                </div>
+                <div class="w-10 h-10 border border-white/10 bg-surface rounded-full overflow-hidden hover:border-brand transition-colors cursor-pointer">
+                    <img src="https://i.pravatar.cc/150?img=33" class="w-full h-full object-cover opacity-80 hover:opacity-100">
+                </div>
+            </div>
+        </header>
+
+        <main class="grid grid-cols-1 md:grid-cols-12 gap-4 flex-grow">
+            
+            <div class="col-span-1 md:col-span-8 bento-card p-8 md:p-10 flex flex-col justify-between relative group overflow-visible">
+                
+                <div class="absolute top-4 right-4 font-mono text-[10px] text-white/20 border border-white/10 px-2 py-1 rounded">
+                    MODE: BATCH_SCAN
+                </div>
+                <div class="absolute bottom-4 left-4 font-mono text-[10px] text-brand/50">
+                    SYS_READY
+                </div>
+
+                <div class="mb-6">
+                    <h2 class="text-display text-white leading-[0.85] mb-2">
+                        VARREDURA <br>
+                        <span class="text-white/20 group-hover:text-white/40 transition-colors">DIÁRIA</span>
+                    </h2>
+                    <p class="font-mono text-neutral-400 text-sm max-w-md">
+                        Selecione o ciclo temporal para carregar a grade de inteligência e previsões.
+                    </p>
+                </div>
+
+                <div class="w-full mt-auto">
+                    
+                    <label class="font-mono text-[10px] text-brand uppercase tracking-widest mb-3 block">1. Selecione o Ciclo</label>
+                    
+                    <div class="grid grid-cols-3 sm:grid-cols-5 gap-2 mb-6" id="dateSelector">
+                        <button class="date-btn group relative h-20 border border-white/10 bg-black/20 hover:border-white/30 hover:bg-white/5 transition-all flex flex-col items-center justify-center gap-1 cursor-pointer">
+                            <span class="font-mono text-[10px] text-neutral-500 uppercase group-hover:text-white transition-colors">Ontem</span>
+                            <span class="font-sans font-bold text-xl text-neutral-400 group-hover:text-white">23</span>
+                            <span class="absolute top-0 right-0 w-2 h-2 border-t border-r border-transparent group-hover:border-brand transition-colors"></span>
+                        </button>
+
+                        <button class="date-btn active relative h-20 border border-brand bg-brand/10 transition-all flex flex-col items-center justify-center gap-1 cursor-pointer shadow-[0_0_20px_rgba(132,204,22,0.15)]">
+                            <div class="absolute top-1 left-1/2 -translate-x-1/2 w-1 h-1 bg-brand rounded-full"></div>
+                            <span class="font-mono text-[10px] text-brand uppercase font-bold">Hoje</span>
+                            <span class="font-sans font-bold text-2xl text-white">24</span>
+                            <span class="font-mono text-[9px] text-brand/60">LIVE</span>
+                        </button>
+
+                        <button class="date-btn group relative h-20 border border-white/10 bg-black/20 hover:border-white/30 hover:bg-white/5 transition-all flex flex-col items-center justify-center gap-1 cursor-pointer">
+                            <span class="font-mono text-[10px] text-neutral-500 uppercase group-hover:text-white transition-colors">Amanhã</span>
+                            <span class="font-sans font-bold text-xl text-neutral-400 group-hover:text-white">25</span>
+                        </button>
+
+                        <button class="date-btn group relative h-20 border border-white/10 bg-black/20 hover:border-white/30 hover:bg-white/5 transition-all flex flex-col items-center justify-center gap-1 cursor-pointer hidden sm:flex">
+                            <span class="font-mono text-[10px] text-neutral-500 uppercase group-hover:text-white transition-colors">Sáb</span>
+                            <span class="font-sans font-bold text-xl text-neutral-400 group-hover:text-white">26</span>
+                        </button>
+                        
+                        <button class="date-btn group relative h-20 border border-white/10 bg-black/20 hover:border-brand/50 hover:bg-brand/5 transition-all flex flex-col items-center justify-center gap-1 cursor-pointer">
+                            <span class="material-icons-outlined text-neutral-500 group-hover:text-brand transition-colors text-2xl">event</span>
+                            <span class="font-mono text-[9px] text-neutral-600 group-hover:text-brand uppercase">Outro</span>
+                        </button>
+                    </div>
+
+                    <div class="relative">
+                        <button id="scanBtn" class="tech-btn w-full h-14 bg-white text-black font-sans font-black text-xl tracking-wide uppercase flex items-center justify-center gap-3 hover:bg-brand transition-colors shadow-[0_0_0_1px_rgba(255,255,255,0.1)] group">
+                            <span class="material-icons-outlined group-hover:animate-spin">data_saver_on</span>
+                            <span id="btnText">Processar Partidas</span>
+                        </button>
+                        
+                        <div id="loadingBar" class="absolute bottom-0 left-0 h-1 bg-brand transition-all duration-[2000ms] ease-out w-0"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-span-1 md:col-span-4 grid grid-rows-2 gap-4">
+                <div class="bento-card p-6 flex flex-col justify-between">
+                    <div class="flex justify-between items-start">
+                        <span class="material-icons-outlined text-neutral-500">radar</span>
+                        <span class="live-pulse"></span>
+                    </div>
+                    <div>
+                        <div class="text-4xl font-sans font-black text-white">14</div>
+                        <div class="font-mono text-xs text-neutral-400 uppercase tracking-wider">Jogos Monitorados Agora</div>
+                    </div>
+                </div>
+                <div class="bento-card p-6 flex flex-col justify-between group cursor-pointer" onclick="alert('Funcionalidade em desenvolvimento')">
+                    <div class="flex justify-between items-start">
+                        <span class="material-icons-outlined text-neutral-500 group-hover:text-brand transition-colors">bookmark</span>
+                        <span class="font-mono text-[10px] text-brand bg-brand/10 px-2 py-0.5 rounded">BETA</span>
+                    </div>
+                    <div>
+                        <div class="text-xl font-sans font-bold text-white mb-1 group-hover:text-brand transition-colors">Meus Alertas</div>
+                        <div class="font-mono text-xs text-neutral-400">3 oportunidades de valor encontradas</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-span-1 md:col-span-12 mt-4">
+                <div class="flex items-end justify-between mb-6">
+                    <h3 class="font-sans font-bold text-2xl uppercase flex items-center gap-2">
+                        <span class="w-1 h-6 bg-brand block"></span>
+                        Destaques do Dia
+                    </h3>
+                    <div class="flex gap-2">
+                        <button class="px-4 py-1 border border-brand bg-brand/10 text-brand font-mono text-xs font-bold uppercase hover:bg-brand hover:text-black transition-colors">Ao Vivo</button>
+                        <button class="px-4 py-1 border border-white/10 text-neutral-400 font-mono text-xs font-bold uppercase hover:border-white transition-colors">Próximos</button>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    
+                    <a href="index.html" class="bento-card block p-0 group no-underline">
+                        <div class="p-6 grid grid-cols-[1fr_auto_1fr] items-center gap-4 border-b border-white/5 bg-white/[0.02]">
+                            <div class="flex flex-col items-start">
+                                <div class="flex items-center gap-3 mb-2">
+                                    <img src="https://flagcdn.com/w40/br.png" class="w-8 h-8 rounded-full object-cover grayscale group-hover:grayscale-0 transition-all">
+                                    <span class="font-sans font-bold text-2xl text-white">BRASIL</span>
+                                </div>
+                                <div class="flex gap-1">
+                                    <span class="w-1.5 h-1.5 bg-brand rounded-sm"></span>
+                                    <span class="w-1.5 h-1.5 bg-brand rounded-sm"></span>
+                                    <span class="w-1.5 h-1.5 bg-brand rounded-sm"></span>
+                                    <span class="w-1.5 h-1.5 bg-neutral-600 rounded-sm"></span>
+                                    <span class="w-1.5 h-1.5 bg-brand rounded-sm"></span>
+                                </div>
+                            </div>
+
+                            <div class="flex flex-col items-center">
+                                <div class="bg-surface border border-white/10 px-4 py-1 rounded text-brand font-mono font-bold text-xl mb-1 group-hover:bg-brand group-hover:text-black transition-colors">
+                                    2 - 0
+                                </div>
+                                <span class="text-accent-red font-mono text-[10px] animate-pulse">● 72'</span>
+                            </div>
+
+                            <div class="flex flex-col items-end">
+                                <div class="flex items-center gap-3 mb-2 flex-row-reverse">
+                                    <img src="https://flagcdn.com/w40/ch.png" class="w-8 h-8 rounded-full object-cover grayscale group-hover:grayscale-0 transition-all">
+                                    <span class="font-sans font-bold text-2xl text-white">SUÍÇA</span>
+                                </div>
+                                <div class="flex gap-1 justify-end">
+                                    <span class="w-1.5 h-1.5 bg-brand rounded-sm"></span>
+                                    <span class="w-1.5 h-1.5 bg-neutral-600 rounded-sm"></span>
+                                    <span class="w-1.5 h-1.5 bg-neutral-600 rounded-sm"></span>
+                                    <span class="w-1.5 h-1.5 bg-brand rounded-sm"></span>
+                                    <span class="w-1.5 h-1.5 bg-neutral-600 rounded-sm"></span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-black/40 p-3 flex justify-between items-center">
+                            <span class="font-mono text-[10px] text-neutral-500 uppercase">Copa do Mundo • Grupo G</span>
+                            <div class="flex gap-4 font-mono text-[10px] text-neutral-300">
+                                <span>Prob. Vitória: <span class="text-brand">88%</span></span>
+                                <span>Gols Esp: <span class="text-brand">2.5</span></span>
+                            </div>
+                        </div>
+                    </a>
+
+                    <a href="index.html" class="bento-card block p-0 group no-underline">
+                        <div class="p-6 grid grid-cols-[1fr_auto_1fr] items-center gap-4 border-b border-white/5 bg-white/[0.02]">
+                            <div class="flex flex-col items-start">
+                                <div class="flex items-center gap-3 mb-2">
+                                    <img src="https://flagcdn.com/w40/pt.png" class="w-8 h-8 rounded-full object-cover grayscale group-hover:grayscale-0 transition-all">
+                                    <span class="font-sans font-bold text-2xl text-white">PORTUGAL</span>
+                                </div>
+                                <div class="flex gap-1">
+                                    <span class="w-1.5 h-1.5 bg-brand rounded-sm"></span>
+                                    <span class="w-1.5 h-1.5 bg-brand rounded-sm"></span>
+                                    <span class="w-1.5 h-1.5 bg-neutral-600 rounded-sm"></span>
+                                    <span class="w-1.5 h-1.5 bg-brand rounded-sm"></span>
+                                </div>
+                            </div>
+
+                            <div class="flex flex-col items-center">
+                                <div class="bg-surface border border-white/10 px-3 py-1 rounded text-neutral-400 font-mono font-bold text-sm mb-1 group-hover:border-brand transition-colors">
+                                    16:00
+                                </div>
+                                <span class="text-neutral-600 font-mono text-[10px]">PRE-LIVE</span>
+                            </div>
+
+                            <div class="flex flex-col items-end">
+                                <div class="flex items-center gap-3 mb-2 flex-row-reverse">
+                                    <img src="https://flagcdn.com/w40/uy.png" class="w-8 h-8 rounded-full object-cover grayscale group-hover:grayscale-0 transition-all">
+                                    <span class="font-sans font-bold text-2xl text-white">URUGUAI</span>
+                                </div>
+                                <div class="flex gap-1 justify-end">
+                                    <span class="w-1.5 h-1.5 bg-brand rounded-sm"></span>
+                                    <span class="w-1.5 h-1.5 bg-neutral-600 rounded-sm"></span>
+                                    <span class="w-1.5 h-1.5 bg-neutral-600 rounded-sm"></span>
+                                    <span class="w-1.5 h-1.5 bg-brand rounded-sm"></span>
+                                    <span class="w-1.5 h-1.5 bg-neutral-600 rounded-sm"></span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-black/40 p-3 flex justify-between items-center">
+                            <span class="font-mono text-[10px] text-neutral-500 uppercase">Copa do Mundo • Grupo H</span>
+                            <div class="flex gap-4 font-mono text-[10px] text-neutral-300">
+                                <span>Odd Fav: <span class="text-white">1.95</span></span>
+                                <span class="flex items-center gap-1 text-brand"><span class="material-icons-outlined text-[10px]">trending_up</span> Alta</span>
+                            </div>
+                        </div>
+                    </a>
+
+                </div>
+            </div>
+        </main>
+        
+        <footer class="mt-12 pt-6 border-t border-white/5 flex justify-between items-center text-neutral-600 font-mono text-xs">
+            <p>&copy; 2025 PALPITE MESTRE ENG. // DATA DRIVEN</p>
+            <div class="flex gap-4">
+                <a href="#" class="hover:text-brand">API DOCS</a>
+                <a href="#" class="hover:text-brand">STATUS</a>
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        const dateBtns = document.querySelectorAll('.date-btn');
+        dateBtns.forEach(btn => {
+            btn.addEventListener('click', function() {
+                dateBtns.forEach(b => {
+                    b.classList.remove('active', 'border-brand', 'bg-brand/10', 'shadow-[0_0_20px_rgba(132,204,22,0.15)]');
+                    b.classList.add('border-white/10', 'bg-black/20');
+                    const label = b.querySelector('span:first-child');
+                    const number = b.querySelector('span:nth-child(2)');
+                    if(label && !label.classList.contains('material-icons-outlined')) {
+                        label.className = "font-mono text-[10px] text-neutral-500 uppercase group-hover:text-white transition-colors";
+                    }
+                    if(number && !number.classList.contains('font-mono')) {
+                        number.className = "font-sans font-bold text-xl text-neutral-400 group-hover:text-white";
+                    }
+                });
+
+                this.classList.remove('border-white/10', 'bg-black/20');
+                this.classList.add('active', 'border-brand', 'bg-brand/10', 'shadow-[0_0_20px_rgba(132,204,22,0.15)]');
+                
+                const label = this.querySelector('span:first-child');
+                const number = this.querySelector('span:nth-child(2)');
+                if(label && !label.classList.contains('material-icons-outlined')) {
+                    label.className = "font-mono text-[10px] text-brand uppercase font-bold";
+                }
+                if(number && !number.classList.contains('font-mono')) {
+                    number.className = "font-sans font-bold text-2xl text-white";
+                }
+            });
+        });
+
+        const scanBtn = document.getElementById('scanBtn');
+        const btnText = document.getElementById('btnText');
+        const loadingBar = document.getElementById('loadingBar');
+
+        scanBtn.addEventListener('click', () => {
+            if(scanBtn.dataset.processing === "true") return;
+            scanBtn.dataset.processing = "true";
+
+            btnText.innerText = "VARRENDO REDE DE DADOS...";
+            loadingBar.style.width = "100%";
+            scanBtn.style.background = "#18181b"; 
+            scanBtn.style.color = "#84cc16"; 
+            
+            setTimeout(() => {
+                btnText.innerText = "BASE DE DADOS SINCRONIZADA";
+                loadingBar.style.opacity = "0";
+                
+                setTimeout(() => {
+                    btnText.innerText = "RE-SCANEAR PARTIDAS";
+                    scanBtn.style.background = ""; 
+                    scanBtn.style.color = ""; 
+                    loadingBar.style.width = "0";
+                    loadingBar.style.opacity = "1";
+                    scanBtn.dataset.processing = "false";
+                }, 2000);
+            }, 1500);
+        });
+    </script>
+</body>
+</html>

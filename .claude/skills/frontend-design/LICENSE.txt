@@ -1,0 +1,47 @@
+FRONTEND DESIGN SKILL LICENSE
+==============================
+
+This skill guides the creation of distinctive, production-grade frontend interfaces.
+It is provided as-is for use in Claude Code projects.
+
+TERMS OF USE
+============
+
+1. PERMITTED USE
+   - Use this skill to create frontend designs and interfaces
+   - Apply the design principles and guidelines in your projects
+   - Share the skill within your organization or team
+   - Modify the skill documentation to suit your needs
+
+2. ATTRIBUTION
+   - When using this skill, no attribution is required
+   - Feel free to customize the guidelines for your project
+
+3. INTELLECTUAL PROPERTY
+   - Code generated using this skill is yours to use and distribute
+   - Design patterns and principles are yours to apply
+   - This skill framework itself is provided free for use
+
+4. WARRANTY DISCLAIMER
+   - This skill is provided "as-is" without warranty
+   - The author/provider is not responsible for:
+     * Quality of output from using this skill
+     * Technical implementation issues
+     * Design decisions made by users
+     * Any negative consequences from applying this skill
+
+5. LIMITATION OF LIABILITY
+   - The provider shall not be liable for any damages arising from
+     the use or inability to use this skill, even if advised of
+     the possibility of such damages
+
+6. MODIFICATION
+   - You may modify this skill and its documentation
+   - Modifications are for internal use only
+   - Share improvements back if you wish to contribute
+
+QUESTIONS?
+==========
+Refer to the SKILL.md documentation or contact your team/organization.
+
+Last Updated: December 2024
