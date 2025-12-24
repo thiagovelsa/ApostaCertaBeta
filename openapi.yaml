@@ -1,0 +1,431 @@
+openapi: 3.0.0
+info:
+  title: Sistema de Análise de Estatísticas de Futebol
+  description: |
+    API para análise detalhada de estatísticas de futebol com integração
+    aos dados da VStats API. Fornece comparativas de desempenho home/away
+    e métricas de estabilidade (Coeficiente de Variação).
+  version: 1.0.0
+  contact:
+    name: Suporte
+    email: suporte@apostacerta.com
+  license:
+    name: MIT
+
+servers:
+  - url: http://localhost:8000
+    description: Ambiente de desenvolvimento
+  - url: https://api.apostacerta.com
+    description: Produção
+
+paths:
+  /api/partidas:
+    get:
+      summary: Lista partidas por data
+      description: |
+        Retorna todas as partidas agendadas para uma data específica
+        de todas as competições suportadas.
+      operationId: listar_partidas
+      tags:
+        - Partidas
+      parameters:
+        - name: data
+          in: query
+          required: true
+          description: Data no formato YYYY-MM-DD
+          schema:
+            type: string
+            format: date
+            example: "2025-12-27"
+      responses:
+        '200':
+          description: Lista de partidas retornada com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PartidaListResponse'
+        '400':
+          description: Data inválida ou formato incorreto
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Erro ao buscar da API VStats
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-code-samples:
+        - lang: javascript
+          source: |
+            const response = await fetch('http://localhost:8000/api/partidas?data=2025-12-27');
+            const data = await response.json();
+
+  /api/partida/{matchId}/stats:
+    get:
+      summary: Estatísticas detalhadas de uma partida
+      description: |
+        Retorna estatísticas agregadas (médias e CVs) de um time em um período
+        específico (geral, últimas 5 ou últimas 10 partidas).
+      operationId: get_stats
+      tags:
+        - Estatísticas
+      parameters:
+        - name: matchId
+          in: path
+          required: true
+          description: ID único da partida
+          schema:
+            type: string
+            example: f4vscquffy37afgv0arwcbztg
+        - name: filtro
+          in: query
+          required: false
+          description: Período de análise
+          schema:
+            type: string
+            enum:
+              - geral
+              - "5"
+              - "10"
+            default: geral
+      responses:
+        '200':
+          description: Estatísticas calculadas com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatsResponse'
+        '400':
+          description: Parâmetros inválidos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Partida não encontrada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Erro ao calcular estatísticas
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/competicoes:
+    get:
+      summary: Lista de competições disponíveis
+      description: Retorna todas as competições suportadas pelo sistema
+      operationId: listar_competicoes
+      tags:
+        - Competições
+      responses:
+        '200':
+          description: Lista de competições
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CompeticaoInfo'
+        '500':
+          description: Erro ao buscar competições
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/time/{teamId}/escudo:
+    get:
+      summary: Escudo/logo de um time
+      description: Retorna URL do escudo e nome do time
+      operationId: get_escudo
+      tags:
+        - Times
+      parameters:
+        - name: teamId
+          in: path
+          required: true
+          description: ID do time
+          schema:
+            type: string
+            example: 4dsgumo7d4zupm2ugsvm4zm4d
+        - name: nome
+          in: query
+          required: false
+          description: Nome do time (fallback)
+          schema:
+            type: string
+            example: Arsenal
+      responses:
+        '200':
+          description: Escudo encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EscudoResponse'
+        '404':
+          description: Escudo não encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Erro ao buscar escudo
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  schemas:
+    TimeInfo:
+      type: object
+      required:
+        - id
+        - nome
+        - codigo
+      properties:
+        id:
+          type: string
+          description: ID único do time
+          example: 4dsgumo7d4zupm2ugsvm4zm4d
+        nome:
+          type: string
+          description: Nome do time
+          example: Arsenal
+        codigo:
+          type: string
+          description: Código do time
+          example: ARS
+        escudo:
+          type: string
+          format: uri
+          nullable: true
+          description: URL do escudo
+          example: https://r2.thesportsdb.com/images/media/team/badge/uyhbfe1612467038.png
+
+    PartidaResumo:
+      type: object
+      required:
+        - id
+        - data
+        - horario
+        - competicao
+        - estadio
+        - mandante
+        - visitante
+      properties:
+        id:
+          type: string
+          example: f4vscquffy37afgv0arwcbztg
+        data:
+          type: string
+          format: date
+          example: "2025-12-27"
+        horario:
+          type: string
+          format: time
+          example: "17:00"
+        competicao:
+          type: string
+          example: Premier League
+        estadio:
+          type: string
+          example: Emirates Stadium
+        mandante:
+          $ref: '#/components/schemas/TimeInfo'
+        visitante:
+          $ref: '#/components/schemas/TimeInfo'
+
+    PartidaListResponse:
+      type: object
+      required:
+        - data
+        - total_partidas
+        - partidas
+      properties:
+        data:
+          type: string
+          format: date
+          example: "2025-12-27"
+        total_partidas:
+          type: integer
+          minimum: 0
+          example: 2
+        partidas:
+          type: array
+          items:
+            $ref: '#/components/schemas/PartidaResumo'
+
+    EstatisticaMetrica:
+      type: object
+      required:
+        - media
+        - cv
+        - classificacao
+      properties:
+        media:
+          type: number
+          format: float
+          minimum: 0
+          example: 5.88
+        cv:
+          type: number
+          format: float
+          minimum: 0
+          example: 0.32
+        classificacao:
+          type: string
+          enum:
+            - Muito Estável
+            - Estável
+            - Moderado
+            - Instável
+            - Muito Instável
+          example: Moderado
+
+    EstatisticaFeitos:
+      type: object
+      required:
+        - feitos
+        - sofridos
+      properties:
+        feitos:
+          $ref: '#/components/schemas/EstatisticaMetrica'
+        sofridos:
+          $ref: '#/components/schemas/EstatisticaMetrica'
+
+    EstatisticasTime:
+      type: object
+      required:
+        - escanteios
+        - gols
+        - finalizacoes
+        - finalizacoes_gol
+        - cartoes
+      properties:
+        escanteios:
+          $ref: '#/components/schemas/EstatisticaFeitos'
+        gols:
+          $ref: '#/components/schemas/EstatisticaFeitos'
+        finalizacoes:
+          $ref: '#/components/schemas/EstatisticaFeitos'
+        finalizacoes_gol:
+          $ref: '#/components/schemas/EstatisticaFeitos'
+        cartoes:
+          type: object
+          properties:
+            amarelos:
+              $ref: '#/components/schemas/EstatisticaMetrica'
+            vermelhos:
+              $ref: '#/components/schemas/EstatisticaMetrica'
+
+    StatsResponse:
+      type: object
+      required:
+        - partida
+        - filtro_aplicado
+        - partidas_analisadas
+        - mandante
+        - visitante
+      properties:
+        partida:
+          $ref: '#/components/schemas/PartidaResumo'
+        filtro_aplicado:
+          type: string
+          enum:
+            - geral
+            - "5"
+            - "10"
+          example: "5"
+        partidas_analisadas:
+          type: integer
+          minimum: 1
+          example: 5
+        mandante:
+          type: object
+          properties:
+            id:
+              type: string
+            nome:
+              type: string
+            escudo:
+              type: string
+            estatisticas:
+              $ref: '#/components/schemas/EstatisticasTime'
+        visitante:
+          type: object
+          properties:
+            id:
+              type: string
+            nome:
+              type: string
+            escudo:
+              type: string
+            estatisticas:
+              $ref: '#/components/schemas/EstatisticasTime'
+
+    CompeticaoInfo:
+      type: object
+      required:
+        - id
+        - nome
+        - pais
+        - tipo
+      properties:
+        id:
+          type: string
+          example: 51r6ph2woavlbbpk8f29nynf8
+        nome:
+          type: string
+          example: Premier League 2024-25
+        pais:
+          type: string
+          example: Inglaterra
+        tipo:
+          type: string
+          example: Liga
+
+    EscudoResponse:
+      type: object
+      properties:
+        escudo:
+          type: string
+          format: uri
+          nullable: true
+          example: https://r2.thesportsdb.com/images/media/team/badge/uyhbfe1612467038.png
+        nome_time:
+          type: string
+          nullable: true
+          example: Arsenal
+
+    ErrorResponse:
+      type: object
+      required:
+        - detail
+      properties:
+        detail:
+          type: string
+          description: Descrição do erro
+          example: Data inválida: 2025-13-01 (formato deve ser YYYY-MM-DD)
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      description: Autenticação JWT (futuro)
+
+tags:
+  - name: Partidas
+    description: Endpoints para listar partidas
+  - name: Estatísticas
+    description: Endpoints para análise de estatísticas
+  - name: Competições
+    description: Endpoints para competições
+  - name: Times
+    description: Endpoints para informações de times
