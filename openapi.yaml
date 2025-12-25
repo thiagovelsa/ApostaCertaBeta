@@ -8,14 +8,14 @@ info:
   version: 1.0.0
   contact:
     name: Suporte
-    email: suporte@apostacerta.com
+    email: contato@palpitremestre.com
   license:
     name: MIT
 
 servers:
   - url: http://localhost:8000
     description: Ambiente de desenvolvimento
-  - url: https://api.apostacerta.com
+  - url: https://api.palpitremestre.com
     description: Produção
 
 paths:

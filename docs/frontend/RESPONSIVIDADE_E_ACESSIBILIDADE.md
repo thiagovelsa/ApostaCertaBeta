@@ -280,7 +280,7 @@ export function Container({ children, maxWidth = 'xl' }: ContainerProps) {
 </main>
 
 <footer role="contentinfo">
-  <p>&copy; 2025 ApostaCerta</p>
+  <p>&copy; 2025 Palpite Mestre</p>
 </footer>
 
 // ❌ ERRADO - Divs genéricas

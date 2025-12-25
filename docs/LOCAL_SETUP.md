@@ -330,7 +330,7 @@ docker-compose down
 
 ```bash
 # Build imagem
-docker build -t apostacerta-backend .
+docker build -t palpitremestre-backend .
 
 # Rodar container
 docker run -d \
@@ -339,11 +339,11 @@ docker run -d \
   -e VSTATS_CLIENT_ID=seu_id \
   -e VSTATS_CLIENT_SECRET=seu_secret \
   -e REDIS_URL=redis://host.docker.internal:6379/0 \
-  --name apostacerta-backend \
-  apostacerta-backend
+  --name palpitremestre-backend \
+  palpitremestre-backend
 
 # Verificar
-docker logs -f apostacerta-backend
+docker logs -f palpitremestre-backend
 
 # Acessar
 curl http://localhost:8000/docs

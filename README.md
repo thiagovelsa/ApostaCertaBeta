@@ -223,13 +223,13 @@ pytest -v -s
 
 ```bash
 # Build
-docker build -t apostacerta-backend .
+docker build -t palpitremestre-backend .
 
 # Run
 docker run -p 8000:8000 \
   -e VSTATS_API_URL=... \
   -e REDIS_URL=redis://host.docker.internal:6379 \
-  apostacerta-backend
+  palpitremestre-backend
 
 # Compose (completo)
 docker-compose up -d
