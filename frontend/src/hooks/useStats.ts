@@ -10,7 +10,8 @@ export function useStats(matchId: string | undefined, filtro: FiltroEstatisticas
   return useQuery({
     queryKey: ['stats', matchId, filtro],
     queryFn: () => getMatchStats(matchId!, filtro),
-    staleTime: 1000 * 60 * 60 * 6, // 6 hours
+    staleTime: 0, // Sem cache - sempre busca dados frescos
+    gcTime: 0,
     enabled: Boolean(matchId),
   });
 }

@@ -18,12 +18,12 @@ interface StatsCategoryProps {
 
 function StatsCategory({ title, icon, homeFeitos, awayFeitos }: StatsCategoryProps) {
   return (
-    <div className="mb-6">
-      <div className="flex items-center gap-2 mb-3">
+    <div className="py-6 first:pt-0">
+      <div className="flex items-center gap-2 mb-4">
         <Icon name={icon} size="sm" className="text-primary-400" />
         <h3 className="text-sm font-medium text-gray-400 uppercase tracking-wider">{title}</h3>
       </div>
-      <div className="space-y-1">
+      <div className="space-y-3">
         <StatMetric
           label="Feitos"
           home={homeFeitos.feitos}
@@ -192,14 +192,14 @@ export function StatsPanel({ stats, isLoading, error }: StatsPanelProps) {
         />
 
         {/* Cartões e Faltas - Simple Metrics */}
-        <div className="pt-4">
-          <div className="flex items-center gap-2 mb-3">
+        <div className="py-6">
+          <div className="flex items-center gap-2 mb-4">
             <Icon name="card" size="sm" className="text-primary-400" />
             <h3 className="text-sm font-medium text-gray-400 uppercase tracking-wider">
               Disciplina
             </h3>
           </div>
-          <div className="space-y-1">
+          <div className="space-y-3">
             <StatMetric
               label="Cartões Amarelos"
               home={mandante.estatisticas.cartoes_amarelos}

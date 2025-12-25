@@ -16,7 +16,8 @@ export function usePartidas(date: string, options: UsePartidasOptions = {}) {
   return useQuery({
     queryKey: ['partidas', date],
     queryFn: () => getPartidasByDate(date),
-    staleTime: 1000 * 60 * 60, // 1 hour
+    staleTime: 0, // Sem cache - sempre busca dados frescos
+    gcTime: 0,
     enabled: Boolean(date) && enabled,
   });
 }
