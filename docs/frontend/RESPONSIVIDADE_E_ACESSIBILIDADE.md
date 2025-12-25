@@ -611,8 +611,8 @@ export function Header() {
 
 ```json
 {
-  "name": "ApostaCerta - Análise de Estatísticas de Futebol",
-  "short_name": "ApostaCerta",
+  "name": "Palpite Mestre - Análise de Estatísticas de Futebol",
+  "short_name": "Palpite Mestre",
   "description": "Sistema web para análise detalhada de estatísticas de futebol",
   "start_url": "/",
   "scope": "/",
@@ -673,14 +673,14 @@ export function Header() {
 <meta name="theme-color" content="#84cc16" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-<meta name="apple-mobile-web-app-title" content="ApostaCerta" />
+<meta name="apple-mobile-web-app-title" content="Palpite Mestre" />
 ```
 
 ### 3.2 Service Worker
 
 ```typescript
 // public/sw.js
-const CACHE_NAME = 'apostacerta-v1';
+const CACHE_NAME = 'palpitremestre-v1';
 const ASSETS_TO_CACHE = [
   '/',
   '/index.html',

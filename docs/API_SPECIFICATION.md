@@ -442,7 +442,7 @@ X-RateLimit-Reset: 1234567890
 **Origens Permitidas:**
 - `http://localhost:3000` (dev frontend)
 - `http://localhost:5173` (Vite dev server)
-- `https://apostacertabeta.vercel.app` (produção)
+- `https://palpitremestre.com` (produção)
 
 **Métodos Permitidos:** GET
 

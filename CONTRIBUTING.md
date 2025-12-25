@@ -3,7 +3,7 @@
 **Versão:** 1.0
 **Data:** 24 de dezembro de 2025
 
-Bem-vindo! Obrigado por considerara contribuir para o ApostaCerta. Este guia explica como contribuir de forma consistente e profissional.
+Bem-vindo! Obrigado por considerar contribuir para o Palpite Mestre. Este guia explica como contribuir de forma consistente e profissional.
 
 ---
 
@@ -364,7 +364,7 @@ Antes de enviar PR, verifique:
 
 - 📖 Consulte as documentações acima
 - 🐛 Abra uma issue no GitHub
-- 💌 Entre em contato: suporte@apostacerta.com
+- 💌 Entre em contato: contato@palpitremestre.com
 
 ---
 

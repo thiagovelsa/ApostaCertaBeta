@@ -639,7 +639,7 @@ DEBUG=false
 LOG_LEVEL=INFO
 CACHE_ENABLED=true
 REDIS_URL=redis://staging-redis:6379/0
-ALLOWED_ORIGINS=https://staging.apostacerta.com
+ALLOWED_ORIGINS=https://staging.palpitremestre.com
 ```
 
 ### Production
@@ -650,7 +650,7 @@ DEBUG=false
 LOG_LEVEL=WARNING
 CACHE_ENABLED=true
 REDIS_URL=redis://prod-redis:6379/0
-ALLOWED_ORIGINS=https://apostacerta.com
+ALLOWED_ORIGINS=https://palpitremestre.com
 ```
 
 ---
@@ -724,7 +724,7 @@ Se encontrar problemas:
 1. Verificar [Troubleshooting](#9-troubleshooting)
 2. Consultar logs (verificar output do servidor)
 3. Abrir issue no GitHub
-4. Contatar suporte: suporte@apostacerta.com
+4. Contatar suporte: contato@palpitremestre.com
 
 ---
 

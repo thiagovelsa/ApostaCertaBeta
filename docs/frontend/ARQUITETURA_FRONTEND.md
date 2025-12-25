@@ -779,7 +779,7 @@ VITE_ENV=development
 
 **`.env.production`:**
 ```env
-VITE_API_URL=https://api.apostacerta.com
+VITE_API_URL=https://api.palpitremestre.com
 VITE_API_TIMEOUT=10000
 VITE_ENV=production
 ```
@@ -881,7 +881,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#84cc16" />
     <meta name="description" content="Sistema de análise de estatísticas de futebol" />
-    <title>ApostaCerta - Análise de Futebol</title>
+    <title>Palpite Mestre - Análise de Futebol</title>
   </head>
   <body>
     <div id="root"></div>

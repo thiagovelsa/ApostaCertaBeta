@@ -570,7 +570,7 @@ pytest -n auto  # Requer pytest-xdist
 
 - 📖 Ler [TESTING_STRATEGY.md](../docs/TESTING_STRATEGY.md) para mais detalhes
 - 🐛 Issues: GitHub Issues
-- 💬 Perguntas: suporte@apostacerta.com
+- 💬 Perguntas: contato@palpitremestre.com
 
 ---
 

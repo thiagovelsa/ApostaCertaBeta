@@ -306,7 +306,7 @@ Veja [CONTRIBUTING.md](CONTRIBUTING.md) para diretrizes detalhadas.
 ## 📞 Suporte
 
 - **Issues:** [GitHub Issues](https://github.com/thiagovelsa/ApostaCertaBeta/issues)
-- **Email:** suporte@apostacerta.com
+- **Email:** contato@palpitremestre.com
 - **Discord:** [Link do Server]
 
 ---
