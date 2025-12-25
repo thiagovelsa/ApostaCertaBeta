@@ -1,42 +1,12 @@
 import { useState } from 'react';
-import { StatMetric } from '@/components/molecules';
-import { LoadingSpinner, TeamBadge, Icon, Badge, type IconName } from '@/components/atoms';
-import type { StatsResponse, EstatisticaFeitos, CVClassificacao } from '@/types';
+import { StatsCard, DisciplineCard } from '@/components/molecules';
+import { LoadingSpinner, TeamBadge, Icon, Badge } from '@/components/atoms';
+import type { StatsResponse, CVClassificacao } from '@/types';
 
 interface StatsPanelProps {
   stats: StatsResponse | undefined;
   isLoading: boolean;
   error: Error | null;
-}
-
-interface StatsCategoryProps {
-  title: string;
-  icon: IconName;
-  homeFeitos: EstatisticaFeitos;
-  awayFeitos: EstatisticaFeitos;
-}
-
-function StatsCategory({ title, icon, homeFeitos, awayFeitos }: StatsCategoryProps) {
-  return (
-    <div className="py-6 first:pt-0">
-      <div className="flex items-center gap-2 mb-4">
-        <Icon name={icon} size="sm" className="text-primary-400" />
-        <h3 className="text-sm font-medium text-gray-400 uppercase tracking-wider">{title}</h3>
-      </div>
-      <div className="space-y-3">
-        <StatMetric
-          label="Feitos"
-          home={homeFeitos.feitos}
-          away={awayFeitos.feitos}
-        />
-        <StatMetric
-          label="Sofridos"
-          home={homeFeitos.sofridos}
-          away={awayFeitos.sofridos}
-        />
-      </div>
-    </div>
-  );
 }
 
 /**
@@ -52,7 +22,7 @@ function CVLegend({ isOpen, onToggle }: { isOpen: boolean; onToggle: () => void 
   ];
 
   return (
-    <div className="mb-4">
+    <div className="mb-6">
       <button
         onClick={onToggle}
         className="flex items-center gap-2 text-xs text-gray-500 hover:text-gray-300 transition-colors"
@@ -123,100 +93,108 @@ export function StatsPanel({ stats, isLoading, error }: StatsPanelProps) {
   const { mandante, visitante, filtro_aplicado, partidas_analisadas } = stats;
 
   return (
-    <div className="card">
-      {/* Team Headers */}
-      <div className="flex items-center justify-between mb-6 pb-4 border-b border-dark-tertiary">
-        <div className="flex items-center gap-3">
-          <TeamBadge src={mandante.escudo ?? undefined} alt={mandante.nome} size="md" />
-          <div>
-            <p className="font-semibold text-white">{mandante.nome}</p>
-            <p className="text-xs text-gray-500">Mandante</p>
+    <div className="space-y-4">
+      {/* Team Headers Card */}
+      <div className="card">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <TeamBadge src={mandante.escudo ?? undefined} alt={mandante.nome} size="md" />
+            <div>
+              <p className="font-semibold text-white">{mandante.nome}</p>
+              <p className="text-xs text-gray-500">Mandante</p>
+            </div>
+          </div>
+
+          <div className="text-center px-4">
+            <span className="text-xs text-gray-500 uppercase tracking-wider">
+              {filtro_aplicado === 'geral'
+                ? 'Temporada'
+                : `Últimos ${filtro_aplicado}`}
+            </span>
+            <p className="text-xs text-gray-600 mt-1">
+              {partidas_analisadas} jogos analisados
+            </p>
+          </div>
+
+          <div className="flex items-center gap-3 flex-row-reverse">
+            <TeamBadge src={visitante.escudo ?? undefined} alt={visitante.nome} size="md" />
+            <div className="text-right">
+              <p className="font-semibold text-white">{visitante.nome}</p>
+              <p className="text-xs text-gray-500">Visitante</p>
+            </div>
           </div>
         </div>
 
-        <div className="text-center">
-          <span className="text-xs text-gray-500 uppercase tracking-wider">
-            {filtro_aplicado === 'geral'
-              ? 'Temporada'
-              : `Últimos ${filtro_aplicado}`}
-          </span>
-          <p className="text-xs text-gray-600 mt-1">
-            {partidas_analisadas} jogos analisados
-          </p>
-        </div>
-
-        <div className="flex items-center gap-3 flex-row-reverse">
-          <TeamBadge src={visitante.escudo ?? undefined} alt={visitante.nome} size="md" />
-          <div className="text-right">
-            <p className="font-semibold text-white">{visitante.nome}</p>
-            <p className="text-xs text-gray-500">Visitante</p>
-          </div>
+        {/* CV Legend */}
+        <div className="mt-4 pt-4 border-t border-dark-tertiary">
+          <CVLegend isOpen={showCVLegend} onToggle={() => setShowCVLegend(!showCVLegend)} />
         </div>
       </div>
 
-      {/* CV Legend */}
-      <CVLegend isOpen={showCVLegend} onToggle={() => setShowCVLegend(!showCVLegend)} />
-
-      {/* Stats Categories */}
-      <div className="divide-y divide-dark-tertiary">
+      {/* Stats Grid - 2 columns on desktop, 1 on mobile */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Gols */}
-        <StatsCategory
+        <StatsCard
           title="Gols"
           icon="goal"
           homeFeitos={mandante.estatisticas.gols}
           awayFeitos={visitante.estatisticas.gols}
+          homeTeamName={mandante.nome}
+          awayTeamName={visitante.nome}
         />
 
         {/* Escanteios */}
-        <StatsCategory
+        <StatsCard
           title="Escanteios"
           icon="corner"
           homeFeitos={mandante.estatisticas.escanteios}
           awayFeitos={visitante.estatisticas.escanteios}
+          homeTeamName={mandante.nome}
+          awayTeamName={visitante.nome}
         />
 
         {/* Finalizações */}
-        <StatsCategory
+        <StatsCard
           title="Finalizações"
           icon="shot"
           homeFeitos={mandante.estatisticas.finalizacoes}
           awayFeitos={visitante.estatisticas.finalizacoes}
+          homeTeamName={mandante.nome}
+          awayTeamName={visitante.nome}
         />
 
         {/* Finalizações no Gol */}
-        <StatsCategory
+        <StatsCard
           title="Finalizações no Gol"
           icon="target"
           homeFeitos={mandante.estatisticas.finalizacoes_gol}
           awayFeitos={visitante.estatisticas.finalizacoes_gol}
+          homeTeamName={mandante.nome}
+          awayTeamName={visitante.nome}
         />
 
-        {/* Cartões e Faltas - Simple Metrics */}
-        <div className="py-6">
-          <div className="flex items-center gap-2 mb-4">
-            <Icon name="card" size="sm" className="text-primary-400" />
-            <h3 className="text-sm font-medium text-gray-400 uppercase tracking-wider">
-              Disciplina
-            </h3>
-          </div>
-          <div className="space-y-3">
-            <StatMetric
-              label="Cartões Amarelos"
-              home={mandante.estatisticas.cartoes_amarelos}
-              away={visitante.estatisticas.cartoes_amarelos}
-            />
-            <StatMetric
-              label="Cartões Vermelhos"
-              home={mandante.estatisticas.cartoes_vermelhos}
-              away={visitante.estatisticas.cartoes_vermelhos}
-            />
-            <StatMetric
-              label="Faltas"
-              home={mandante.estatisticas.faltas}
-              away={visitante.estatisticas.faltas}
-            />
-          </div>
-        </div>
+        {/* Disciplina - Full Width */}
+        <DisciplineCard
+          metrics={[
+            {
+              label: 'Cartões Amarelos',
+              home: mandante.estatisticas.cartoes_amarelos,
+              away: visitante.estatisticas.cartoes_amarelos,
+            },
+            {
+              label: 'Cartões Vermelhos',
+              home: mandante.estatisticas.cartoes_vermelhos,
+              away: visitante.estatisticas.cartoes_vermelhos,
+            },
+            {
+              label: 'Faltas',
+              home: mandante.estatisticas.faltas,
+              away: visitante.estatisticas.faltas,
+            },
+          ]}
+          homeTeamName={mandante.nome}
+          awayTeamName={visitante.nome}
+        />
       </div>
     </div>
   );

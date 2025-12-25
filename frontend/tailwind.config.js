@@ -32,6 +32,14 @@ export default {
         warning: '#f59e0b',
         danger: '#ef4444',
         info: '#3b82f6',
+        // CV Classification Colors
+        cv: {
+          muitoEstavel: '#22c55e',
+          estavel: '#84cc16',
+          moderado: '#eab308',
+          instavel: '#f97316',
+          muitoInstavel: '#ef4444',
+        },
       },
       fontFamily: {
         sans: ['Outfit', 'Inter', 'system-ui', 'sans-serif'],
