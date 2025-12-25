@@ -50,7 +50,7 @@ Sistema web para analise estatistica de partidas de futebol, permitindo ao usuar
 | Dados Primarios | VStats API (Opta/Stats Perform) |
 | Escudos | TheSportsDB (API gratuita) |
 
-### 1.3 Notas Importantes sobre a API (Verificado 24/12/2025)
+### 1.3 Notas Importantes sobre a API (Verificado 25/12/2025)
 
 > **CRITICO:** Algumas limitacoes da VStats API que impactam a implementacao:
 
@@ -60,15 +60,46 @@ Sistema web para analise estatistica de partidas de futebol, permitindo ao usuar
 | `schedule/month?month=&year=` | Parametros `month` e `year` sao **IGNORADOS** | Endpoint sempre retorna mes atual |
 | `seasonstats` | Nao fornece `lostCorners` (corners sofridos) | Usar `get-match-stats` por partida |
 
+#### DESCOBERTA IMPORTANTE (25/12/2025): Endpoint /schedule (Temporada Completa)
+
+> **CRITICO:** O endpoint `/schedule` **SEM sufixo** retorna TODA a temporada!
+
+| Endpoint | Retorno | Quantidade |
+|----------|---------|------------|
+| `/stats/tournament/v1/schedule?tmcl={id}` | Temporada COMPLETA | ~380 jogos (Ago-Mai) |
+| `/stats/tournament/v1/schedule/month?Tmcl={id}` | Apenas mes atual | ~16 jogos |
+| `/stats/tournament/v1/schedule/week?tmcl={id}` | Apenas semana atual | ~10 jogos |
+
+**Vantagens do /schedule:**
+- Acesso a TODAS as partidas (passadas e futuras)
+- Permite buscar ultimas 5/10 partidas de qualquer time
+- Dados incluem placar (`homeScore`, `awayScore`) para partidas realizadas
+- Resolve problema de "poucas partidas no mes atual"
+
+**Uso recomendado para filtros 5/10:**
+```python
+# Buscar temporada completa
+GET /stats/tournament/v1/schedule?tmcl={tournamentId}
+
+# Filtrar client-side:
+# 1. Partidas do time (homeContestantId ou awayContestantId)
+# 2. Partidas realizadas (homeScore != null)
+# 3. Ordenar por data decrescente
+# 4. Pegar ultimas N
+```
+
 **Recomendacao de Implementacao:**
 
 ```python
 # NAO FAZER (nao funciona):
 GET /schedule/day?date=2025-12-27  # Retorna vazio
 
-# FAZER (funciona):
+# FAZER para partidas do DIA (funciona):
 GET /schedule/month?Tmcl={id}      # Retorna mes atual
 GET /schedule/week?tmcl={id}       # Retorna semana atual
+
+# FAZER para HISTORICO COMPLETO (filtros 5/10):
+GET /schedule?tmcl={id}            # Retorna temporada inteira!
 
 # Filtrar no codigo:
 partidas_do_dia = [m for m in todas_partidas if m['localDate'] == data_desejada]
@@ -78,6 +109,14 @@ partidas_do_dia = [m for m in todas_partidas if m['localDate'] == data_desejada]
 1. Chamar `schedule/month` ou `schedule/week`
 2. Filtrar array `matches` pela `localDate` desejada
 3. Cachear resultado por 1 hora (partidas nao mudam frequentemente)
+
+**Fluxo Correto para Buscar Historico (Filtros 5/10):**
+1. Chamar `schedule` (sem sufixo) para temporada completa
+2. Filtrar por `contestantId` (home ou away)
+3. Filtrar partidas realizadas (`homeScore != null`)
+4. Ordenar por `localDate` decrescente
+5. Pegar ultimas N partidas
+6. Cachear schedule completo por 6 horas
 
 ---
 
@@ -223,6 +262,12 @@ GET /stats/tournament/v1/schedule/month?Tmcl={tournamentCalendarId}
 - **ATENCAO:** Os parametros `month` e `year` sao **IGNORADOS** pela API
 - O endpoint sempre retorna o mes **ATUAL**, independente dos parametros
 - Para filtrar por data especifica, fazer o filtro no client-side
+
+> **IMPORTANTE - Case-Sensitivity dos Parametros:**
+> - `schedule/day` usa parametro `tmcl` (minusculo)
+> - `schedule/month` usa parametro `Tmcl` (T maiusculo)
+> - `schedule/week` usa parametro `tmcl` (minusculo)
+> - Reversao destes valores pode resultar em erro 400/500
 
 **Alternativa - Schedule Week:**
 ```http
@@ -411,7 +456,8 @@ GET /stats/seasonstats/v1/team?ctst={contestantId}&tmcl={tournamentCalendarId}&d
 
 - **NAO fornece** `lostCorners` (corners sofridos) - ver nota abaixo
 - ✅ **DISPONIVEL:** `Total Shots Conceded` (finalizacoes sofridas) desde v5.2
-- **NAO fornece** CV (Coeficiente de Variacao) - precisa calcular manualmente via get-match-stats
+- **NAO fornece** CV (Coeficiente de Variacao) - precisa calcular manualmente via partidas individuais
+- **OBS:** `get-match-stats` só traz lineUp com stats para partidas JA disputadas; partidas futuras retornam apenas matchInfo/arbitragem
 
 > **Nota sobre Corners Sofridos (Investigado 24/12/2025):**
 > A Opta possui o campo `lost_corners` na fonte original. A VStats expõe como `lostCorners`
@@ -421,23 +467,31 @@ GET /stats/seasonstats/v1/team?ctst={contestantId}&tmcl={tournamentCalendarId}&d
 
 ### 4.2 Filtro "5 Partidas" / "10 Partidas"
 
-**Fluxo Completo:**
+**Fluxo Completo (Atualizado 25/12/2025):**
 
 ```
 1. OBTER IDS DE PARTIDAS ANTERIORES
    --------------------------------
-   Opcao A: Via match-preview (confrontos diretos)
-   GET /stats/matchpreview/v1/get-match-preview?Fx={matchId}
-   → previousMeetingsAnyComp.ids
+   RECOMENDADO: Via /schedule (temporada completa)
+   GET /stats/tournament/v1/schedule?tmcl={tmcl}
+   → Retorna TODA a temporada (~380 jogos)
+   → Filtrar por contestantId (home ou away)
+   → Filtrar partidas realizadas (homeScore != null)
+   → Ordenar por data decrescente
+   → Pegar ultimas N
 
-   Opcao B: Via schedule/month (todas as partidas do time)
+   OBSOLETO: Via schedule/month (limitado ao mes atual)
    GET /stats/tournament/v1/schedule/month?Tmcl={tmcl}
-   → Retorna mes atual, filtrar por contestantId e data < hoje
+   → Retorna apenas mes atual (~16 jogos)
+   → PROBLEMA: No inicio do mes pode nao ter 5/10 partidas!
 
 2. PARA CADA PARTIDA (limite 5 ou 10):
    -----------------------------------
    GET /stats/matchstats/v1/get-match-stats?Fx={matchId}
    → liveData.lineUp[].stat[]
+   Se lineUp estiver vazio (partida futura ou sem stats), usar fallback:
+   GET /stats/matchstats/v1/get-game-played-stats?Fx={matchId}
+   → stats (arrays por time: home/away)
 
 3. EXTRAIR ESTATISTICAS
    --------------------
@@ -472,17 +526,30 @@ GET /stats/seasonstats/v1/team?ctst={contestantId}&tmcl={tournamentCalendarId}&d
 | `totalRedCard` | Cartoes vermelhos | `liveData.lineUp[].stat[]` |
 | `saves` | Defesas do goleiro | `liveData.lineUp[].stat[]` |
 
+**Fallback recomendado (partidas JA disputadas):**
+
+Use `get-game-played-stats` quando `lineUp` vier vazio ou sem `stat[]`.  
+Mapeamento básico:
+- `attempts` → totalScoringAtt (home idx 0 / away idx 1)
+- `attemptsOnGoal` → ontargetScoringAtt
+- `corners` → wonCorners (home/away) e lostCorners (via oponente)
+- `fouls` → fkFoulLost
+- `yellowCards` / `redCards` → totalYellowCard / totalRedCard
+- `homeScore` / `awayScore` → goals / goalsConceded
+
 ### 4.3 Diferenca entre Filtros
 
 | Aspecto | Geral | 5 Partidas | 10 Partidas |
 |---------|-------|------------|-------------|
-| Fonte | seasonstats | get-match-stats | get-match-stats |
+| Fonte | seasonstats | get-match-stats (fallback: get-game-played-stats) | get-match-stats (fallback: get-game-played-stats) |
 | Periodo | Temporada toda | Ultimas 5 | Ultimas 10 |
-| CV Disponivel | NAO | SIM | SIM |
+| CV Disponivel | NAO | SIM* | SIM* |
 | Corners Sofridos | ❌ NAO | ✅ SIM | ✅ SIM |
 | Finalizacoes Sofridas | ✅ **SIM** (Total Shots Conceded) | ✅ SIM | ✅ SIM |
 | Requisicoes API | 1 | 5+ | 10+ |
 | Performance | Rapido | Moderado | Lento |
+
+*CV só é calculado quando existem partidas jogadas no período (dados por partida).
 
 ---
 
@@ -785,54 +852,114 @@ GET /stats/tournament/v1/calendar?Comp={competitionId}
 
 **Competition ID Principal:** `2kwbbcootiqqgmrzs6o5inle5` (Premier League)
 
+### 7.7 Schedule (Temporada Completa) - DESCOBERTA 25/12/2025
+
+```http
+GET /stats/tournament/v1/schedule?tmcl={tournamentCalendarId}
+```
+
+**Uso:** Obter TODAS as partidas da temporada (passadas e futuras).
+
+**Retorno:** ~380 partidas por competicao (temporada completa Ago-Mai)
+
+**Campos importantes na resposta:**
+```json
+{
+  "matches": [
+    {
+      "id": "abc123xyz",
+      "localDate": "2025-12-20",
+      "localTime": "16:00:00",
+      "homeContestantId": "team1id",
+      "awayContestantId": "team2id",
+      "homeScore": 2,       // null se nao realizada
+      "awayScore": 1,       // null se nao realizada
+      "matchStatus": "Played"  // ou "Fixture"
+    }
+  ]
+}
+```
+
+**Diferenca dos outros endpoints schedule:**
+
+| Endpoint | Retorno | Uso Recomendado |
+|----------|---------|-----------------|
+| `/schedule` | Temporada completa (~380) | Filtros 5/10, historico |
+| `/schedule/month` | Mes atual (~16) | Listagem de partidas do dia |
+| `/schedule/week` | Semana atual (~10) | Listagem rapida |
+
+**IMPORTANTE:** Este endpoint resolve o problema de buscar partidas historicas para calcular CV nos filtros 5/10!
+
 ---
 
 ## 8. IDS DE COMPETICOES
 
 > **Referencia:** Secao 3 da `DOCUMENTACAO_VSTATS_COMPLETA.md`
 
-### 8.1 Principais Competicoes
+### 8.1 Abordagem Dinamica (Recomendada)
 
-| Competicao | Tournament Calendar ID | Secao Doc |
-|------------|------------------------|-----------|
-| Premier League 2025/26 | `51r6ph2woavlbbpk8f29nynf8` | 3.1 |
-| La Liga 2025/26 | (via calendar) | 3.2 |
-| Serie A 2025/26 | (via calendar) | 3.3 |
-| Bundesliga 2025/26 | (via calendar) | 3.4 |
-| Ligue 1 2025/26 | (via calendar) | 3.5 |
-
-### 8.2 Como Obter Todos os IDs
+**IMPORTANTE:** Os IDs de competicoes (tournamentCalendarId) mudam a cada temporada. Em vez de hardcodar IDs, use o endpoint `/calendar` para obter dinamicamente todas as competicoes disponiveis.
 
 ```http
-GET /stats/tournament/v1/calendar?Comp=2kwbbcootiqqgmrzs6o5inle5
+GET /stats/tournament/v1/calendar
 ```
 
 **Resposta:**
-
 ```json
 [
   {
-    "id": "51r6ph2woavlbbpk8f29nynf8",
-    "name": "Premier League 2025/2026",
+    "tournamentCalendarId": "51r6ph2woavlbbpk8f29nynf8",
+    "knownName": "Premier League",
+    "translatedName": "Premier League 2025/2026",
+    "country": "England",
     "startDate": "2025-08-16",
     "endDate": "2026-05-24"
   },
   {
-    "id": "6lhltebj0dx79xptn0hyph5as",
-    "name": "Premier League 2024/2025",
-    "startDate": "2024-08-16",
-    "endDate": "2025-05-25"
+    "tournamentCalendarId": "80zg2v1cuqcfhphn56u4qpyqc",
+    "knownName": "La Liga",
+    "translatedName": "La Liga 2025/2026",
+    "country": "Spain"
   }
 ]
 ```
 
+**Implementacao no Backend:**
+```python
+async def fetch_calendar() -> List[Dict]:
+    """Busca TODAS as competicoes disponiveis dinamicamente."""
+    response = await client.get("/stats/tournament/v1/calendar")
+    data = response.json()
+
+    competitions = []
+    raw_list = data if isinstance(data, list) else data.get("tournaments", [])
+
+    for comp in raw_list:
+        competitions.append({
+            "id": comp.get("tournamentCalendarId"),
+            "name": comp.get("knownName") or comp.get("translatedName"),
+            "country": comp.get("country"),
+        })
+
+    return competitions
+```
+
+### 8.2 Campos de Identificacao
+
+| Campo | Descricao | Exemplo |
+|-------|-----------|---------|
+| `tournamentCalendarId` | ID unico da competicao (muda por temporada) | `51r6ph2woavlbbpk8f29nynf8` |
+| `knownName` | Nome curto/comum | `Premier League` |
+| `translatedName` | Nome com temporada | `Premier League 2025/2026` |
+| `country` | Pais/regiao | `England` |
+
 ### 8.3 Total de Competicoes
 
-A API VStats cobre **33+ competicoes globais**, incluindo:
+A API VStats retorna **32+ competicoes globais**, incluindo:
 
-- Ligas europeias principais
+- Ligas europeias principais (Premier League, La Liga, Serie A, Bundesliga, Ligue 1)
 - Copas nacionais
-- Competicoes europeias (Champions, Europa League)
+- Competicoes europeias (Champions League, Europa League, Conference League)
 - Ligas sul-americanas
 
 ---
@@ -1161,12 +1288,12 @@ python scripts/validacao/validar_get_match_stats.py
 │     │       └── Retorna medias pre-calculadas                       │
 │     │                                                               │
 │     ├── FILTRO "5 PARTIDAS" (1 + 5 requests por time = 12 total)    │
-│     │   ├── GET /schedule/month → IDs das ultimas 5                 │
+│     │   ├── GET /schedule → IDs das ultimas 5 (temporada completa)  │
 │     │   └── GET /get-match-stats?Fx={id} x 5 partidas               │
 │     │       └── Calcular medias e CV                                │
 │     │                                                               │
 │     └── FILTRO "10 PARTIDAS" (1 + 10 requests por time = 22 total)  │
-│         ├── GET /schedule/month → IDs das ultimas 10                │
+│         ├── GET /schedule → IDs das ultimas 10 (temporada completa) │
 │         └── GET /get-match-stats?Fx={id} x 10 partidas              │
 │             └── Calcular medias e CV                                │
 │                                                                     │
@@ -1194,27 +1321,30 @@ def get_matches_by_date(date: str, tournament_id: str):
         params={"Tmcl": tournament_id}
     )
 
+    # Estrutura: {"matches": [...]} com campo "localDate" em cada partida
+    all_matches_raw = response.json().get('matches', [])
+
+    # Filtra partidas pela data especifica
     all_matches = []
-    for date_obj in response.json().get('matchDate', []):
-        if date_obj.get('date') == date:  # Filtrar pela data
-            for match in date_obj.get('match', []):
-                all_matches.append({
-                    'id': match.get('id'),
-                    'homeTeam': {
-                        'id': match.get('homeContestantId'),
-                        'name': match.get('homeContestantName'),
-                        'code': match.get('homeContestantCode'),
-                    },
-                    'awayTeam': {
-                        'id': match.get('awayContestantId'),
-                        'name': match.get('awayContestantName'),
-                        'code': match.get('awayContestantCode'),
-                    },
-                    'time': match.get('time'),
-                    'status': match.get('matchStatus'),
-                    'homeScore': match.get('homeScore'),
-                    'awayScore': match.get('awayScore'),
-                })
+    for match in all_matches_raw:
+        if match.get('localDate') == date:  # Formato: YYYY-MM-DD
+            all_matches.append({
+                'id': match.get('id'),
+                'homeTeam': {
+                    'id': match.get('homeContestantId'),
+                    'name': match.get('homeContestantClubName') or match.get('homeContestantName'),
+                    'code': match.get('homeContestantCode'),
+                },
+                'awayTeam': {
+                    'id': match.get('awayContestantId'),
+                    'name': match.get('awayContestantClubName') or match.get('awayContestantName'),
+                    'code': match.get('awayContestantCode'),
+                },
+                'time': match.get('localTime'),
+                'status': match.get('matchStatus'),
+                'homeScore': match.get('homeScore'),
+                'awayScore': match.get('awayScore'),
+            })
     return all_matches
 ```
 
@@ -1314,22 +1444,34 @@ def get_season_stats(team_id: str, tournament_id: str):
 
 **Requests necessarios:** 12 (filtro 5) ou 22 (filtro 10)
 
-**Sub-passo A: Obter IDs das ultimas N partidas**
+**Sub-passo A: Obter IDs das ultimas N partidas (Atualizado 25/12/2025)**
 ```python
 def get_recent_match_ids(team_id: str, tournament_id: str, limit: int = 10):
+    # IMPORTANTE: Usar /schedule (sem sufixo) para obter temporada completa!
+    # /schedule/month retorna apenas mes atual e pode nao ter 5/10 partidas
     response = requests.get(
-        f"{BASE_URL}/stats/tournament/v1/schedule/month",
-        params={"Tmcl": tournament_id}
+        f"{BASE_URL}/stats/tournament/v1/schedule",
+        params={"tmcl": tournament_id}  # minusculo!
     )
 
-    match_ids = []
-    for date_obj in response.json().get('matchDate', []):
-        for match in date_obj.get('match', []):
-            if team_id in [match.get('homeContestantId'), match.get('awayContestantId')]:
-                if match.get('homeScore') is not None:  # Partida realizada
-                    match_ids.append(match.get('id'))
+    # Estrutura: {"matches": [...]} com ~380 partidas da temporada
+    all_matches = response.json().get('matches', [])
 
-    return match_ids[:limit]
+    # Filtrar partidas do time que ja foram realizadas
+    team_matches = []
+    for match in all_matches:
+        is_home = match.get('homeContestantId') == team_id
+        is_away = match.get('awayContestantId') == team_id
+        has_score = match.get('homeScore') is not None
+
+        if (is_home or is_away) and has_score:
+            team_matches.append(match)
+
+    # Ordenar por data (mais recentes primeiro)
+    team_matches.sort(key=lambda m: m.get('localDate', ''), reverse=True)
+
+    # Retornar IDs das ultimas N partidas
+    return [m.get('id') for m in team_matches[:limit]]
 ```
 
 **Sub-passo B: Extrair stats de cada partida**
@@ -1810,7 +1952,22 @@ Legenda cores:
 ```
 API/
 ├── PROJETO_SISTEMA_ANALISE.md          # Este documento
-├── DOCUMENTACAO_VSTATS_COMPLETA.md     # Documentacao tecnica da API
+├── DOCUMENTACAO_VSTATS_COMPLETA.md     # Documentacao tecnica da API (v5.5)
+├── ALINHAMENTO_DOCUMENTACAO.md         # Analise de alinhamento entre documentos
+├── CLAUDE.md                           # Guia para Claude Code
+├── .env.example                        # Template de variaveis de ambiente
+├── docs/                               # Documentacao tecnica adicional
+│   ├── ARQUITETURA_BACKEND.md          # Arquitetura do backend
+│   ├── MODELOS_DE_DADOS.md             # Modelos de dados
+│   ├── TESTING_STRATEGY.md             # Estrategia de testes
+│   ├── API_SPECIFICATION.md            # Especificacao da API propria
+│   ├── LOCAL_SETUP.md                  # Setup local
+│   └── frontend/                       # Documentacao do frontend
+│       ├── ARQUITETURA_FRONTEND.md
+│       ├── COMPONENTES_REACT.md
+│       ├── DESIGN_SYSTEM.md
+│       ├── INTEGRACAO_API.md
+│       └── RESPONSIVIDADE_E_ACESSIBILIDADE.md
 ├── scripts/
 │   ├── validacao/                      # Scripts de validacao
 │   │   ├── validar_seasonstats_geral.py
@@ -1822,13 +1979,14 @@ API/
 │       ├── calcular_corners_sofridos.py
 │       ├── compare_detailed.py
 │       └── extract_arsenal_fields.py
-├── data/
-│   └── samples/                        # Dados de exemplo (JSON)
-│       ├── arsenal_detailed_true.json
-│       ├── arsenal_full_data.json
-│       ├── premier_league_teams.json
-│       └── ...
-└── stitch_football_statistics_dashboard2/  # Prototipo frontend
+└── data/
+    └── samples/                        # Dados de exemplo (JSON)
+        ├── arsenal_detailed_true.json
+        ├── arsenal_full_data.json
+        ├── arsenal_seasonstats.json
+        ├── arsenal_team_rankings.json
+        ├── arsenal_vs_crystal_palace.json
+        └── premier_league_teams.json
 ```
 
 ---
@@ -1844,5 +2002,14 @@ API/
 
 ---
 
-**Versao:** 1.1
-**Ultima Atualizacao:** 24 de Dezembro de 2025 (Adicionado Modelo de Previsao)
+**Versao:** 1.3
+**Ultima Atualizacao:** 25 de Dezembro de 2025
+**Alinhado com:** DOCUMENTACAO_VSTATS_COMPLETA.md v5.5
+**Status de Alinhamento:** ✅ Verificado (ver ALINHAMENTO_DOCUMENTACAO.md)
+
+### Changelog v1.3 (25/12/2025)
+- **DESCOBERTA:** Endpoint `/schedule` (sem sufixo) retorna temporada completa (~380 jogos)
+- Atualizada seção 1.3 com nova descoberta
+- Atualizada seção 4.2 para usar /schedule em vez de /schedule/month
+- Adicionada seção 7.7 documentando endpoint /schedule
+- Atualizado diagrama de fluxo na seção 14

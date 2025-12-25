@@ -142,8 +142,8 @@ backend/
 │       │
 │       └── constants.py                 # Constantes globais
 │           └── CV_THRESHOLDS
-│           └── TOURNAMENT_IDS
 │           └── API_TIMEOUTS
+│           └── STAT_NAMES
 │
 ├── tests/
 │   ├── __init__.py
@@ -412,18 +412,44 @@ class VStatsRepository:
         self.base_url = settings.VSTATS_API_URL
         self.client = httpx.AsyncClient(timeout=10)
 
+    async def fetch_calendar(self) -> List[dict]:
+        """
+        Busca TODAS as competições disponíveis dinamicamente.
+
+        IMPORTANTE: IDs de torneios mudam a cada temporada.
+        Este endpoint retorna os IDs atualizados automaticamente.
+
+        Returns:
+            Lista de competições com estrutura normalizada:
+            [{"id": "...", "name": "Premier League", "country": "England"}, ...]
+        """
+        response = await self.client.get(f"{self.base_url}/tournament/v1/calendar")
+        response.raise_for_status()
+
+        # Normaliza estrutura da resposta
+        competitions = []
+        for comp in response.json():
+            competitions.append({
+                "id": comp.get("tournamentCalendarId"),
+                "name": comp.get("knownName") or comp.get("name"),
+                "country": comp.get("country"),
+            })
+        return competitions
+
     async def fetch_matches(self, tournament_id: str, date: str) -> List[dict]:
-        """Busca partidas de um torneio."""
+        """Busca partidas de um torneio para uma data específica."""
         try:
             response = await self.client.get(
                 f"{self.base_url}/schedule/month",
-                params={'Tmcl': tournament_id}  # Nota: case-sensitive
+                params={'Tmcl': tournament_id}  # Nota: T maiúsculo!
             )
             response.raise_for_status()
-            matches = response.json()['matches']
 
-            # Filtra por data (client-side, pois API não suporta)
-            return [m for m in matches if m['localDate'] == date]
+            # Resposta: {"matches": [...]}
+            matches = response.json().get('matches', [])
+
+            # Filtra por data (client-side, pois API não suporta filtro por data)
+            return [m for m in matches if m.get('localDate') == date]
 
         except httpx.TimeoutException:
             raise Exception(f"VStats timeout ao buscar partidas")

@@ -1,7 +1,7 @@
 # VStats API - Documentacao Unificada
 
-**Data:** 24 de Dezembro de 2025
-**Versao:** 5.5 - NOVO: Coeficiente de Variacao (CV)
+**Data:** 25 de Dezembro de 2025
+**Versao:** 5.6 - Busca dinamica de competicoes via /calendar
 **Status:** Documentacao Completa e Validada
 
 ---
@@ -29,8 +29,23 @@
 
 ```
 API/
+├── DOCUMENTACAO_VSTATS_COMPLETA.md     # Esta documentacao tecnica (v5.5)
 ├── PROJETO_SISTEMA_ANALISE.md          # Documento do sistema de analise
-├── DOCUMENTACAO_VSTATS_COMPLETA.md     # Esta documentacao tecnica
+├── ALINHAMENTO_DOCUMENTACAO.md         # Analise de alinhamento entre documentos
+├── CLAUDE.md                           # Guia para Claude Code
+├── .env.example                        # Template de variaveis de ambiente
+├── docs/                               # Documentacao tecnica adicional
+│   ├── ARQUITETURA_BACKEND.md          # Arquitetura do backend
+│   ├── MODELOS_DE_DADOS.md             # Modelos de dados
+│   ├── TESTING_STRATEGY.md             # Estrategia de testes
+│   ├── API_SPECIFICATION.md            # Especificacao da API propria
+│   ├── LOCAL_SETUP.md                  # Setup local
+│   └── frontend/                       # Documentacao do frontend
+│       ├── ARQUITETURA_FRONTEND.md
+│       ├── COMPONENTES_REACT.md
+│       ├── DESIGN_SYSTEM.md
+│       ├── INTEGRACAO_API.md
+│       └── RESPONSIVIDADE_E_ACESSIBILIDADE.md
 ├── scripts/
 │   ├── validacao/                      # Scripts de validacao
 │   │   ├── validar_seasonstats_geral.py
@@ -42,13 +57,14 @@ API/
 │       ├── calcular_corners_sofridos.py
 │       ├── compare_detailed.py
 │       └── extract_arsenal_fields.py
-├── data/
-│   └── samples/                        # Dados de exemplo (JSON)
-│       ├── arsenal_detailed_true.json
-│       ├── arsenal_full_data.json
-│       ├── premier_league_teams.json
-│       └── ...
-└── stitch_football_statistics_dashboard2/  # Prototipo frontend
+└── data/
+    └── samples/                        # Dados de exemplo (JSON)
+        ├── arsenal_detailed_true.json
+        ├── arsenal_full_data.json
+        ├── arsenal_seasonstats.json
+        ├── arsenal_team_rankings.json
+        ├── arsenal_vs_crystal_palace.json
+        └── premier_league_teams.json
 ```
 
 ---
@@ -221,6 +237,10 @@ Como a Opta fornece APIs padronizadas para seus clientes, os endpoints do VStats
 ---
 
 ## 3. Competicoes Disponiveis
+
+> **IMPORTANTE (v5.5):** Os IDs de competicoes (`tournamentCalendarId`) mudam a cada temporada!
+> Para producao, use o endpoint `/stats/tournament/v1/calendar` para obter dinamicamente todos os IDs atuais.
+> Veja secao 4.17 para implementacao completa.
 
 ### Brasil
 
@@ -652,7 +672,8 @@ corners_away_2t = int(stats['corners'][5])  # 1
 GET /stats/matchstats/v1/get-match-stats?Fx={matchId}
 ```
 
-**Descricao:** Retorna informacoes detalhadas da partida incluindo ARBITRAGEM. Funciona para partidas FUTURAS!
+**Descricao:** Retorna informacoes detalhadas da partida incluindo ARBITRAGEM. Funciona para partidas FUTURAS (apenas metadados/arbitragem).
+**Nota:** Stats por time via `liveData.lineUp[].stat[]` so aparecem quando a partida ja foi disputada. Para estatisticas agregadas por time, usar `get-game-played-stats`.
 
 **Parametros:**
 

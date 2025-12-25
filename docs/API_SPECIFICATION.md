@@ -272,6 +272,7 @@ GET /api/partida/f4vscquffy37afgv0arwcbztg/stats?filtro=10
 - **Período `geral`**: Todas as partidas da temporada
 - **Período `5`**: Últimas 5 partidas do time
 - **Período `10`**: Últimas 10 partidas do time
+- **Observação:** filtros `5/10` dependem de partidas já disputadas. Quando não há histórico suficiente, o backend usa dados agregados da temporada (CV estimado).
 - Cache: **6 horas** por matchId + filtro
 - Timeout: **15 segundos** (multiple API calls)
 
@@ -285,7 +286,7 @@ GET /api/partida/f4vscquffy37afgv0arwcbztg/stats?filtro=10
    a. Busca detalhes da partida
    b. Busca histórico do time mandante (últimas 5/10 ou todas)
    c. Busca histórico do time visitante
-   d. Calcula CV e médias para cada categoria
+   d. Calcula CV e médias para cada categoria (por partida quando disponível)
    e. Armazena em cache por 6h
 5. Retorna StatsResponse
 ```
@@ -330,13 +331,13 @@ GET /api/competicoes
 [
   {
     "id": "51r6ph2woavlbbpk8f29nynf8",
-    "nome": "Premier League 2024-25",
+    "nome": "Premier League 2025/26",
     "pais": "Inglaterra",
     "tipo": "Liga"
   },
   {
     "id": "tournament_id_2",
-    "nome": "La Liga 2024-25",
+    "nome": "La Liga 2025/26",
     "pais": "Espanha",
     "tipo": "Liga"
   }

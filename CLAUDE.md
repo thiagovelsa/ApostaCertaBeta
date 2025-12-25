@@ -21,18 +21,23 @@ This is a **football (soccer) statistics analysis system** that integrates with 
 
 ```
 API/
-├── DOCUMENTACAO_VSTATS_COMPLETA.md    # Complete VStats API documentation
+├── DOCUMENTACAO_VSTATS_COMPLETA.md    # Complete VStats API documentation (v5.5)
 ├── PROJETO_SISTEMA_ANALISE.md         # System design & requirements
-├── ballerside_ui_replica/              # Static HTML/CSS UI prototypes
-│   ├── index.html
-│   ├── home.html
-│   └── styles.css
-├── stitch_football_statistics_dashboard/   # Dashboard prototype
-│   ├── code.html                       # Full statistics dashboard UI
-│   └── screen.png
-├── stitch_football_statistics_dashboard2/  # Another dashboard variant
-│   ├── code.html
-│   └── screen.png
+├── ALINHAMENTO_DOCUMENTACAO.md        # Cross-reference alignment analysis
+├── CLAUDE.md                          # This file - project guidance for Claude Code
+├── .env.example                       # Environment variables template
+├── docs/                              # Additional technical documentation
+│   ├── ARQUITETURA_BACKEND.md         # Backend architecture (Python/FastAPI)
+│   ├── MODELOS_DE_DADOS.md            # Data models specification
+│   ├── TESTING_STRATEGY.md            # Testing approach
+│   ├── API_SPECIFICATION.md           # API endpoints specification
+│   ├── LOCAL_SETUP.md                 # Local development setup
+│   └── frontend/                      # Frontend-specific docs
+│       ├── ARQUITETURA_FRONTEND.md    # Frontend architecture (React/TS)
+│       ├── COMPONENTES_REACT.md       # React components documentation
+│       ├── DESIGN_SYSTEM.md           # UI/UX design system
+│       ├── INTEGRACAO_API.md          # API integration guide
+│       └── RESPONSIVIDADE_E_ACESSIBILIDADE.md
 ├── scripts/
 │   ├── validacao/                      # API validation scripts
 │   │   ├── validar_seasonstats_geral.py
@@ -49,9 +54,9 @@ API/
         ├── arsenal_detailed_true.json
         ├── arsenal_full_data.json
         ├── arsenal_seasonstats.json
+        ├── arsenal_team_rankings.json
         ├── arsenal_vs_crystal_palace.json
-        ├── premier_league_teams.json
-        └── ...
+        └── premier_league_teams.json
 ```
 
 ## Development Commands
@@ -78,15 +83,16 @@ python scripts/utilitarios/compare_detailed.py
 ### Frontend Development
 
 ```bash
-# Static HTML pages - Open in browser
-# ballerside_ui_replica/index.html
-# stitch_football_statistics_dashboard/code.html
-
 # For React development (when implementing frontend):
 npm install
 npm start          # Development server
 npm run build      # Production build
 npm test           # Run tests
+
+# See docs/frontend/ for detailed frontend documentation:
+# - ARQUITETURA_FRONTEND.md - Architecture overview
+# - COMPONENTES_REACT.md - Component documentation
+# - DESIGN_SYSTEM.md - UI/UX design system
 ```
 
 ## Architecture Overview
@@ -136,8 +142,15 @@ npm test           # Run tests
 
 **Tournament IDs (Global Competitions):**
 
-- Premier League 2024-25: `51r6ph2woavlbbpk8f29nynf8`
-- Multiple other competitions documented in `DOCUMENTACAO_VSTATS_COMPLETA.md` Section 3
+> **Note:** IDs change each season! Use `/stats/tournament/v1/calendar` endpoint to get all current competition IDs dynamically. See `DOCUMENTACAO_VSTATS_COMPLETA.md` Section 4.17.
+
+Examples (2025/26 season):
+- Premier League: `51r6ph2woavlbbpk8f29nynf8`
+- La Liga: `80zg2v1cuqcfhphn56u4qpyqc`
+- Serie A: `emdmtfr1v8rey2qru3xzfwges`
+- Bundesliga: `2bchmrj23l9u42d68ntcekob8`
+- Ligue 1: `dbxs75cag7zyip5re0ppsanmc`
+- All 33+ competitions documented in `DOCUMENTACAO_VSTATS_COMPLETA.md` Section 3
 
 ## System Design
 
@@ -172,15 +185,19 @@ Statistics Panel (Home vs Away Team Comparison)
 ### File Organization
 
 - **Documentation files are the single source of truth** for API endpoints, IDs, and structure
-  - `DOCUMENTACAO_VSTATS_COMPLETA.md` - API reference (v5.5)
+  - `DOCUMENTACAO_VSTATS_COMPLETA.md` - VStats API reference (v5.5)
   - `PROJETO_SISTEMA_ANALISE.md` - System design & implementation guide
+  - `ALINHAMENTO_DOCUMENTACAO.md` - Cross-reference consistency analysis
+
+- **Technical documentation** in `docs/` folder:
+  - Backend architecture and models (`docs/ARQUITETURA_BACKEND.md`, `docs/MODELOS_DE_DADOS.md`)
+  - Frontend architecture and components (`docs/frontend/`)
+  - Testing strategy and local setup
 
 - **Python scripts are reference implementations** for:
   - Data validation (confirming API response structure)
   - Calculations (CV, statistics filtering)
   - Data extraction (field mapping)
-
-- **HTML prototypes show UI/UX design** but are static; actual frontend will use React + TypeScript
 
 ### Cache Strategy
 

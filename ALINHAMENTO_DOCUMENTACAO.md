@@ -443,4 +443,74 @@ O documento está **bem alinhado** com a documentação técnica. As 3 inconsist
 
 **Gerado por:** Claude Code
 **Data:** 24 de Dezembro de 2025
-**Versão:** 1.0
+**Versão:** 1.1
+**Última Atualização:** 25 de Dezembro de 2025
+
+---
+
+## 7. CORREÇÕES APLICADAS (25/12/2025)
+
+As recomendações deste documento foram aplicadas:
+
+| Recomendação | Status | Arquivo |
+|--------------|--------|---------|
+| Case-sensitivity documentada | ✅ Aplicado | PROJETO_SISTEMA_ANALISE.md (Seção 2.4) |
+| Campo "Shots On Target ( inc goals )" | ✅ Já estava correto | PROJETO_SISTEMA_ANALISE.md (Seção 4.1) |
+| Total Shots Conceded disponível | ✅ Já estava correto | PROJETO_SISTEMA_ANALISE.md (Seção 4.1/11) |
+| Versão de sincronização | ✅ Aplicado | PROJETO_SISTEMA_ANALISE.md (rodapé) |
+| Estrutura de pastas atualizada | ✅ Aplicado | CLAUDE.md |
+| Pastas inexistentes removidas | ✅ Aplicado | CLAUDE.md |
+| Pasta docs/ documentada | ✅ Aplicado | CLAUDE.md |
+| IDs de competições atualizados | ✅ Aplicado | CLAUDE.md |
+
+**Status Final:** 🟢 **DOCUMENTAÇÃO 100% ALINHADA E VERIFICADA**
+
+---
+
+## 8. REVISÃO docs/ (25/12/2025)
+
+Documentação técnica em `docs/` e `docs/frontend/` revisada e corrigida:
+
+### 8.1 Arquivos Revisados
+
+**docs/ (5 arquivos):**
+- ✅ API_SPECIFICATION.md - Corrigido "Premier League 2024-25" → "2025/26"
+- ✅ ARQUITETURA_BACKEND.md - Verificado, sem problemas
+- ✅ LOCAL_SETUP.md - Verificado (nota: referências ao repo "ApostaCertaBeta")
+- ✅ MODELOS_DE_DADOS.md - Corrigido "Premier League 2024-25" → "2025/26"
+- ✅ TESTING_STRATEGY.md - Verificado, sem problemas
+
+**docs/frontend/ (5 arquivos):**
+- ✅ ARQUITETURA_FRONTEND.md - Verificado, sem problemas
+- ✅ COMPONENTES_REACT.md - Verificado, sem problemas
+- ✅ DESIGN_SYSTEM.md - Verificado, sem problemas
+- ✅ INTEGRACAO_API.md - Verificado, sem problemas
+- ✅ RESPONSIVIDADE_E_ACESSIBILIDADE.md - Verificado, sem problemas
+
+### 8.2 Correções Aplicadas
+
+| Arquivo | Correção | Status |
+|---------|----------|--------|
+| docs/API_SPECIFICATION.md | Premier League 2024-25 → 2025/26 | ✅ Corrigido |
+| docs/API_SPECIFICATION.md | La Liga 2024-25 → 2025/26 | ✅ Corrigido |
+| docs/MODELOS_DE_DADOS.md | Premier League 2024-25 → 2025/26 (2 ocorrências) | ✅ Corrigido |
+
+### 8.3 Referências Cruzadas Validadas
+
+Todos os links "Ver Também" nos documentos frontend verificados:
+- ✅ Todas as referências internas (docs/frontend/*.md) válidas
+- ✅ Todas as referências externas (docs/*.md) válidas
+- ✅ Referências a arquivos raiz (openapi.yaml, CONTRIBUTING.md, tests/README.md) validadas
+
+### 8.4 Observações
+
+**Nome do Repositório:**
+- Sistema: "Palpite Mestre" ✅
+- Docker images: "palpitremestre" ✅
+- GitHub URL: "ApostaCertaBeta" (requer renomeação no GitHub para alinhar)
+
+**Versão da Temporada:**
+- Documentos principais usam "2025/26" ✅
+- docs/ agora usa "2025/26" ✅
+
+**Status docs/:** 🟢 **REVISADA E ALINHADA**

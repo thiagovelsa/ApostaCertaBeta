@@ -1,0 +1,59 @@
+import { Badge } from '@/components/atoms';
+import type { EstatisticaMetrica } from '@/types';
+
+interface StatMetricProps {
+  label: string;
+  home: EstatisticaMetrica;
+  away: EstatisticaMetrica;
+  showCV?: boolean;
+}
+
+export function StatMetric({ label, home, away, showCV = true }: StatMetricProps) {
+  const total = home.media + away.media;
+  const percentHome = total > 0 ? (home.media / total) * 100 : 50;
+  const percentAway = total > 0 ? (away.media / total) * 100 : 50;
+
+  return (
+    <div className="py-3">
+      <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center gap-2">
+          <span className="text-white font-semibold text-lg">{home.media.toFixed(1)}</span>
+          {showCV && (
+            <Badge classificacao={home.classificacao} size="sm" />
+          )}
+        </div>
+
+        <span className="text-gray-400 text-sm font-medium uppercase tracking-wider">
+          {label}
+        </span>
+
+        <div className="flex items-center gap-2">
+          {showCV && (
+            <Badge classificacao={away.classificacao} size="sm" />
+          )}
+          <span className="text-white font-semibold text-lg">{away.media.toFixed(1)}</span>
+        </div>
+      </div>
+
+      {/* Comparison Bar */}
+      <div className="h-2 bg-dark-tertiary rounded-full overflow-hidden flex">
+        <div
+          className="bg-primary-500 transition-all duration-500"
+          style={{ width: `${percentHome}%` }}
+        />
+        <div
+          className="bg-gray-600 transition-all duration-500"
+          style={{ width: `${percentAway}%` }}
+        />
+      </div>
+
+      {/* CV Values */}
+      {showCV && (
+        <div className="flex justify-between mt-1 text-xs text-gray-500">
+          <span>CV: {(home.cv * 100).toFixed(0)}%</span>
+          <span>CV: {(away.cv * 100).toFixed(0)}%</span>
+        </div>
+      )}
+    </div>
+  );
+}

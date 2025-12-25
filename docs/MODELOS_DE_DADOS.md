@@ -252,9 +252,9 @@ class EstatisticaMetrica(BaseModel):
             return "Muito Estável"
         elif cv < 0.30:
             return "Estável"
-        elif cv < 0.45:
+        elif cv < 0.50:
             return "Moderado"
-        elif cv < 0.60:
+        elif cv < 0.75:
             return "Instável"
         else:
             return "Muito Instável"
@@ -463,7 +463,7 @@ class CompeticaoInfo(BaseModel):
     nome: str = Field(
         ...,
         max_length=100,
-        description="Nome da competição (ex: Premier League 2024-25)"
+        description="Nome da competição (ex: Premier League 2025/26)"
     )
     pais: str = Field(
         ...,
@@ -479,7 +479,7 @@ class CompeticaoInfo(BaseModel):
         json_schema_extra = {
             "example": {
                 "id": "51r6ph2woavlbbpk8f29nynf8",
-                "nome": "Premier League 2024-25",
+                "nome": "Premier League 2025/26",
                 "pais": "Inglaterra",
                 "tipo": "Liga"
             }

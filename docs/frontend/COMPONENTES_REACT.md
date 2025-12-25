@@ -473,147 +473,135 @@ export const TeamCard: React.FC<TeamCardProps> = ({
 
 ### 8. StatMetric
 
-Métrica com label, valor e CV badge.
+Componente de comparação de estatísticas entre mandante e visitante.
 
 ```typescript
 // src/components/molecules/StatMetric.tsx
 
+import { Badge } from '@/components/atoms';
+import type { EstatisticaMetrica } from '@/types';
+
 interface StatMetricProps {
   label: string;
-  value: number;
-  cv: number;
-  type: 'feitos' | 'sofridos';
-  showCVBadge?: boolean;
+  home: EstatisticaMetrica;
+  away: EstatisticaMetrica;
+  showCV?: boolean;
 }
 
-export const StatMetric: React.FC<StatMetricProps> = ({
-  label,
-  value,
-  cv,
-  type,
-  showCVBadge = true,
-}) => {
-  const getCV Classification = (cv: number) => {
-    if (cv < 0.15) return 'Muito Estável';
-    if (cv < 0.30) return 'Estável';
-    if (cv < 0.45) return 'Moderado';
-    if (cv < 0.60) return 'Instável';
-    return 'Muito Instável';
-  };
+export function StatMetric({ label, home, away, showCV = true }: StatMetricProps) {
+  const total = home.media + away.media;
+  const percentHome = total > 0 ? (home.media / total) * 100 : 50;
+  const percentAway = total > 0 ? (away.media / total) * 100 : 50;
 
   return (
-    <div className="flex flex-col gap-2">
-      <div className="flex items-center justify-between">
-        <p className="text-xs text-text-muted">{label}</p>
-        {showCVBadge && (
-          <Badge variant="cv" value={getClassification(cv)} size="sm" />
-        )}
+    <div className="py-3">
+      <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center gap-2">
+          <span className="text-white font-semibold text-lg">{home.media.toFixed(1)}</span>
+          {showCV && <Badge classificacao={home.classificacao} size="sm" />}
+        </div>
+        <span className="text-gray-400 text-sm font-medium uppercase tracking-wider">
+          {label}
+        </span>
+        <div className="flex items-center gap-2">
+          {showCV && <Badge classificacao={away.classificacao} size="sm" />}
+          <span className="text-white font-semibold text-lg">{away.media.toFixed(1)}</span>
+        </div>
       </div>
-      <p className="font-mono text-2xl font-bold text-lime-500">
-        {value.toFixed(2)}
-      </p>
+      {/* Comparison Bar */}
+      <div className="h-2 bg-dark-tertiary rounded-full overflow-hidden flex">
+        <div className="bg-primary-500 transition-all duration-500" style={{ width: `${percentHome}%` }} />
+        <div className="bg-gray-600 transition-all duration-500" style={{ width: `${percentAway}%` }} />
+      </div>
+      {/* CV Values */}
+      {showCV && (
+        <div className="flex justify-between mt-1 text-xs text-gray-500">
+          <span>CV: {(home.cv * 100).toFixed(0)}%</span>
+          <span>CV: {(away.cv * 100).toFixed(0)}%</span>
+        </div>
+      )}
     </div>
   );
-};
+}
 
 // Exemplo de Uso:
 // <StatMetric
-//   label="Escanteios Feitos"
-//   value={5.2}
-//   cv={0.28}
-//   type="feitos"
-//   showCVBadge
+//   label="Gols Feitos"
+//   home={mandante.estatisticas.gols.feitos}
+//   away={visitante.estatisticas.gols.feitos}
+//   showCV
 // />
 ```
 
 **Props:**
-- `label`: Descrição da métrica
-- `value`: Número a exibir
-- `cv`: Coeficiente de variação (0.0-1.0)
-- `type`: 'feitos' | 'sofridos'
-- `showCVBadge`: Mostrar badge CV
+- `label`: Descrição da métrica (ex: "Gols Feitos", "Escanteios Sofridos")
+- `home`: EstatisticaMetrica do mandante { media, cv, classificacao }
+- `away`: EstatisticaMetrica do visitante { media, cv, classificacao }
+- `showCV`: Mostrar badges de classificação CV (default: true)
 
 ---
 
 ### 9. ComparisonBar
 
-Barras horizontais comparando dois valores.
+Barra horizontal de comparação entre dois valores (mandante vs visitante).
 
 ```typescript
 // src/components/molecules/ComparisonBar.tsx
 
 interface ComparisonBarProps {
-  homeValue: number;
-  awayValue: number;
-  maxValue?: number;
-  label: string;
-  showGradient?: boolean;
+  home: number;
+  away: number;
+  label?: string;
+  showValues?: boolean;
+  height?: 'sm' | 'md';
 }
 
-export const ComparisonBar: React.FC<ComparisonBarProps> = ({
-  homeValue,
-  awayValue,
-  maxValue = Math.max(homeValue, awayValue) * 1.2,
+export function ComparisonBar({
+  home,
+  away,
   label,
-  showGradient = true,
-}) => {
-  const homePercent = (homeValue / maxValue) * 100;
-  const awayPercent = (awayValue / maxValue) * 100;
+  showValues = true,
+  height = 'sm',
+}: ComparisonBarProps) {
+  const total = home + away;
+  const percentHome = total > 0 ? (home / total) * 100 : 50;
+  const percentAway = total > 0 ? (away / total) * 100 : 50;
+  const heightClass = height === 'sm' ? 'h-1.5' : 'h-2.5';
 
   return (
-    <div className="flex flex-col gap-2">
-      <p className="text-xs text-text-muted text-center">{label}</p>
-      <div className="flex items-center gap-2 h-8">
-        {/* Home bar (left) */}
-        <div
-          className={`
-            h-full rounded-l-md flex items-center justify-end pr-2
-            ${showGradient ? 'bg-gradient-to-r from-lime-500 to-lime-500/60' : 'bg-lime-500'}
-            shadow-glow
-          `}
-          style={{ width: `${homePercent}%` }}
-        >
-          <span className="font-mono text-xs font-bold text-white">
-            {homeValue.toFixed(1)}
+    <div className="w-full">
+      {label && (
+        <div className="flex justify-between items-center mb-1">
+          {showValues && <span className="text-white font-medium text-sm">{home}</span>}
+          <span className="text-gray-400 text-xs uppercase tracking-wider flex-1 text-center">
+            {label}
           </span>
+          {showValues && <span className="text-white font-medium text-sm">{away}</span>}
         </div>
-
-        {/* Separator */}
-        <div className="flex-1 h-px bg-dark-tertiary" />
-
-        {/* Away bar (right) */}
-        <div
-          className={`
-            h-full rounded-r-md flex items-center justify-start pl-2
-            ${showGradient ? 'bg-gradient-to-l from-lime-500 to-lime-500/60' : 'bg-lime-500'}
-            shadow-glow
-          `}
-          style={{ width: `${awayPercent}%` }}
-        >
-          <span className="font-mono text-xs font-bold text-white">
-            {awayValue.toFixed(1)}
-          </span>
-        </div>
+      )}
+      <div className={`${heightClass} bg-dark-quaternary rounded-full overflow-hidden flex`}>
+        <div className="bg-primary-500 rounded-l-full transition-all duration-500" style={{ width: `${percentHome}%` }} />
+        <div className="bg-gray-500 rounded-r-full transition-all duration-500" style={{ width: `${percentAway}%` }} />
       </div>
     </div>
   );
-};
+}
 
 // Exemplo de Uso:
 // <ComparisonBar
-//   homeValue={5.2}
-//   awayValue={4.8}
-//   label="Escanteios Feitos"
-//   showGradient
+//   home={5.2}
+//   away={4.8}
+//   label="Escanteios"
+//   height="md"
 // />
 ```
 
 **Props:**
-- `homeValue`: Valor do time mandante
-- `awayValue`: Valor do time visitante
-- `maxValue`: Máximo para normalização
-- `label`: Descrição
-- `showGradient`: Mostrar gradientes + glow
+- `home`: Valor do time mandante
+- `away`: Valor do time visitante
+- `label`: Descrição (opcional)
+- `showValues`: Mostrar valores numéricos (default: true)
+- `height`: Altura da barra 'sm' | 'md'
 
 ---
 
@@ -821,218 +809,153 @@ export const MatchCard: React.FC<MatchCardProps> = ({
 
 ### 13. StatsPanel
 
-Painel principal de estatísticas (3 colunas).
+Painel de estatísticas comparando mandante e visitante.
 
 ```typescript
 // src/components/organisms/StatsPanel.tsx
 
+import { StatMetric } from '@/components/molecules';
+import { LoadingSpinner, TeamBadge, Icon } from '@/components/atoms';
+import type { StatsResponse, EstatisticaFeitos } from '@/types';
+
 interface StatsPanelProps {
-  partida: PartidaResumo;
-  stats: StatsResponse;
-  filtro: 'geral' | '5' | '10';
-  onFiltroChange: (filtro: string) => void;
+  stats: StatsResponse | undefined;
+  isLoading: boolean;
+  error: Error | null;
 }
 
-export const StatsPanel: React.FC<StatsPanelProps> = ({
-  partida,
-  stats,
-  filtro,
-  onFiltroChange,
-}) => {
-  const filterOptions = [
-    { label: 'Geral', value: 'geral' },
-    { label: 'Últimas 5', value: '5' },
-    { label: 'Últimas 10', value: '10' },
-  ];
+export function StatsPanel({ stats, isLoading, error }: StatsPanelProps) {
+  if (isLoading) return <LoadingSpinner size="lg" />;
+  if (error) return <p className="text-danger">Erro: {error.message}</p>;
+  if (!stats) return <p className="text-gray-500">Nenhuma estatística</p>;
+
+  const { mandante, visitante, filtro_aplicado, partidas_analisadas } = stats;
 
   return (
-    <div className="space-y-6">
-      {/* Filter */}
-      <FilterToggle
-        options={filterOptions}
-        selected={filtro}
-        onChange={onFiltroChange}
-        fullWidth
-      />
-
-      {/* Main Grid - 3 Colunas */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* Left: Mandante */}
-        <div className="space-y-4">
-          <TeamCard
-            team={partida.mandante}
-            recentForm={stats.mandante.recentForm}
-            stats={{
-              gols: stats.mandante.gols.media,
-              escanteios: stats.mandante.escanteios.media,
-            }}
-            size="md"
-          />
-
-          {/* Mandante Stats */}
-          <div className="space-y-3 bg-dark-secondary rounded-lg p-4">
-            <h4 className="font-semibold text-lime-500">Estatísticas</h4>
-            <StatMetric
-              label="Gols"
-              value={stats.mandante.gols.media}
-              cv={stats.mandante.gols.cv}
-              type="feitos"
-              showCVBadge
-            />
-            <StatMetric
-              label="Escanteios"
-              value={stats.mandante.escanteios.media}
-              cv={stats.mandante.escanteios.cv}
-              type="feitos"
-              showCVBadge
-            />
+    <div className="card">
+      {/* Team Headers */}
+      <div className="flex items-center justify-between mb-6 pb-4 border-b border-dark-tertiary">
+        <div className="flex items-center gap-3">
+          <TeamBadge src={mandante.escudo ?? undefined} alt={mandante.nome} size="md" />
+          <div>
+            <p className="font-semibold text-white">{mandante.nome}</p>
+            <p className="text-xs text-gray-500">Mandante</p>
           </div>
         </div>
 
-        {/* Center: Match Info */}
-        <div className="flex flex-col items-center justify-start gap-4 bg-dark-secondary rounded-lg p-6">
-          <h2 className="text-xl font-bold text-text-primary text-center">
-            {partida.mandante.nome}
-            <br />
-            <span className="text-lime-500">vs</span>
-            <br />
-            {partida.visitante.nome}
-          </h2>
-
-          <div className="space-y-2 w-full">
-            <p className="text-sm text-center text-text-muted">
-              {partida.data} • {partida.horario}
-            </p>
-            <p className="text-sm text-center text-text-muted">
-              {partida.competicao}
-            </p>
-            <p className="text-xs text-center text-text-muted">
-              {partida.estadio}
-            </p>
-          </div>
-
-          <div className="text-xs text-center text-text-tertiary pt-4 border-t border-dark-tertiary w-full">
-            {stats.partidas_analisadas} partidas analisadas
-          </div>
+        <div className="text-center">
+          <span className="text-xs text-gray-500 uppercase tracking-wider">
+            {filtro_aplicado === 'geral' ? 'Temporada' : `Últimos ${filtro_aplicado}`}
+          </span>
+          <p className="text-xs text-gray-600 mt-1">{partidas_analisadas} jogos analisados</p>
         </div>
 
-        {/* Right: Visitante */}
-        <div className="space-y-4">
-          <TeamCard
-            team={partida.visitante}
-            recentForm={stats.visitante.recentForm}
-            stats={{
-              gols: stats.visitante.gols.media,
-              escanteios: stats.visitante.escanteios.media,
-            }}
-            size="md"
-          />
-
-          {/* Visitante Stats */}
-          <div className="space-y-3 bg-dark-secondary rounded-lg p-4">
-            <h4 className="font-semibold text-lime-500">Estatísticas</h4>
-            <StatMetric
-              label="Gols"
-              value={stats.visitante.gols.media}
-              cv={stats.visitante.gols.cv}
-              type="feitos"
-              showCVBadge
-            />
-            <StatMetric
-              label="Escanteios"
-              value={stats.visitante.escanteios.media}
-              cv={stats.visitante.escanteios.cv}
-              type="feitos"
-              showCVBadge
-            />
+        <div className="flex items-center gap-3 flex-row-reverse">
+          <TeamBadge src={visitante.escudo ?? undefined} alt={visitante.nome} size="md" />
+          <div className="text-right">
+            <p className="font-semibold text-white">{visitante.nome}</p>
+            <p className="text-xs text-gray-500">Visitante</p>
           </div>
         </div>
       </div>
 
       {/* Stats Categories */}
-      <StatsCategories stats={stats} />
+      <div className="divide-y divide-dark-tertiary">
+        <StatsCategory title="Gols" icon="goal"
+          homeFeitos={mandante.estatisticas.gols} awayFeitos={visitante.estatisticas.gols} />
+        <StatsCategory title="Escanteios" icon="corner"
+          homeFeitos={mandante.estatisticas.escanteios} awayFeitos={visitante.estatisticas.escanteios} />
+        <StatsCategory title="Finalizações" icon="shot"
+          homeFeitos={mandante.estatisticas.finalizacoes} awayFeitos={visitante.estatisticas.finalizacoes} />
+        <StatsCategory title="Finalizações no Gol" icon="target"
+          homeFeitos={mandante.estatisticas.finalizacoes_gol} awayFeitos={visitante.estatisticas.finalizacoes_gol} />
+
+        {/* Disciplina - Simple Metrics */}
+        <div className="pt-4">
+          <div className="flex items-center gap-2 mb-3">
+            <Icon name="card" size="sm" className="text-primary-400" />
+            <h3 className="text-sm font-medium text-gray-400 uppercase">Disciplina</h3>
+          </div>
+          <div className="space-y-1">
+            <StatMetric label="Cartões Amarelos"
+              home={mandante.estatisticas.cartoes_amarelos} away={visitante.estatisticas.cartoes_amarelos} />
+            <StatMetric label="Cartões Vermelhos"
+              home={mandante.estatisticas.cartoes_vermelhos} away={visitante.estatisticas.cartoes_vermelhos} />
+            <StatMetric label="Faltas"
+              home={mandante.estatisticas.faltas} away={visitante.estatisticas.faltas} />
+          </div>
+        </div>
+      </div>
     </div>
   );
-};
+}
 
 // Exemplo de Uso:
-// <StatsPanel
-//   partida={partida}
-//   stats={statsData}
-//   filtro={filtroAtual}
-//   onFiltroChange={setFiltro}
-// />
+// <StatsPanel stats={stats} isLoading={isLoading} error={error} />
 ```
 
 ---
 
 ### 14. StatsCategory
 
-Seção de uma categoria de estatística.
+Seção de uma categoria de estatística com feitos/sofridos.
 
 ```typescript
 // src/components/organisms/StatsCategory.tsx
 
+import { Icon } from '@/components/atoms';
+import { ComparisonBar } from '@/components/molecules';
+import type { EstatisticaFeitos } from '@/types';
+
 interface StatsCategoryProps {
   title: string;
-  icon: string;  // Material Icon name
-  homeStats: {
-    feitos: { media: number; cv: number };
-    sofridos: { media: number; cv: number };
-  };
-  awayStats: {
-    feitos: { media: number; cv: number };
-    sofridos: { media: number; cv: number };
-  };
+  icon: string;
+  homeStats: EstatisticaFeitos;
+  awayStats: EstatisticaFeitos;
 }
 
-export const StatsCategory: React.FC<StatsCategoryProps> = ({
-  title,
-  icon,
-  homeStats,
-  awayStats,
-}) => {
+export function StatsCategory({ title, icon, homeStats, awayStats }: StatsCategoryProps) {
   return (
-    <div className="bg-dark-secondary rounded-lg p-6 space-y-4">
+    <div className="card">
       {/* Header */}
-      <div className="flex items-center gap-3">
-        <Icon name={icon} size="lg" color="text-lime-500" />
-        <h3 className="text-lg font-semibold text-text-primary">{title}</h3>
+      <div className="flex items-center gap-2 mb-4 pb-3 border-b border-dark-tertiary">
+        <Icon name={icon} size="md" className="text-primary-400" />
+        <h3 className="font-semibold text-white">{title}</h3>
       </div>
 
-      {/* Feitos */}
-      <div>
-        <p className="text-xs text-text-tertiary mb-2">Feitos</p>
+      {/* Stats List */}
+      <div className="space-y-4">
         <ComparisonBar
-          homeValue={homeStats.feitos.media}
-          awayValue={awayStats.feitos.media}
-          label="Média"
-          showGradient
+          home={homeStats.feitos.media}
+          away={awayStats.feitos.media}
+          label="Feitos"
+          height="md"
         />
-      </div>
-
-      {/* Sofridos */}
-      <div>
-        <p className="text-xs text-text-tertiary mb-2">Sofridos</p>
         <ComparisonBar
-          homeValue={homeStats.sofridos.media}
-          awayValue={awayStats.sofridos.media}
-          label="Média"
-          showGradient
+          home={homeStats.sofridos.media}
+          away={awayStats.sofridos.media}
+          label="Sofridos"
+          height="md"
         />
       </div>
     </div>
   );
-};
+}
 
 // Exemplo de Uso:
 // <StatsCategory
 //   title="Escanteios"
-//   icon="sports_soccer"
-//   homeStats={mandanteEscanteios}
-//   awayStats={visitanteEscanteios}
+//   icon="corner"
+//   homeStats={mandante.estatisticas.escanteios}
+//   awayStats={visitante.estatisticas.escanteios}
 // />
 ```
+
+**Props:**
+- `title`: Nome da categoria (ex: "Gols", "Escanteios")
+- `icon`: Nome do ícone
+- `homeStats`: EstatisticaFeitos do mandante { feitos, sofridos }
+- `awayStats`: EstatisticaFeitos do visitante { feitos, sofridos }
 
 ---
 
