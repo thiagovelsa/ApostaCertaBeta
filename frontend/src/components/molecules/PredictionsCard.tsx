@@ -14,22 +14,6 @@ interface PredictionsCardProps {
 }
 
 /**
- * Retorna a cor da barra baseada na confiança
- */
-function getBarColor(label: ConfiancaLabel): string {
-  switch (label) {
-    case 'Alta':
-      return 'bg-cv-muitoEstavel';
-    case 'Média':
-      return 'bg-cv-moderado';
-    case 'Baixa':
-      return 'bg-gray-500';
-    default:
-      return 'bg-gray-500';
-  }
-}
-
-/**
  * Retorna a cor do texto baseada na confiança
  */
 function getTextColor(label: ConfiancaLabel): string {
@@ -55,7 +39,6 @@ function PredictionCell({ label, icon, previsao }: PredictionCellProps) {
   const sum = home.valor + away.valor;
   const homePercent = sum > 0 ? (home.valor / sum) * 100 : 50;
 
-  const barColor = getBarColor(total.confiancaLabel);
   const textColor = getTextColor(total.confiancaLabel);
 
   return (
@@ -79,14 +62,14 @@ function PredictionCell({ label, icon, previsao }: PredictionCellProps) {
         </span>
 
         <div className="flex-1 h-2 bg-dark-quaternary rounded-full overflow-hidden flex">
-          {/* Lado Home - cor sólida */}
+          {/* Lado Home - verde primário */}
           <div
-            className={`${barColor} transition-all duration-500`}
+            className="bg-primary-500 transition-all duration-500"
             style={{ width: `${homePercent}%` }}
           />
-          {/* Lado Away - cor mais clara */}
+          {/* Lado Away - azul info */}
           <div
-            className={`${barColor} opacity-40 transition-all duration-500`}
+            className="bg-info transition-all duration-500"
             style={{ width: `${100 - homePercent}%` }}
           />
         </div>

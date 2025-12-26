@@ -68,20 +68,20 @@ function DisciplineMetricRow({
   const percentHome = total > 0 ? (home.media / total) * 100 : 50;
 
   return (
-    <div className="py-3 first:pt-0 last:pb-0">
-      {/* Header com label e badge */}
-      <div className="flex items-center justify-between mb-2">
+    <div className="flex flex-col">
+      {/* Header com label e badge - altura fixa */}
+      <div className="flex items-center justify-between mb-2 h-6">
         <span className="text-sm text-gray-300">{label}</span>
         <Badge classificacao={worstClassification} size="sm" />
       </div>
 
-      {/* Valores comparativos */}
-      <div className="flex items-center justify-between mb-2">
+      {/* Valores comparativos - altura fixa */}
+      <div className="flex items-center justify-between mb-2 h-7">
         <span className="text-lg font-bold text-white">{home.media.toFixed(1)}</span>
         <span className="text-lg font-bold text-white">{away.media.toFixed(1)}</span>
       </div>
 
-      {/* Barra de comparação */}
+      {/* Barra de comparação - altura fixa */}
       <div className="h-1.5 bg-dark-quaternary rounded-full overflow-hidden flex mb-3">
         <div
           className="bg-primary-500 transition-all duration-500"
@@ -93,10 +93,10 @@ function DisciplineMetricRow({
         />
       </div>
 
-      {/* CV por time */}
-      <div className="grid grid-cols-2 gap-4">
+      {/* CV por time - layout vertical para consistência */}
+      <div className="space-y-2">
         <div className="flex items-center gap-2">
-          <span className="text-xs text-gray-500 truncate min-w-0" style={{ maxWidth: '90px' }} title={homeTeamName}>
+          <span className="text-xs text-gray-500 truncate w-24" title={homeTeamName}>
             {homeTeamName}
           </span>
           <div className="flex-1 h-1 bg-dark-quaternary rounded-full overflow-hidden">
@@ -105,10 +105,10 @@ function DisciplineMetricRow({
               style={{ width: `${Math.min(home.cv * 100, 100)}%` }}
             />
           </div>
-          <span className="text-xs text-gray-400">{(home.cv * 100).toFixed(0)}%</span>
+          <span className="text-xs text-gray-400 w-8 text-right">{(home.cv * 100).toFixed(0)}%</span>
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-xs text-gray-500 truncate min-w-0" style={{ maxWidth: '90px' }} title={awayTeamName}>
+          <span className="text-xs text-gray-500 truncate w-24" title={awayTeamName}>
             {awayTeamName}
           </span>
           <div className="flex-1 h-1 bg-dark-quaternary rounded-full overflow-hidden">
@@ -117,7 +117,7 @@ function DisciplineMetricRow({
               style={{ width: `${Math.min(away.cv * 100, 100)}%` }}
             />
           </div>
-          <span className="text-xs text-gray-400">{(away.cv * 100).toFixed(0)}%</span>
+          <span className="text-xs text-gray-400 w-8 text-right">{(away.cv * 100).toFixed(0)}%</span>
         </div>
       </div>
     </div>
@@ -179,7 +179,7 @@ export function DisciplineCard({
       {!arbitro && <div className="h-px bg-dark-tertiary mb-4" />}
 
       {/* Grid de métricas */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
         {metrics.map((metric) => (
           <DisciplineMetricRow
             key={metric.label}

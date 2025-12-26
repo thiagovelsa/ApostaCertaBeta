@@ -41,11 +41,11 @@ LOGOS_DIR = PROJECT_DIR / "frontend" / "logos"
 PROGRESS_FILE = LOGOS_DIR / ".progress.json"
 INDEX_FILE = LOGOS_DIR / "index.json"
 
-# Mapeamento de ligas
+# Mapeamento de ligas (nomes exatos da API TheSportsDB)
 LEAGUES = {
     "england": {
         "premier-league": "English Premier League",
-        "championship": "English Championship"
+        "championship": "English League Championship"
     },
     "germany": {
         "bundesliga": "German Bundesliga",
@@ -57,7 +57,7 @@ LEAGUES = {
     },
     "spain": {
         "la-liga": "Spanish La Liga",
-        "la-liga-2": "Spanish Segunda Division"
+        "la-liga-2": "Spanish La Liga 2"
     },
     "france": {
         "ligue-1": "French Ligue 1",
@@ -65,7 +65,7 @@ LEAGUES = {
     },
     "portugal": {
         "primeira-liga": "Portuguese Primeira Liga",
-        "liga-portugal-2": "Portuguese Segunda Liga"
+        "liga-portugal-2": "Portuguese LigaPro"
     }
 }
 
@@ -104,6 +104,21 @@ def save_progress(progress: Dict) -> None:
         json.dump(progress, f, indent=2, ensure_ascii=False)
 
 
+def verify_league_exists(league_name: str) -> bool:
+    """Verifica se uma liga existe na API antes de buscar times."""
+    url = f"{BASE_URL}/search_all_teams.php"
+    params = {"l": league_name}
+
+    try:
+        response = requests.get(url, params=params, timeout=30)
+        response.raise_for_status()
+        data = response.json()
+        teams = data.get("teams", [])
+        return teams is not None and len(teams) > 0
+    except Exception:
+        return False
+
+
 def fetch_teams(league_name: str, delay: float) -> Optional[List[Dict]]:
     """Busca times de uma liga na API do TheSportsDB."""
     url = f"{BASE_URL}/search_all_teams.php"
@@ -138,6 +153,38 @@ def fetch_teams(league_name: str, delay: float) -> Optional[List[Dict]]:
             time.sleep(backoff)
 
     print(f"  [X] Falha apos {MAX_RETRIES} tentativas")
+    return None
+
+
+def fetch_team_details(team_name: str, delay: float) -> Optional[Dict]:
+    """Busca detalhes de um time especifico (inclui URL do badge)."""
+    url = f"{BASE_URL}/searchteams.php"
+    params = {"t": team_name}
+
+    for attempt in range(MAX_RETRIES):
+        try:
+            response = requests.get(url, params=params, timeout=30)
+
+            if response.status_code == 429:
+                backoff = INITIAL_BACKOFF * (BACKOFF_MULTIPLIER ** attempt)
+                print(f"    [!] Rate limit! Aguardando {backoff}s...")
+                time.sleep(backoff)
+                continue
+
+            response.raise_for_status()
+            data = response.json()
+
+            teams = data.get("teams", [])
+            if teams:
+                time.sleep(delay)
+                return teams[0]
+            return None
+
+        except requests.exceptions.RequestException as e:
+            backoff = INITIAL_BACKOFF * (BACKOFF_MULTIPLIER ** attempt)
+            if attempt < MAX_RETRIES - 1:
+                time.sleep(backoff)
+
     return None
 
 
@@ -200,7 +247,6 @@ def process_league(
     for team in teams:
         team_name = team.get("strTeam", "Unknown")
         team_id = team.get("idTeam", "")
-        badge_url = team.get("strTeamBadge", "")
 
         team_slug = slugify(team_name)
         file_path = f"{country}/{league_slug}/{team_slug}.png"
@@ -213,23 +259,40 @@ def process_league(
 
         if dry_run:
             print(f"  [DRY] {team_name} -> {file_path}")
-            if badge_url:
-                success_count += 1
-            else:
-                fail_count += 1
+            success_count += 1
             continue
 
+        # Buscar detalhes do time para obter URL do badge
+        print(f"  Buscando: {team_name}...", end=" ", flush=True)
+        team_details = fetch_team_details(team_name, delay)
+
+        if not team_details:
+            print("[NAO ENCONTRADO]")
+            progress.setdefault("failed", []).append({
+                "team": team_name,
+                "reason": "team_not_found",
+                "league": league_name
+            })
+            fail_count += 1
+            save_progress(progress)
+            continue
+
+        # Usar strBadge (nao strTeamBadge)
+        badge_url = team_details.get("strBadge", "")
+        team_id = team_details.get("idTeam", team_id)
+
         if not badge_url:
-            print(f"  [!] {team_name}: sem logo disponivel")
+            print("[SEM BADGE]")
             progress.setdefault("failed", []).append({
                 "team": team_name,
                 "reason": "no_badge_url",
                 "league": league_name
             })
             fail_count += 1
+            save_progress(progress)
             continue
 
-        print(f"  Baixando: {team_name}...", end=" ", flush=True)
+        print(f"Baixando...", end=" ", flush=True)
 
         if download_logo(badge_url, full_path, delay):
             print("[OK]")
@@ -348,9 +411,40 @@ def main():
         print("[!] Nenhuma liga encontrada com os parametros especificados")
         sys.exit(1)
 
+    # VERIFICAR TODAS AS LIGAS ANTES DE INICIAR
+    print(f"\n{'#'*60}")
+    print("# Verificando ligas na API...")
+    print(f"{'#'*60}")
+
+    valid_leagues = []
+    invalid_leagues = []
+
+    for country, league_slug, league_name in leagues_to_process:
+        print(f"  Verificando: {league_name}...", end=" ", flush=True)
+        if verify_league_exists(league_name):
+            print("[OK]")
+            valid_leagues.append((country, league_slug, league_name))
+        else:
+            print("[NAO ENCONTRADA]")
+            invalid_leagues.append((country, league_slug, league_name))
+        time.sleep(1)  # Pequeno delay entre verificacoes
+
+    if invalid_leagues:
+        print(f"\n[!] ATENCAO: {len(invalid_leagues)} liga(s) nao encontrada(s):")
+        for country, league_slug, league_name in invalid_leagues:
+            print(f"    - {league_name} ({country}/{league_slug})")
+
+        if not valid_leagues:
+            print("\n[X] Nenhuma liga valida encontrada. Abortando.")
+            sys.exit(1)
+
+        print(f"\n[i] Continuando com {len(valid_leagues)} liga(s) valida(s)...")
+
+    leagues_to_process = valid_leagues
+
     print(f"\n{'#'*60}")
     print(f"# Download de Logos - TheSportsDB")
-    print(f"# Ligas: {len(leagues_to_process)}")
+    print(f"# Ligas validas: {len(leagues_to_process)}")
     print(f"# Intervalo: {args.delay}s entre requisicoes")
     print(f"# Modo: {'DRY-RUN (simulacao)' if args.dry_run else 'DOWNLOAD'}")
     print(f"{'#'*60}")
