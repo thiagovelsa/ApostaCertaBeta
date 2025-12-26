@@ -13,6 +13,7 @@ export type {
   EstatisticasTime,
   TimeComEstatisticas,
   FiltroEstatisticas,
+  ArbitroInfo,
   StatsResponse,
   CompeticaoInfo,
   EscudoResponse,

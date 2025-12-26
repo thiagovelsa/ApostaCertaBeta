@@ -11,6 +11,7 @@ from .estatisticas import (
     EstatisticaFeitos,
     EstatisticasTime,
     TimeComEstatisticas,
+    ArbitroInfo,
     StatsResponse,
 )
 from .competicao import CompeticaoInfo, CompeticaoListResponse
@@ -26,6 +27,7 @@ __all__ = [
     "EstatisticaFeitos",
     "EstatisticasTime",
     "TimeComEstatisticas",
+    "ArbitroInfo",
     "StatsResponse",
     # Competicao
     "CompeticaoInfo",

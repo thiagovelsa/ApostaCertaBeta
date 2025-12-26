@@ -83,6 +83,31 @@ class TimeComEstatisticas(BaseModel):
     estatisticas: EstatisticasTime = Field(..., description="Estatisticas do time")
 
 
+class ArbitroInfo(BaseModel):
+    """Informacoes do arbitro da partida com estatisticas."""
+
+    id: str = Field(..., description="ID do arbitro")
+    nome: str = Field(..., description="Nome do arbitro")
+    partidas: int = Field(..., ge=0, description="Partidas apitadas na competicao")
+    media_cartoes_amarelos: float = Field(
+        ..., ge=0, description="Media de cartoes amarelos por jogo"
+    )
+    media_faltas: Optional[float] = Field(
+        None, ge=0, description="Media de faltas por jogo"
+    )
+
+    @field_validator("media_cartoes_amarelos", "media_faltas", mode="before")
+    @classmethod
+    def parse_float(cls, v):
+        """Converte string para float se necessario."""
+        if v is None:
+            return None
+        try:
+            return round(float(v), 2)
+        except (TypeError, ValueError):
+            return 0.0
+
+
 class StatsResponse(BaseModel):
     """Response para GET /api/partida/{matchId}/stats."""
 
@@ -98,6 +123,9 @@ class StatsResponse(BaseModel):
     )
     visitante: TimeComEstatisticas = Field(
         ..., description="Estatisticas do time visitante"
+    )
+    arbitro: Optional[ArbitroInfo] = Field(
+        None, description="Informacoes do arbitro da partida"
     )
 
     model_config = {

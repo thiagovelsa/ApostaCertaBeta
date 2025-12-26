@@ -194,6 +194,7 @@ export function StatsPanel({ stats, isLoading, error }: StatsPanelProps) {
           ]}
           homeTeamName={mandante.nome}
           awayTeamName={visitante.nome}
+          arbitro={stats.arbitro}
         />
       </div>
     </div>

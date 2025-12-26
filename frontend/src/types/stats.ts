@@ -55,6 +55,17 @@ export interface TimeComEstatisticas {
 export type FiltroEstatisticas = 'geral' | '5' | '10';
 
 /**
+ * Informações do árbitro da partida (alinhado com backend ArbitroInfo)
+ */
+export interface ArbitroInfo {
+  id: string;
+  nome: string;
+  partidas: number;
+  media_cartoes_amarelos: number;
+  media_faltas?: number | null;
+}
+
+/**
  * Resposta completa de estatísticas (alinhado com backend StatsResponse)
  */
 export interface StatsResponse {
@@ -63,6 +74,7 @@ export interface StatsResponse {
   partidas_analisadas: number;
   mandante: TimeComEstatisticas;
   visitante: TimeComEstatisticas;
+  arbitro?: ArbitroInfo | null;
 }
 
 /**

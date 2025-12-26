@@ -22,6 +22,7 @@ from ..models import (
     EstatisticaFeitos,
     EstatisticasTime,
     TimeComEstatisticas,
+    ArbitroInfo,
 )
 from ..repositories import VStatsRepository
 from ..utils.cv_calculator import calculate_cv, classify_cv
@@ -95,9 +96,12 @@ class StatsService:
         home_name = match_meta["home_name"]
         away_name = match_meta["away_name"]
 
-        # Busca estatisticas de cada time
-        home_stats = await self._get_team_stats(tournament_id, home_id, filtro)
-        away_stats = await self._get_team_stats(tournament_id, away_id, filtro)
+        # Busca estatisticas de cada time e arbitro em paralelo
+        home_stats, away_stats, arbitro = await asyncio.gather(
+            self._get_team_stats(tournament_id, home_id, filtro),
+            self._get_team_stats(tournament_id, away_id, filtro),
+            self._get_referee_info(match_id),
+        )
 
         # Monta partida a partir dos metadados
         partida = self._build_partida_from_meta(match_id, match_meta)
@@ -131,6 +135,7 @@ class StatsService:
                 escudo=None,
                 estatisticas=away_stats["estatisticas"],
             ),
+            arbitro=arbitro,
         )
 
         # Salva no cache
@@ -580,3 +585,79 @@ class StatsService:
                 codigo=meta["away_name"][:3].upper(),
             ),
         )
+
+    async def _get_referee_info(self, match_id: str) -> Optional[ArbitroInfo]:
+        """
+        Busca informacoes do arbitro da partida.
+
+        1. Busca match-stats para obter o ID do arbitro principal
+        2. Busca estatisticas do arbitro via get-by-prsn
+        """
+        try:
+            # Busca dados da partida para obter o arbitro
+            match_data = await self.vstats.fetch_match_stats(match_id)
+
+            # Extrai arbitro principal do matchOfficials
+            match_detail_extra = match_data.get("liveData", {}).get("matchDetailExtra", {})
+            match_officials = match_detail_extra.get("matchOfficials", [])
+
+            if not match_officials:
+                logger.info(f"[REFEREE] Nenhum arbitro encontrado para partida {match_id[:8]}")
+                return None
+
+            # Busca o arbitro principal (type: "Main")
+            main_referee = next(
+                (ref for ref in match_officials if ref.get("type") == "Main"),
+                None
+            )
+
+            if not main_referee:
+                logger.info(f"[REFEREE] Arbitro principal nao encontrado para partida {match_id[:8]}")
+                return None
+
+            referee_id = main_referee.get("id")
+            if not referee_id:
+                # Se nao tiver ID, retorna apenas o nome
+                first_name = main_referee.get("firstName", "")
+                last_name = main_referee.get("lastName", "")
+                nome = f"{first_name} {last_name}".strip()
+                logger.info(f"[REFEREE] Arbitro sem ID: {nome}")
+                return None
+
+            # Busca estatisticas do arbitro
+            referee_stats = await self.vstats.fetch_referee_stats(referee_id)
+
+            # Extrai nome
+            nome = referee_stats.get("name", "")
+            if not nome:
+                first_name = main_referee.get("firstName", "")
+                last_name = main_referee.get("lastName", "")
+                nome = f"{first_name} {last_name}".strip()
+
+            # Extrai estatisticas do torneio (primeira competicao)
+            tournament_stats = referee_stats.get("tournamentStats", [])
+            if tournament_stats:
+                stats = tournament_stats[0]
+                partidas = int(stats.get("matches", 0))
+                avg_cards = float(stats.get("averageCards", 0))
+                avg_fouls = stats.get("averageFouls")
+                if avg_fouls:
+                    avg_fouls = float(avg_fouls)
+            else:
+                partidas = 0
+                avg_cards = 0.0
+                avg_fouls = None
+
+            logger.info(f"[REFEREE] {nome}: {partidas} partidas, {avg_cards} cartoes/jogo")
+
+            return ArbitroInfo(
+                id=referee_id,
+                nome=nome,
+                partidas=partidas,
+                media_cartoes_amarelos=avg_cards,
+                media_faltas=avg_fouls,
+            )
+
+        except Exception as e:
+            logger.warning(f"[REFEREE] Erro ao buscar arbitro: {e}")
+            return None

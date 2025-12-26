@@ -1,5 +1,5 @@
-import { Icon, Badge, type IconName } from '@/components/atoms';
-import type { EstatisticaMetrica, CVClassificacao } from '@/types';
+import { Icon, Badge } from '@/components/atoms';
+import type { EstatisticaMetrica, CVClassificacao, ArbitroInfo } from '@/types';
 
 interface DisciplineMetric {
   label: string;
@@ -11,6 +11,7 @@ interface DisciplineCardProps {
   metrics: DisciplineMetric[];
   homeTeamName: string;
   awayTeamName: string;
+  arbitro?: ArbitroInfo | null;
 }
 
 /**
@@ -124,6 +125,31 @@ function DisciplineMetricRow({
 }
 
 /**
+ * Componente para exibir informações do árbitro
+ */
+function RefereeInfo({ arbitro }: { arbitro: ArbitroInfo }) {
+  return (
+    <div className="flex items-center justify-between p-3 bg-dark-tertiary/50 rounded-lg">
+      <div className="flex items-center gap-3">
+        <div className="w-8 h-8 rounded-full bg-dark-quaternary flex items-center justify-center">
+          <Icon name="whistle" size="sm" className="text-gray-400" />
+        </div>
+        <div>
+          <p className="text-sm font-medium text-white">{arbitro.nome}</p>
+          <p className="text-xs text-gray-500">
+            {arbitro.partidas} {arbitro.partidas === 1 ? 'partida' : 'partidas'} na competição
+          </p>
+        </div>
+      </div>
+      <div className="text-right">
+        <p className="text-lg font-bold text-warning">{arbitro.media_cartoes_amarelos.toFixed(1)}</p>
+        <p className="text-xs text-gray-500">cartões/jogo</p>
+      </div>
+    </div>
+  );
+}
+
+/**
  * Card de disciplina com múltiplas métricas simples
  * Layout full-width com cartões amarelos, vermelhos e faltas
  */
@@ -131,6 +157,7 @@ export function DisciplineCard({
   metrics,
   homeTeamName,
   awayTeamName,
+  arbitro,
 }: DisciplineCardProps) {
   return (
     <div className="bg-dark-secondary rounded-xl p-4 border border-dark-tertiary hover:border-dark-quaternary transition-colors col-span-full">
@@ -140,8 +167,16 @@ export function DisciplineCard({
         <h3 className="text-sm font-medium text-white">Disciplina</h3>
       </div>
 
-      {/* Divisor */}
-      <div className="h-px bg-dark-tertiary mb-4" />
+      {/* Árbitro (se disponível) */}
+      {arbitro && (
+        <>
+          <RefereeInfo arbitro={arbitro} />
+          <div className="h-px bg-dark-tertiary my-4" />
+        </>
+      )}
+
+      {/* Divisor (se não tem árbitro) */}
+      {!arbitro && <div className="h-px bg-dark-tertiary mb-4" />}
 
       {/* Grid de métricas */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">

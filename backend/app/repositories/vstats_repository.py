@@ -227,6 +227,19 @@ class VStatsRepository:
         params = {"Fx": match_id}
         return await self._get("/stats/matchstats/v1/match-preview", params)
 
+    async def fetch_referee_stats(self, referee_id: str) -> Dict:
+        """
+        Busca estatisticas de um arbitro especifico.
+
+        Args:
+            referee_id: ID do arbitro (Person ID)
+
+        Returns:
+            Estatisticas do arbitro incluindo media de cartoes
+        """
+        params = {"Prsn": referee_id}
+        return await self._get("/stats/referees/v1/get-by-prsn", params)
+
     def filter_matches_by_date(
         self,
         matches: List[Dict],
