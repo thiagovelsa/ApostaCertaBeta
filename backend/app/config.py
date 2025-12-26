@@ -33,7 +33,7 @@ class Settings(BaseSettings):
     # Cache Configuration
     redis_url: str = "redis://localhost:6379/0"
     cache_enabled: bool = True
-    cache_version: int = 5  # Incrementado para invalidar cache com CV=0.35 hardcoded
+    cache_version: int = 7  # Incrementado para calcular recent_form corretamente
     cache_ttl_schedule: int = 3600  # 1 hora
     cache_ttl_seasonstats: int = 21600  # 6 horas
     cache_ttl_badges: int = 604800  # 7 dias

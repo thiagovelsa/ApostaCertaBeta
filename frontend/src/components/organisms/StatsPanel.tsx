@@ -2,7 +2,46 @@ import { useState } from 'react';
 import { StatsCard, DisciplineCard, PredictionsCard } from '@/components/molecules';
 import { LoadingSpinner, TeamBadge, Icon, Badge } from '@/components/atoms';
 import { calcularPrevisoes } from '@/utils/predictions';
-import type { StatsResponse, CVClassificacao } from '@/types';
+import type { StatsResponse, CVClassificacao, FormResult } from '@/types';
+
+/**
+ * Badges de sequência de resultados (race)
+ * V = Vitória (verde), E = Empate (amarelo), D = Derrota (vermelho)
+ *
+ * @param results - Array de resultados (W/D/L)
+ * @param limit - Limite de badges a exibir (default: todos)
+ */
+function RaceBadges({ results, limit }: { results?: FormResult[]; limit?: number }) {
+  if (!results?.length) return null;
+
+  const colors: Record<FormResult, string> = {
+    W: 'bg-success',
+    D: 'bg-warning',
+    L: 'bg-danger',
+  };
+
+  const labels: Record<FormResult, string> = {
+    W: 'V',
+    D: 'E',
+    L: 'D',
+  };
+
+  // Aplica limite se especificado
+  const displayResults = limit ? results.slice(0, limit) : results;
+
+  return (
+    <div className="flex gap-0.5 mt-1">
+      {displayResults.map((r, i) => (
+        <span
+          key={i}
+          className={`${colors[r]} text-[10px] font-bold text-white px-1.5 py-0.5 rounded`}
+        >
+          {labels[r]}
+        </span>
+      ))}
+    </div>
+  );
+}
 
 interface StatsPanelProps {
   stats: StatsResponse | undefined;
@@ -96,6 +135,10 @@ export function StatsPanel({ stats, isLoading, error }: StatsPanelProps) {
   // Calcula previsões para a partida
   const previsoes = calcularPrevisoes(mandante, visitante, partidas_analisadas);
 
+  // Limite de badges a exibir baseado no filtro
+  // Temporada (geral) → 5, Últimos 5 → 5, Últimos 10 → 10
+  const raceBadgesLimit = filtro_aplicado === '10' ? 10 : 5;
+
   return (
     <div className="space-y-4">
       {/* Team Headers Card */}
@@ -106,6 +149,7 @@ export function StatsPanel({ stats, isLoading, error }: StatsPanelProps) {
             <div>
               <p className="font-semibold text-white">{mandante.nome}</p>
               <p className="text-xs text-gray-500">Mandante</p>
+              <RaceBadges results={mandante.recent_form} limit={raceBadgesLimit} />
             </div>
           </div>
 
@@ -125,6 +169,9 @@ export function StatsPanel({ stats, isLoading, error }: StatsPanelProps) {
             <div className="text-right">
               <p className="font-semibold text-white">{visitante.nome}</p>
               <p className="text-xs text-gray-500">Visitante</p>
+              <div className="flex justify-end">
+                <RaceBadges results={visitante.recent_form} limit={raceBadgesLimit} />
+              </div>
             </div>
           </div>
         </div>

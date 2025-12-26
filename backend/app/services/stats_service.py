@@ -134,12 +134,14 @@ class StatsService:
                 nome=partida.mandante.nome,
                 escudo=None,
                 estatisticas=home_stats["estatisticas"],
+                recent_form=home_stats.get("recent_form", []),
             ),
             visitante=TimeComEstatisticas(
                 id=away_id,
                 nome=partida.visitante.nome,
                 escudo=None,
                 estatisticas=away_stats["estatisticas"],
+                recent_form=away_stats.get("recent_form", []),
             ),
             arbitro=arbitro,
         )
@@ -191,14 +193,18 @@ class StatsService:
         """
         Busca estatisticas das ultimas N partidas via get-match-stats.
         Calcula CV real a partir dos dados individuais.
+        Tambem retorna recent_form (W/D/L) calculado dos gols de cada partida.
         """
-        # 1. Busca IDs das ultimas partidas do time
-        match_ids = await self._get_recent_match_ids(tournament_id, team_id, limit)
+        # 1. Busca IDs das ultimas partidas
+        matches_data = await self._get_recent_matches_with_form(tournament_id, team_id, limit)
+        match_ids = matches_data.get("match_ids", [])
 
         if not match_ids:
             logger.warning(f"Nenhuma partida encontrada para time {team_id}")
             # Fallback para seasonstats
-            return await self._get_season_stats(tournament_id, team_id)
+            fallback = await self._get_season_stats(tournament_id, team_id)
+            fallback["recent_form"] = []
+            return fallback
 
         logger.info(f"[FETCH] Buscando stats de {len(match_ids)} partidas para time {team_id[:8]}...")
 
@@ -207,71 +213,131 @@ class StatsService:
 
         if not match_stats_list:
             logger.warning(f"Nenhuma estatistica encontrada para time {team_id}")
-            return await self._get_season_stats(tournament_id, team_id)
+            fallback = await self._get_season_stats(tournament_id, team_id)
+            fallback["recent_form"] = []
+            return fallback
 
-        # 3. Calcula medias e CV reais
+        # 3. Calcula recent_form (W/D/L) a partir dos gols de cada partida
+        recent_form: List[Literal["W", "D", "L"]] = []
+        for stats in match_stats_list:
+            goals = stats.get("goals", 0)
+            goals_conceded = stats.get("goalsConceded", 0)
+            if goals > goals_conceded:
+                recent_form.append("W")
+            elif goals < goals_conceded:
+                recent_form.append("L")
+            else:
+                recent_form.append("D")
+
+        logger.info(f"[FORM] {team_id[:8]}: {recent_form}")
+
+        # 4. Calcula medias e CV reais
         estatisticas = self._calculate_metrics_from_matches(match_stats_list)
 
         return {
             "estatisticas": estatisticas,
             "matches": len(match_stats_list),
+            "recent_form": recent_form,
         }
 
-    async def _get_recent_match_ids(
+    async def _get_recent_matches_with_form(
         self,
         tournament_id: str,
         team_id: str,
         limit: int,
-    ) -> List[str]:
+    ) -> dict:
         """
-        Busca IDs das ultimas N partidas realizadas pelo time.
+        Busca IDs das ultimas N partidas realizadas pelo time E calcula W/D/L.
 
-        ATUALIZADO (25/12/2025): Usa fetch_schedule_full em vez de fetch_schedule_month
-        para obter a temporada completa (~380 jogos), garantindo que sempre haja
-        partidas suficientes para os filtros 5/10.
+        ATUALIZADO (26/12/2025): Agora retorna tambem recent_form (W/D/L)
+        calculado a partir de homeScore/awayScore disponiveis no /schedule.
 
-        NOTA: O endpoint /schedule NAO retorna homeScore/awayScore na listagem,
-        entao usamos a data como indicador (localDate < hoje = partida realizada).
+        Returns:
+            dict com {
+                "match_ids": List[str],
+                "recent_form": List[Literal["W", "D", "L"]]
+            }
         """
         from datetime import date as dt_date
 
         try:
-            # MUDANCA: Usar schedule completo em vez de schedule/month
-            # /schedule retorna ~380 jogos da temporada inteira
-            # /schedule/month retorna apenas ~16 jogos do mes atual
             schedule = await self.vstats.fetch_schedule_full(tournament_id)
             all_matches = schedule.get("matches", [])
 
             logger.info(f"[SCHEDULE] Recebidas {len(all_matches)} partidas da temporada")
 
-            # Data de hoje para comparacao
-            today_str = dt_date.today().isoformat()  # YYYY-MM-DD
-            logger.info(f"[DATE] Hoje={today_str}, Time ID={team_id}")
+            today_str = dt_date.today().isoformat()
+            logger.debug(f"[DATE] Hoje={today_str}, Time ID={team_id}")
 
-            # Filtra partidas do time que ja foram realizadas (data < hoje)
-            # NOTA: O endpoint /schedule NAO retorna homeScore na listagem,
-            # entao usamos localDate < hoje como proxy para "partida realizada"
+            # Filtra partidas do time que ja foram realizadas
             team_matches = []
             for match in all_matches:
                 is_home = match.get("homeContestantId") == team_id
                 is_away = match.get("awayContestantId") == team_id
                 match_date = match.get("localDate", "")
-                is_played = match_date < today_str  # Partida anterior a hoje
+                is_played = match_date < today_str
 
                 if (is_home or is_away) and is_played:
-                    team_matches.append(match)
+                    team_matches.append({
+                        **match,
+                        "_is_home": is_home,
+                    })
 
             logger.info(f"[FILTER] {len(team_matches)} partidas disputadas do time {team_id[:8]}...")
 
             # Ordena por data (mais recentes primeiro)
             team_matches.sort(key=lambda m: m.get("localDate", ""), reverse=True)
 
-            # Retorna IDs das ultimas N
-            return [m.get("id") for m in team_matches[:limit] if m.get("id")]
+            # Extrai IDs e calcula W/D/L das ultimas N
+            match_ids = []
+            recent_form = []
+
+            # Log para debug - verificar estrutura do primeiro match
+            if team_matches:
+                sample = team_matches[0]
+                logger.info(f"[DEBUG] Sample match keys: {list(sample.keys())[:15]}")
+                logger.info(f"[DEBUG] homeScore={sample.get('homeScore')}, awayScore={sample.get('awayScore')}")
+                logger.info(f"[DEBUG] score keys check: home.score={sample.get('home', {}).get('score') if isinstance(sample.get('home'), dict) else 'N/A'}")
+
+            for match in team_matches[:limit]:
+                match_id = match.get("id")
+                if match_id:
+                    match_ids.append(match_id)
+
+                # Calcula W/D/L a partir dos scores
+                # Tenta diferentes formatos possíveis
+                home_score = match.get("homeScore")
+                away_score = match.get("awayScore")
+
+                # Se não encontrou, tenta formato alternativo
+                if home_score is None:
+                    home_score = match.get("home", {}).get("score") if isinstance(match.get("home"), dict) else None
+                if away_score is None:
+                    away_score = match.get("away", {}).get("score") if isinstance(match.get("away"), dict) else None
+
+                is_home = match.get("_is_home", False)
+
+                if home_score is not None and away_score is not None:
+                    team_goals = home_score if is_home else away_score
+                    opp_goals = away_score if is_home else home_score
+
+                    if team_goals > opp_goals:
+                        recent_form.append("W")
+                    elif team_goals < opp_goals:
+                        recent_form.append("L")
+                    else:
+                        recent_form.append("D")
+
+            logger.info(f"[FORM] Time {team_id[:8]}: {recent_form[:10]} (total: {len(recent_form)})")
+
+            return {
+                "match_ids": match_ids,
+                "recent_form": recent_form,
+            }
 
         except Exception as e:
             logger.error(f"Erro ao buscar partidas recentes: {e}")
-            return []
+            return {"match_ids": [], "recent_form": []}
 
     async def _fetch_matches_stats(
         self,

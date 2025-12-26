@@ -5,7 +5,7 @@ Modelos de Estatisticas
 Schemas para estatisticas de times e partidas.
 """
 
-from typing import Dict, Literal, Optional
+from typing import Dict, List, Literal, Optional
 
 from pydantic import BaseModel, Field, field_validator
 
@@ -81,6 +81,10 @@ class TimeComEstatisticas(BaseModel):
     nome: str = Field(..., description="Nome do time")
     escudo: Optional[str] = Field(None, description="URL do escudo")
     estatisticas: EstatisticasTime = Field(..., description="Estatisticas do time")
+    recent_form: List[Literal["W", "D", "L"]] = Field(
+        default_factory=list,
+        description="Sequencia de resultados recentes (W=win, D=draw, L=loss)",
+    )
 
 
 class ArbitroInfo(BaseModel):

@@ -40,6 +40,11 @@ export interface EstatisticasTime {
 }
 
 /**
+ * Resultado de uma partida (W=Win, D=Draw, L=Loss)
+ */
+export type FormResult = 'W' | 'D' | 'L';
+
+/**
  * Time com suas estatísticas (alinhado com backend TimeComEstatisticas)
  */
 export interface TimeComEstatisticas {
@@ -47,6 +52,7 @@ export interface TimeComEstatisticas {
   nome: string;
   escudo?: string | null;
   estatisticas: EstatisticasTime;
+  recent_form?: FormResult[];
 }
 
 /**
