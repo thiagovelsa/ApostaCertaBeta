@@ -23,7 +23,7 @@ function getTextColor(label: ConfiancaLabel): string {
     case 'Média':
       return 'text-cv-moderado';
     case 'Baixa':
-      return 'text-gray-400';
+      return 'text-danger';
     default:
       return 'text-gray-400';
   }
