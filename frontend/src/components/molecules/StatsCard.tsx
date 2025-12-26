@@ -47,8 +47,8 @@ function CVTeamBar({
 
   return (
     <div className="flex items-center gap-2">
-      <span className="text-xs text-gray-400 truncate w-20" title={teamName}>
-        {teamName.length > 12 ? `${teamName.substring(0, 10)}...` : teamName}
+      <span className="text-xs text-gray-400 truncate min-w-0 flex-shrink" style={{ maxWidth: '100px' }} title={teamName}>
+        {teamName}
       </span>
       <div className="flex-1 h-1.5 bg-dark-quaternary rounded-full overflow-hidden">
         <div
@@ -110,7 +110,7 @@ function MetricColumn({
           style={{ width: `${percentHome}%` }}
         />
         <div
-          className="bg-gray-600 transition-all duration-500"
+          className="bg-info transition-all duration-500"
           style={{ width: `${100 - percentHome}%` }}
         />
       </div>

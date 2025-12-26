@@ -87,7 +87,7 @@ function DisciplineMetricRow({
           style={{ width: `${percentHome}%` }}
         />
         <div
-          className="bg-gray-600 transition-all duration-500"
+          className="bg-info transition-all duration-500"
           style={{ width: `${100 - percentHome}%` }}
         />
       </div>
@@ -95,8 +95,8 @@ function DisciplineMetricRow({
       {/* CV por time */}
       <div className="grid grid-cols-2 gap-4">
         <div className="flex items-center gap-2">
-          <span className="text-xs text-gray-500 truncate" title={homeTeamName}>
-            {homeTeamName.length > 10 ? `${homeTeamName.substring(0, 8)}...` : homeTeamName}
+          <span className="text-xs text-gray-500 truncate min-w-0" style={{ maxWidth: '90px' }} title={homeTeamName}>
+            {homeTeamName}
           </span>
           <div className="flex-1 h-1 bg-dark-quaternary rounded-full overflow-hidden">
             <div
@@ -107,8 +107,8 @@ function DisciplineMetricRow({
           <span className="text-xs text-gray-400">{(home.cv * 100).toFixed(0)}%</span>
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-xs text-gray-500 truncate" title={awayTeamName}>
-            {awayTeamName.length > 10 ? `${awayTeamName.substring(0, 8)}...` : awayTeamName}
+          <span className="text-xs text-gray-500 truncate min-w-0" style={{ maxWidth: '90px' }} title={awayTeamName}>
+            {awayTeamName}
           </span>
           <div className="flex-1 h-1 bg-dark-quaternary rounded-full overflow-hidden">
             <div
