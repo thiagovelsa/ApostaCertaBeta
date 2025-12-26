@@ -63,8 +63,14 @@ class StatsService:
         cache_key = self.cache.build_key("stats", match_id, filtro)
         cached = await self.cache.get(cache_key)
         if cached:
-            logger.info(f"  [CACHE HIT] Stats encontradas em cache")
-            return StatsResponse(**cached)
+            # Verifica se o cache tem dados validos do arbitro (nao apenas null)
+            # cached.get("arbitro") retorna None se a chave nao existe OU se o valor eh null
+            if cached.get("arbitro") is not None:
+                logger.info(f"  [CACHE HIT] Stats encontradas em cache (com arbitro)")
+                return StatsResponse(**cached)
+            else:
+                logger.info(f"  [CACHE STALE] Cache sem dados de arbitro, invalidando...")
+                await self.cache.delete(cache_key)
 
         # Busca metadados da partida (cacheados quando listamos partidas)
         match_meta_key = self.cache.build_key("match_meta", match_id)
@@ -612,16 +618,10 @@ class StatsService:
             )
 
             if not main_referee:
-                logger.info(f"[REFEREE] Arbitro principal nao encontrado para partida {match_id[:8]}")
                 return None
 
             referee_id = main_referee.get("id")
             if not referee_id:
-                # Se nao tiver ID, retorna apenas o nome
-                first_name = main_referee.get("firstName", "")
-                last_name = main_referee.get("lastName", "")
-                nome = f"{first_name} {last_name}".strip()
-                logger.info(f"[REFEREE] Arbitro sem ID: {nome}")
                 return None
 
             # Busca estatisticas do arbitro
