@@ -5,3 +5,4 @@ export { DisciplineCard } from './DisciplineCard';
 export { ComparisonBar } from './ComparisonBar';
 export { FilterToggle } from './FilterToggle';
 export { RaceRow } from './RaceRow';
+export { PredictionsCard } from './PredictionsCard';

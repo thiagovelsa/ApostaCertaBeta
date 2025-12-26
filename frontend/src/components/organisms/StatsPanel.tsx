@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { StatsCard, DisciplineCard } from '@/components/molecules';
+import { StatsCard, DisciplineCard, PredictionsCard } from '@/components/molecules';
 import { LoadingSpinner, TeamBadge, Icon, Badge } from '@/components/atoms';
+import { calcularPrevisoes } from '@/utils/predictions';
 import type { StatsResponse, CVClassificacao } from '@/types';
 
 interface StatsPanelProps {
@@ -92,6 +93,9 @@ export function StatsPanel({ stats, isLoading, error }: StatsPanelProps) {
 
   const { mandante, visitante, filtro_aplicado, partidas_analisadas } = stats;
 
+  // Calcula previsões para a partida
+  const previsoes = calcularPrevisoes(mandante, visitante, partidas_analisadas);
+
   return (
     <div className="space-y-4">
       {/* Team Headers Card */}
@@ -130,6 +134,13 @@ export function StatsPanel({ stats, isLoading, error }: StatsPanelProps) {
           <CVLegend isOpen={showCVLegend} onToggle={() => setShowCVLegend(!showCVLegend)} />
         </div>
       </div>
+
+      {/* Predictions Card */}
+      <PredictionsCard
+        previsoes={previsoes}
+        homeTeamName={mandante.nome}
+        awayTeamName={visitante.nome}
+      />
 
       {/* Stats Grid - 2 columns on desktop, 1 on mobile */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -180,11 +191,6 @@ export function StatsPanel({ stats, isLoading, error }: StatsPanelProps) {
               label: 'Cartões Amarelos',
               home: mandante.estatisticas.cartoes_amarelos,
               away: visitante.estatisticas.cartoes_amarelos,
-            },
-            {
-              label: 'Cartões Vermelhos',
-              home: mandante.estatisticas.cartoes_vermelhos,
-              away: visitante.estatisticas.cartoes_vermelhos,
             },
             {
               label: 'Faltas',

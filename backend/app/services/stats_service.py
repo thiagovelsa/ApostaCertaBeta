@@ -161,18 +161,12 @@ class StatsService:
     ) -> dict:
         """
         Busca e calcula estatisticas de um time.
-
-        - Filtro "geral": usa seasonstats (agregado)
-        - Filtro "5" ou "10": busca partidas individuais e calcula CV real
+        Agora usa partidas individuais para TODOS os filtros (CV real).
         """
         limit = self._get_limit(filtro)
 
-        if filtro == "geral":
-            # Usa seasonstats (dados agregados da temporada)
-            return await self._get_season_stats(tournament_id, team_id)
-        else:
-            # Busca ultimas N partidas e calcula estatisticas reais
-            return await self._get_recent_matches_stats(tournament_id, team_id, limit)
+        # SEMPRE usa partidas individuais para calcular CV real
+        return await self._get_recent_matches_stats(tournament_id, team_id, limit)
 
     async def _get_season_stats(self, tournament_id: str, team_id: str) -> dict:
         """Busca estatisticas agregadas da temporada via seasonstats."""
@@ -467,7 +461,7 @@ class StatsService:
             return 5
         elif filtro == "10":
             return 10
-        return 20  # geral
+        return 50  # geral - busca até 50 partidas da temporada
 
     def _parse_time(self, time_str: str):
         """

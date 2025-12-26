@@ -96,3 +96,45 @@ export interface EscudoResponse {
   badge_url: string;
   source: string;
 }
+
+// ============================================================
+// TIPOS DE PREVISÃO
+// ============================================================
+
+/**
+ * Label de confiança para previsões
+ */
+export type ConfiancaLabel = 'Baixa' | 'Média' | 'Alta';
+
+/**
+ * Previsão individual com valor e confiança
+ */
+export interface PrevisaoValor {
+  valor: number;
+  confianca: number;
+  confiancaLabel: ConfiancaLabel;
+}
+
+/**
+ * 3 previsões separadas para cada estatística
+ * - home: previsão do mandante (feitos_casa + sofridos_fora)
+ * - away: previsão do visitante (feitos_fora + sofridos_casa)
+ * - total: soma das duas previsões
+ */
+export interface PrevisaoEstatistica {
+  home: PrevisaoValor;
+  away: PrevisaoValor;
+  total: PrevisaoValor;
+}
+
+/**
+ * Todas as previsões da partida
+ */
+export interface PrevisaoPartida {
+  gols: PrevisaoEstatistica;
+  escanteios: PrevisaoEstatistica;
+  finalizacoes: PrevisaoEstatistica;
+  finalizacoes_gol: PrevisaoEstatistica;
+  cartoes_amarelos: PrevisaoEstatistica;
+  faltas: PrevisaoEstatistica;
+}
