@@ -12,87 +12,108 @@ This is a **football (soccer) statistics analysis system** that integrates with 
 
 | Layer | Technology |
 |-------|------------|
-| **Frontend** | HTML/CSS (static pages), React + TypeScript (planned) |
-| **Backend** | Python + FastAPI (planned) |
+| **Frontend** | React 18 + TypeScript 5 + Vite 5 + TailwindCSS + React Query |
+| **Backend** | Python 3.11+ + FastAPI + Pydantic + Redis |
 | **External APIs** | VStats API (statistics), TheSportsDB (team logos) |
-| **Data** | JSON samples for testing/documentation |
+| **Cache** | Redis (TTLs: schedule 1h, stats 6h, badges 7d) |
 
 ## Directory Structure
 
 ```
 API/
-├── DOCUMENTACAO_VSTATS_COMPLETA.md    # Complete VStats API documentation (v5.5)
-├── PROJETO_SISTEMA_ANALISE.md         # System design & requirements
-├── ALINHAMENTO_DOCUMENTACAO.md        # Cross-reference alignment analysis
-├── CLAUDE.md                          # This file - project guidance for Claude Code
-├── .env.example                       # Environment variables template
-├── docs/                              # Additional technical documentation
-│   ├── ARQUITETURA_BACKEND.md         # Backend architecture (Python/FastAPI)
-│   ├── MODELOS_DE_DADOS.md            # Data models specification
-│   ├── TESTING_STRATEGY.md            # Testing approach
-│   ├── API_SPECIFICATION.md           # API endpoints specification
-│   ├── LOCAL_SETUP.md                 # Local development setup
-│   └── frontend/                      # Frontend-specific docs
-│       ├── ARQUITETURA_FRONTEND.md    # Frontend architecture (React/TS)
-│       ├── COMPONENTES_REACT.md       # React components documentation
-│       ├── DESIGN_SYSTEM.md           # UI/UX design system
-│       ├── INTEGRACAO_API.md          # API integration guide
-│       └── RESPONSIVIDADE_E_ACESSIBILIDADE.md
-├── scripts/
-│   ├── validacao/                      # API validation scripts
-│   │   ├── validar_seasonstats_geral.py
-│   │   ├── validar_get_match_stats.py
-│   │   └── validar_descobertas.py
-│   └── utilitarios/                    # Data calculation utilities
-│       ├── calcular_coeficiente_variacao.py  # Stability metric calculations
-│       ├── calcular_estatisticas_sofridas.py # Defensive stats
-│       ├── calcular_corners_sofridos.py      # Corner calculations
-│       ├── compare_detailed.py               # Data comparison
-│       └── extract_arsenal_fields.py         # Field extraction
-└── data/
-    └── samples/                        # Sample JSON data for testing
-        ├── arsenal_detailed_true.json
-        ├── arsenal_full_data.json
-        ├── arsenal_seasonstats.json
-        ├── arsenal_team_rankings.json
-        ├── arsenal_vs_crystal_palace.json
-        └── premier_league_teams.json
+├── backend/                            # FastAPI backend
+│   ├── app/
+│   │   ├── main.py                     # FastAPI app entry point
+│   │   ├── config.py                   # Pydantic settings (env vars, cache)
+│   │   ├── models/                     # Pydantic schemas
+│   │   │   └── __init__.py             # TimeComEstatisticas, StatsResponse, etc.
+│   │   ├── services/                   # Business logic
+│   │   │   ├── stats_service.py        # Statistics calculation + recent_form
+│   │   │   ├── schedule_service.py     # Match scheduling
+│   │   │   └── badge_service.py        # Team logos (TheSportsDB)
+│   │   ├── api/                        # FastAPI routes
+│   │   │   └── routes.py               # /partidas, /partida/{id}/stats
+│   │   └── utils/                      # Helpers (cache, calculations)
+│   ├── requirements.txt
+│   └── Dockerfile
+│
+├── frontend/                           # React + TypeScript frontend
+│   ├── src/
+│   │   ├── components/
+│   │   │   ├── atoms/                  # Badge, Icon, TeamBadge, LoadingSpinner
+│   │   │   ├── molecules/              # StatsCard, PredictionsCard, DisciplineCard
+│   │   │   └── organisms/              # StatsPanel (with RaceBadges)
+│   │   ├── pages/                      # HomePage, EstatisticasPage
+│   │   ├── hooks/                      # usePartidas, useStats (React Query)
+│   │   ├── services/                   # API service layer
+│   │   ├── types/                      # TypeScript interfaces
+│   │   └── utils/                      # predictions.ts, etc.
+│   ├── package.json
+│   └── vite.config.ts
+│
+├── docs/                               # Technical documentation
+│   ├── MODELOS_DE_DADOS.md             # Pydantic schemas (v1.1)
+│   ├── frontend/
+│   │   ├── COMPONENTES_REACT.md        # 22 components (v1.1)
+│   │   └── INTEGRACAO_API.md           # Services + React Query (v1.1)
+│   └── ...
+│
+├── CLAUDE.md                           # This file
+├── README.md                           # Project overview
+└── docker-compose.yml                  # Backend + Redis + Frontend
 ```
 
 ## Development Commands
 
-### Running Python Scripts
+### Backend (FastAPI)
 
 ```bash
-# Validate API responses (seasonal statistics)
-python scripts/validacao/validar_seasonstats_geral.py
+cd backend
 
-# Validate match statistics endpoint
-python scripts/validacao/validar_get_match_stats.py
+# Create virtual environment
+python -m venv venv
+source venv/bin/activate  # Linux/Mac
+# ou
+venv\Scripts\activate      # Windows
 
-# Calculate coefficient of variation (CV) for team stability
-python scripts/utilitarios/calcular_coeficiente_variacao.py
+# Install dependencies
+pip install -r requirements.txt
 
-# Extract specific statistics fields
-python scripts/utilitarios/extract_arsenal_fields.py
+# Run development server
+uvicorn app.main:app --reload --port 8000
 
-# Compare detailed data from different API responses
-python scripts/utilitarios/compare_detailed.py
+# API available at: http://localhost:8000
+# Swagger UI at: http://localhost:8000/docs
 ```
 
-### Frontend Development
+### Frontend (React)
 
 ```bash
-# For React development (when implementing frontend):
-npm install
-npm start          # Development server
-npm run build      # Production build
-npm test           # Run tests
+cd frontend
 
-# See docs/frontend/ for detailed frontend documentation:
-# - ARQUITETURA_FRONTEND.md - Architecture overview
-# - COMPONENTES_REACT.md - Component documentation
-# - DESIGN_SYSTEM.md - UI/UX design system
+# Install dependencies
+npm install
+
+# Run development server
+npm run dev
+
+# Build for production
+npm run build
+
+# Frontend available at: http://localhost:5173
+```
+
+### Docker (Recommended)
+
+```bash
+# Start all services (backend + redis + frontend)
+docker-compose up -d
+
+# View logs
+docker-compose logs -f backend
+
+# Stop services
+docker-compose down
 ```
 
 ## Architecture Overview
@@ -135,10 +156,20 @@ npm test           # Run tests
 - Scale: 0.00-0.15 (very stable) to 0.75+ (very unstable)
 - Used to identify predictable vs unpredictable teams
 
+**Recent Form (Race):** Sequence of recent results
+- `W` = Win (Vitória), `D` = Draw (Empate), `L` = Loss (Derrota)
+- Calculated from `goals` vs `goalsConceded` per match
+- Display limit: 5 results for Temporada/Últimos 5, 10 for Últimos 10
+
 **Statistics Categories:**
 
 - **Feitos (Made):** Goals scored, corners won, shots on target, yellow/red cards, fouls committed
 - **Sofridos (Conceded):** Goals against, corners conceded, shots conceded, defensive metrics
+
+**Referee Data (Árbitro):** Cards statistics per referee
+- `media_amarelos`: Average yellow cards per match
+- `media_vermelhos`: Average red cards per match
+- `total_jogos`: Total matches refereed in competition
 
 **Tournament IDs (Global Competitions):**
 
@@ -163,7 +194,11 @@ Match List (Cards with Teams, Time, Competition)
     ↓
 Statistics Panel (Home vs Away Team Comparison)
     ├─ Filter Options (All Season | Last 5 | Last 10)
+    ├─ Recent Form Badges (V/E/D sequence)
+    ├─ CV Legend (expandable explanation)
+    ├─ Predictions Card (calculated insights)
     ├─ Team Stats (Goals, Corners, Shots, etc.)
+    ├─ Discipline Card (Cards, Fouls + Referee data)
     └─ Stability Metrics (CV for predictability)
 ```
 

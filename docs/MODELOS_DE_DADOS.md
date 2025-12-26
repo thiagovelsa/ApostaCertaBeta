@@ -1,7 +1,7 @@
 # Modelos de Dados - Pydantic Schemas
 
-**Versão:** 1.0
-**Data:** 24 de Dezembro de 2025
+**Versão:** 1.1
+**Data:** 26 de Dezembro de 2025
 **Framework:** Pydantic v2.x (com FastAPI)
 
 ---
@@ -366,16 +366,47 @@ class EstatisticasTime(BaseModel):
         }
 ```
 
-### 3.4 StatsResponse
+### 3.4 TimeComEstatisticas
+
+```python
+class TimeComEstatisticas(BaseModel):
+    """Time com suas estatísticas e forma recente."""
+
+    id: str = Field(..., description="ID único do time")
+    nome: str = Field(..., description="Nome do time")
+    escudo: Optional[str] = Field(None, description="URL do escudo")
+    estatisticas: EstatisticasAgregadas = Field(..., description="Estatísticas agregadas")
+    recent_form: List[Literal["W", "D", "L"]] = Field(
+        default=[],
+        description="Sequência de resultados recentes (W=Win, D=Draw, L=Loss)"
+    )
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "id": "4dsgumo7d4zupm2ugsvm4zm4d",
+                "nome": "Arsenal",
+                "escudo": "https://...",
+                "estatisticas": { ... },
+                "recent_form": ["W", "D", "W", "L", "W"]
+            }
+        }
+```
+
+**Campo `recent_form`:**
+- Array de resultados recentes do time (mais recente primeiro)
+- Valores: `"W"` (Vitória), `"D"` (Empate), `"L"` (Derrota)
+- Calculado a partir de `goals` vs `goalsConceded` de cada partida
+- Limitado pelo filtro: Temporada/Últimos 5 → 5 resultados, Últimos 10 → 10 resultados
+
+---
+
+### 3.5 StatsResponse
 
 ```python
 class StatsResponse(BaseModel):
     """Response para GET /api/partida/{matchId}/stats."""
 
-    partida: PartidaResumo = Field(
-        ...,
-        description="Informações da partida"
-    )
     filtro_aplicado: Literal["geral", "5", "10"] = Field(
         ...,
         description="Qual período foi analisado"
@@ -385,13 +416,17 @@ class StatsResponse(BaseModel):
         ge=1,
         description="Número de partidas usadas para calcular as médias"
     )
-    mandante: Dict = Field(
+    mandante: TimeComEstatisticas = Field(
         ...,
         description="Estatísticas do time mandante"
     )
-    visitante: Dict = Field(
+    visitante: TimeComEstatisticas = Field(
         ...,
         description="Estatísticas do time visitante"
+    )
+    arbitro: Optional[ArbitroInfo] = Field(
+        None,
+        description="Informações do árbitro e estatísticas de cartões"
     )
 
     @field_validator('mandante', 'visitante', mode='before')
@@ -439,6 +474,46 @@ class StatsResponse(BaseModel):
                         # ...
                     }
                 }
+            }
+        }
+```
+
+---
+
+## 3.6 ArbitroInfo
+
+```python
+class ArbitroInfo(BaseModel):
+    """Informações do árbitro e estatísticas de cartões."""
+
+    id: str = Field(..., description="ID único do árbitro")
+    nome: str = Field(..., description="Nome do árbitro")
+    pais: Optional[str] = Field(None, description="País do árbitro")
+    media_amarelos: float = Field(
+        ...,
+        ge=0,
+        description="Média de cartões amarelos por partida"
+    )
+    media_vermelhos: float = Field(
+        ...,
+        ge=0,
+        description="Média de cartões vermelhos por partida"
+    )
+    total_jogos: int = Field(
+        ...,
+        ge=0,
+        description="Total de jogos apitados na competição"
+    )
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "id": "abc123",
+                "nome": "Michael Oliver",
+                "pais": "England",
+                "media_amarelos": 3.5,
+                "media_vermelhos": 0.2,
+                "total_jogos": 15
             }
         }
 ```

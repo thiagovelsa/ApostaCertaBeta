@@ -15,6 +15,9 @@ Sistema web completo para análise detalhada de estatísticas de futebol, integr
 - ✅ **Análise Comparativa** - Compare estatísticas do time mandante vs visitante
 - ✅ **Filtros Flexíveis** - Análise por período (temporada completa, últimas 5 ou 10 partidas)
 - ✅ **Métricas de Estabilidade** - Coeficiente de Variação (CV) para avaliar consistência
+- ✅ **Sequência de Resultados** - Race badges (V/E/D) mostrando forma recente dos times
+- ✅ **Previsões Inteligentes** - Análise preditiva baseada em médias e tendências
+- ✅ **Dados do Árbitro** - Estatísticas de cartões por árbitro na competição
 - ✅ **API RESTful Completa** - Endpoints bem documentados com Swagger/OpenAPI
 - ✅ **Caching Inteligente** - Redis para performance (TTLs otimizados)
 - ✅ **CORS Configurado** - Pronto para frontend em produção
@@ -368,11 +371,11 @@ Este projeto está licenciado sob MIT License - veja [LICENSE](LICENSE) para det
   - ✅ Backend: 6 documentações + arquitetura profissional
   - ✅ Frontend: 5 documentações + design system completo
   - ✅ Cross-references: 10/10 engenharia de contexto
-- 🔄 Backend (Em desenvolvimento)
-- 🔄 Frontend (Pronto para implementação - specs completas)
+- ✅ **Backend** (Funcional - FastAPI + Redis cache)
+- ✅ **Frontend** (Funcional - React + TypeScript + TailwindCSS)
 - 🔄 Deploy em produção (Próximo)
 
-**Última atualização:** 24 de dezembro de 2025
+**Última atualização:** 26 de dezembro de 2025
 
 ---
 

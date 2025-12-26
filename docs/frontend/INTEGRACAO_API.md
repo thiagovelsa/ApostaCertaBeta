@@ -1,7 +1,7 @@
 # Integração API - Services e React Query Hooks
 
-**Versão:** 1.0
-**Data:** 24 de dezembro de 2025
+**Versão:** 1.1
+**Data:** 26 de dezembro de 2025
 **Framework:** React Query 5 (TanStack Query)
 **HTTP Client:** Axios 1.6+
 
@@ -592,10 +592,21 @@ export interface PartidaListResponse {
  * STATISTICS TYPES
  */
 
+// Tipo para resultado de partida (W=Win, D=Draw, L=Loss)
+export type FormResult = 'W' | 'D' | 'L';
+
+// Classificação do Coeficiente de Variação
+export type CVClassificacao =
+  | 'Muito Estável'
+  | 'Estável'
+  | 'Moderado'
+  | 'Instável'
+  | 'Muito Instável';
+
 export interface EstatisticaMetrica {
   media: number;
-  cv: number;           // Coeficiente de Variação (0.0-1.0)
-  classificacao: string;  // "Muito Estável" → "Muito Instável"
+  cv: number;                     // Coeficiente de Variação (0.0-1.0)
+  classificacao: CVClassificacao; // Classificação baseada no CV
 }
 
 export interface EstatisticaFeitos {
@@ -603,23 +614,39 @@ export interface EstatisticaFeitos {
   sofridos: EstatisticaMetrica;
 }
 
-export interface EstatisticasTime {
-  escanteios: EstatisticaFeitos;
+export interface EstatisticasAgregadas {
   gols: EstatisticaFeitos;
+  escanteios: EstatisticaFeitos;
   finalizacoes: EstatisticaFeitos;
   finalizacoes_gol: EstatisticaFeitos;
-  cartoes: {
-    amarelos: EstatisticaMetrica;
-    vermelhos: EstatisticaMetrica;
-  };
+  cartoes_amarelos: EstatisticaMetrica;
+  cartoes_vermelhos: EstatisticaMetrica;
+  faltas: EstatisticaFeitos;
+}
+
+export interface TimeComEstatisticas {
+  id: string;
+  nome: string;
+  escudo: string | null;
+  estatisticas: EstatisticasAgregadas;
+  recent_form: FormResult[];  // Sequência de resultados (V/E/D)
+}
+
+export interface ArbitroInfo {
+  id: string;
+  nome: string;
+  pais?: string;
+  media_amarelos: number;
+  media_vermelhos: number;
+  total_jogos: number;
 }
 
 export interface StatsResponse {
-  partida: PartidaResumo;
-  filtro_aplicado: 'geral' | '5_partidas' | '10_partidas';
+  filtro_aplicado: 'geral' | '5' | '10';
   partidas_analisadas: number;
-  mandante: EstatisticasTime & { recentForm: ('W' | 'D' | 'L')[] };
-  visitante: EstatisticasTime & { recentForm: ('W' | 'D' | 'L')[] };
+  mandante: TimeComEstatisticas;
+  visitante: TimeComEstatisticas;
+  arbitro?: ArbitroInfo;
 }
 
 /**

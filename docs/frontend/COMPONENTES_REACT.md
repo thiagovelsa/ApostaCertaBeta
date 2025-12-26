@@ -1,9 +1,9 @@
 # Componentes React - Catálogo Atomic Design
 
-**Versão:** 1.0
-**Data:** 24 de dezembro de 2025
+**Versão:** 1.1
+**Data:** 26 de dezembro de 2025
 **Pattern:** Atomic Design (Atoms → Molecules → Organisms → Pages)
-**Total de Componentes:** 19 (v1)
+**Total de Componentes:** 22 (v1.1)
 
 Catálogo completo de componentes React + TypeScript para implementação do frontend.
 
@@ -13,7 +13,7 @@ Catálogo completo de componentes React + TypeScript para implementação do fro
 
 1. [ATOMS (6)](#atoms---6-componentes)
 2. [MOLECULES (5)](#molecules---5-componentes)
-3. [ORGANISMS (3)](#organisms---3-componentes)
+3. [ORGANISMS (6)](#organisms---6-componentes) *(+3 novos: RaceBadges, PredictionsCard, DisciplineCard)*
 4. [LAYOUT (3)](#layout---3-componentes)
 5. [PAGES (2)](#pages---2-páginas-v1)
 6. [Padrões de Implementação](#padrões-de-implementação)
@@ -712,7 +712,7 @@ export const RaceRow: React.FC<RaceRowProps> = ({
 
 ---
 
-## ORGANISMS - 3 Componentes
+## ORGANISMS - 6 Componentes
 
 ### 12. MatchCard
 
@@ -959,9 +959,204 @@ export function StatsCategory({ title, icon, homeStats, awayStats }: StatsCatego
 
 ---
 
+### 15. RaceBadges (v1.1)
+
+Badges de sequência de resultados (V/E/D) para exibir forma recente dos times.
+
+```typescript
+// src/components/organisms/StatsPanel.tsx (componente interno)
+
+type FormResult = 'W' | 'D' | 'L';
+
+interface RaceBadgesProps {
+  results?: FormResult[];
+  limit?: number;  // Máximo de badges a exibir
+}
+
+function RaceBadges({ results, limit }: RaceBadgesProps) {
+  if (!results?.length) return null;
+
+  const colors: Record<FormResult, string> = {
+    W: 'bg-success',   // Verde - Vitória
+    D: 'bg-warning',   // Amarelo - Empate
+    L: 'bg-danger',    // Vermelho - Derrota
+  };
+
+  const labels: Record<FormResult, string> = {
+    W: 'V',  // Vitória
+    D: 'E',  // Empate
+    L: 'D',  // Derrota
+  };
+
+  // Aplica limite se especificado
+  const displayResults = limit ? results.slice(0, limit) : results;
+
+  return (
+    <div className="flex gap-0.5 mt-1">
+      {displayResults.map((r, i) => (
+        <span
+          key={i}
+          className={`${colors[r]} text-[10px] font-bold text-white px-1.5 py-0.5 rounded`}
+        >
+          {labels[r]}
+        </span>
+      ))}
+    </div>
+  );
+}
+
+// Exemplo de Uso:
+// <RaceBadges results={mandante.recent_form} limit={5} />
+// Renderiza: V V E D V (badges coloridos)
+```
+
+**Props:**
+- `results`: Array de resultados ('W' | 'D' | 'L')
+- `limit`: Número máximo de badges (Temporada/5 partidas → 5, 10 partidas → 10)
+
+**Cores:**
+- **V (Vitória)**: `bg-success` (verde)
+- **E (Empate)**: `bg-warning` (amarelo)
+- **D (Derrota)**: `bg-danger` (vermelho)
+
+---
+
+### 16. PredictionsCard (v1.1)
+
+Card de previsões com análise preditiva baseada em médias.
+
+```typescript
+// src/components/molecules/PredictionsCard.tsx
+
+interface Previsao {
+  tipo: string;           // ex: "Gols", "Escanteios"
+  valorPrevisto: number;  // ex: 2.8
+  confianca: 'alta' | 'media' | 'baixa';
+  descricao: string;
+}
+
+interface PredictionsCardProps {
+  previsoes: Previsao[];
+  homeTeamName: string;
+  awayTeamName: string;
+}
+
+export function PredictionsCard({
+  previsoes,
+  homeTeamName,
+  awayTeamName,
+}: PredictionsCardProps) {
+  return (
+    <div className="card">
+      <div className="flex items-center gap-2 mb-4">
+        <Icon name="analytics" className="text-primary-400" />
+        <h3 className="font-semibold text-white">Previsões</h3>
+      </div>
+
+      <div className="grid gap-3">
+        {previsoes.map((p, i) => (
+          <div key={i} className="flex justify-between items-center">
+            <span className="text-gray-400">{p.tipo}</span>
+            <div className="flex items-center gap-2">
+              <span className="text-white font-bold">
+                {p.valorPrevisto.toFixed(1)}
+              </span>
+              <Badge
+                variant={p.confianca === 'alta' ? 'success' : p.confianca === 'media' ? 'warning' : 'danger'}
+                size="sm"
+              >
+                {p.confianca}
+              </Badge>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+```
+
+**Props:**
+- `previsoes`: Array de previsões calculadas
+- `homeTeamName`: Nome do time mandante
+- `awayTeamName`: Nome do time visitante
+
+---
+
+### 17. DisciplineCard (v1.1)
+
+Card de disciplina com métricas de cartões e faltas, incluindo dados do árbitro.
+
+```typescript
+// src/components/molecules/DisciplineCard.tsx
+
+interface DisciplineMetric {
+  label: string;
+  home: EstatisticaMetrica;
+  away: EstatisticaMetrica;
+}
+
+interface ArbitroInfo {
+  nome: string;
+  media_amarelos: number;
+  media_vermelhos: number;
+  total_jogos: number;
+}
+
+interface DisciplineCardProps {
+  metrics: DisciplineMetric[];
+  homeTeamName: string;
+  awayTeamName: string;
+  arbitro?: ArbitroInfo;
+}
+
+export function DisciplineCard({
+  metrics,
+  homeTeamName,
+  awayTeamName,
+  arbitro,
+}: DisciplineCardProps) {
+  return (
+    <div className="card md:col-span-2">
+      <div className="flex items-center gap-2 mb-4">
+        <Icon name="card" className="text-yellow-400" />
+        <h3 className="font-semibold text-white">Disciplina</h3>
+      </div>
+
+      {/* Métricas */}
+      <div className="space-y-3">
+        {metrics.map((m, i) => (
+          <StatMetric key={i} label={m.label} home={m.home} away={m.away} />
+        ))}
+      </div>
+
+      {/* Árbitro */}
+      {arbitro && (
+        <div className="mt-4 pt-4 border-t border-dark-tertiary">
+          <p className="text-sm text-gray-400 mb-2">Árbitro: {arbitro.nome}</p>
+          <div className="flex gap-4 text-xs text-gray-500">
+            <span>🟨 {arbitro.media_amarelos.toFixed(1)}/jogo</span>
+            <span>🟥 {arbitro.media_vermelhos.toFixed(1)}/jogo</span>
+            <span>{arbitro.total_jogos} jogos</span>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+```
+
+**Props:**
+- `metrics`: Array de métricas de disciplina (amarelos, faltas)
+- `homeTeamName`: Nome do time mandante
+- `awayTeamName`: Nome do time visitante
+- `arbitro`: Informações do árbitro (opcional)
+
+---
+
 ## LAYOUT - 3 Componentes
 
-### 15. PageLayout
+### 18. PageLayout
 
 Layout principal com header e footer.
 
@@ -1005,7 +1200,7 @@ export const PageLayout: React.FC<PageLayoutProps> = ({
 
 ---
 
-### 16. Container
+### 19. Container
 
 Container responsivo.
 
@@ -1031,7 +1226,7 @@ export const Container: React.FC<ContainerProps> = ({
 
 ---
 
-### 17. Grid
+### 20. Grid
 
 Grid system responsivo.
 
@@ -1081,7 +1276,7 @@ export const Grid: React.FC<GridProps> = ({
 
 ## PAGES - 2 Páginas (v1)
 
-### 18. HomePage/PartidasPage (Combinadas ✅)
+### 21. HomePage/PartidasPage (Combinadas)
 
 Página única com DatePicker e grid de MatchCards animados.
 
@@ -1143,9 +1338,9 @@ export const HomePage: React.FC = () => {
 
 ---
 
-### 19. EstatisticasPage
+### 22. EstatisticasPage
 
-Página de estatísticas detalhadas (sem predictions v1).
+Página de estatísticas detalhadas com previsões e sequência de resultados.
 
 ```typescript
 // src/pages/EstatisticasPage.tsx
