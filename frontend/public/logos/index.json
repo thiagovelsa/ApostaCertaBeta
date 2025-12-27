@@ -1,0 +1,1388 @@
+{
+  "teams": {
+    "birmingham-city": {
+      "name": "Birmingham City",
+      "country": "england",
+      "league": "championship",
+      "file": "england/championship/birmingham-city.png",
+      "thesportsdb_id": "133597"
+    },
+    "blackburn-rovers": {
+      "name": "Blackburn Rovers",
+      "country": "england",
+      "league": "championship",
+      "file": "england/championship/blackburn-rovers.png",
+      "thesportsdb_id": "133598"
+    },
+    "bristol-city": {
+      "name": "Bristol City",
+      "country": "england",
+      "league": "championship",
+      "file": "england/championship/bristol-city.png",
+      "thesportsdb_id": "133621"
+    },
+    "charlton-athletic": {
+      "name": "Charlton Athletic",
+      "country": "england",
+      "league": "championship",
+      "file": "england/championship/charlton-athletic.png",
+      "thesportsdb_id": "133851"
+    },
+    "coventry-city": {
+      "name": "Coventry City",
+      "country": "england",
+      "league": "championship",
+      "file": "england/championship/coventry-city.png",
+      "thesportsdb_id": "133625"
+    },
+    "derby-county": {
+      "name": "Derby County",
+      "country": "england",
+      "league": "championship",
+      "file": "england/championship/derby-county.png",
+      "thesportsdb_id": "133627"
+    },
+    "hull-city": {
+      "name": "Hull City",
+      "country": "england",
+      "league": "championship",
+      "file": "england/championship/hull-city.png",
+      "thesportsdb_id": "133617"
+    },
+    "ipswich-town": {
+      "name": "Ipswich Town",
+      "country": "england",
+      "league": "championship",
+      "file": "england/championship/ipswich-town.png",
+      "thesportsdb_id": "133622"
+    },
+    "leicester-city": {
+      "name": "Leicester City",
+      "country": "england",
+      "league": "championship",
+      "file": "england/championship/leicester-city.png",
+      "thesportsdb_id": "133626"
+    },
+    "middlesbrough": {
+      "name": "Middlesbrough",
+      "country": "england",
+      "league": "championship",
+      "file": "england/championship/middlesbrough.png",
+      "thesportsdb_id": "133628"
+    },
+    "millwall": {
+      "name": "Millwall",
+      "country": "england",
+      "league": "championship",
+      "file": "england/championship/millwall.png",
+      "thesportsdb_id": "133634"
+    },
+    "norwich-city": {
+      "name": "Norwich City",
+      "country": "england",
+      "league": "championship",
+      "file": "england/championship/norwich-city.png",
+      "thesportsdb_id": "133608"
+    },
+    "oxford-united": {
+      "name": "Oxford United",
+      "country": "england",
+      "league": "championship",
+      "file": "england/championship/oxford-united.png",
+      "thesportsdb_id": "134361"
+    },
+    "portsmouth": {
+      "name": "Portsmouth",
+      "country": "england",
+      "league": "championship",
+      "file": "england/championship/portsmouth.png",
+      "thesportsdb_id": "133629"
+    },
+    "preston-north-end": {
+      "name": "Preston North End",
+      "country": "england",
+      "league": "championship",
+      "file": "england/championship/preston-north-end.png",
+      "thesportsdb_id": "133809"
+    },
+    "queens-park-rangers": {
+      "name": "Queens Park Rangers",
+      "country": "england",
+      "league": "championship",
+      "file": "england/championship/queens-park-rangers.png",
+      "thesportsdb_id": "133605"
+    },
+    "sheffield-united": {
+      "name": "Sheffield United",
+      "country": "england",
+      "league": "championship",
+      "file": "england/championship/sheffield-united.png",
+      "thesportsdb_id": "133811"
+    },
+    "sheffield-wednesday": {
+      "name": "Sheffield Wednesday",
+      "country": "england",
+      "league": "championship",
+      "file": "england/championship/sheffield-wednesday.png",
+      "thesportsdb_id": "133837"
+    },
+    "southampton": {
+      "name": "Southampton",
+      "country": "england",
+      "league": "championship",
+      "file": "england/championship/southampton.png",
+      "thesportsdb_id": "134778"
+    },
+    "stoke-city": {
+      "name": "Stoke City",
+      "country": "england",
+      "league": "championship",
+      "file": "england/championship/stoke-city.png",
+      "thesportsdb_id": "133609"
+    },
+    "swansea-city": {
+      "name": "Swansea City",
+      "country": "england",
+      "league": "championship",
+      "file": "england/championship/swansea-city.png",
+      "thesportsdb_id": "133614"
+    },
+    "watford": {
+      "name": "Watford",
+      "country": "england",
+      "league": "championship",
+      "file": "england/championship/watford.png",
+      "thesportsdb_id": "133624"
+    },
+    "west-bromwich-albion": {
+      "name": "West Bromwich Albion",
+      "country": "england",
+      "league": "championship",
+      "file": "england/championship/west-bromwich-albion.png",
+      "thesportsdb_id": "133611"
+    },
+    "wrexham": {
+      "name": "Wrexham",
+      "country": "england",
+      "league": "championship",
+      "file": "england/championship/wrexham.png",
+      "thesportsdb_id": "134775"
+    },
+    "wolfsburg": {
+      "name": "Wolfsburg",
+      "country": "germany",
+      "league": "bundesliga",
+      "file": "germany/bundesliga/wolfsburg.png",
+      "thesportsdb_id": "133655"
+    },
+    "arminia-bielefeld": {
+      "name": "Arminia Bielefeld",
+      "country": "germany",
+      "league": "2-bundesliga",
+      "file": "germany/2-bundesliga/arminia-bielefeld.png",
+      "thesportsdb_id": "133852"
+    },
+    "bochum": {
+      "name": "Bochum",
+      "country": "germany",
+      "league": "2-bundesliga",
+      "file": "germany/2-bundesliga/bochum.png",
+      "thesportsdb_id": "133839"
+    },
+    "darmstadt": {
+      "name": "Darmstadt",
+      "country": "germany",
+      "league": "2-bundesliga",
+      "file": "germany/2-bundesliga/darmstadt.png",
+      "thesportsdb_id": "134693"
+    },
+    "dynamo-dresden": {
+      "name": "Dynamo Dresden",
+      "country": "germany",
+      "league": "2-bundesliga",
+      "file": "germany/2-bundesliga/dynamo-dresden.png",
+      "thesportsdb_id": "135655"
+    },
+    "eintracht-braunschweig": {
+      "name": "Eintracht Braunschweig",
+      "country": "germany",
+      "league": "2-bundesliga",
+      "file": "germany/2-bundesliga/eintracht-braunschweig.png",
+      "thesportsdb_id": "134302"
+    },
+    "elversberg": {
+      "name": "Elversberg",
+      "country": "germany",
+      "league": "2-bundesliga",
+      "file": "germany/2-bundesliga/elversberg.png",
+      "thesportsdb_id": "138411"
+    },
+    "fc-nurnberg": {
+      "name": "FC Nürnberg",
+      "country": "germany",
+      "league": "2-bundesliga",
+      "file": "germany/2-bundesliga/fc-nurnberg.png",
+      "thesportsdb_id": "133659"
+    },
+    "fortuna-dusseldorf": {
+      "name": "Fortuna Düsseldorf",
+      "country": "germany",
+      "league": "2-bundesliga",
+      "file": "germany/2-bundesliga/fortuna-dusseldorf.png",
+      "thesportsdb_id": "133935"
+    },
+    "greuther-furth": {
+      "name": "Greuther Fürth",
+      "country": "germany",
+      "league": "2-bundesliga",
+      "file": "germany/2-bundesliga/greuther-furth.png",
+      "thesportsdb_id": "134099"
+    },
+    "hannover": {
+      "name": "Hannover",
+      "country": "germany",
+      "league": "2-bundesliga",
+      "file": "germany/2-bundesliga/hannover.png",
+      "thesportsdb_id": "133656"
+    },
+    "hertha": {
+      "name": "Hertha",
+      "country": "germany",
+      "league": "2-bundesliga",
+      "file": "germany/2-bundesliga/hertha.png",
+      "thesportsdb_id": "133658"
+    },
+    "holstein-kiel": {
+      "name": "Holstein Kiel",
+      "country": "germany",
+      "league": "2-bundesliga",
+      "file": "germany/2-bundesliga/holstein-kiel.png",
+      "thesportsdb_id": "136027"
+    },
+    "kaiserslautern": {
+      "name": "Kaiserslautern",
+      "country": "germany",
+      "league": "2-bundesliga",
+      "file": "germany/2-bundesliga/kaiserslautern.png",
+      "thesportsdb_id": "133663"
+    },
+    "karlsruhe": {
+      "name": "Karlsruhe",
+      "country": "germany",
+      "league": "2-bundesliga",
+      "file": "germany/2-bundesliga/karlsruhe.png",
+      "thesportsdb_id": "135293"
+    },
+    "magdeburg": {
+      "name": "Magdeburg",
+      "country": "germany",
+      "league": "2-bundesliga",
+      "file": "germany/2-bundesliga/magdeburg.png",
+      "thesportsdb_id": "136194"
+    },
+    "paderborn": {
+      "name": "Paderborn",
+      "country": "germany",
+      "league": "2-bundesliga",
+      "file": "germany/2-bundesliga/paderborn.png",
+      "thesportsdb_id": "134551"
+    },
+    "preuen-munster": {
+      "name": "Preußen Münster",
+      "country": "germany",
+      "league": "2-bundesliga",
+      "file": "germany/2-bundesliga/preuen-munster.png",
+      "thesportsdb_id": "137965"
+    },
+    "schalke-04": {
+      "name": "Schalke 04",
+      "country": "germany",
+      "league": "2-bundesliga",
+      "file": "germany/2-bundesliga/schalke-04.png",
+      "thesportsdb_id": "133661"
+    },
+    "ac-milan": {
+      "name": "AC Milan",
+      "country": "italy",
+      "league": "serie-a",
+      "file": "italy/serie-a/ac-milan.png",
+      "thesportsdb_id": "133667"
+    },
+    "atalanta": {
+      "name": "Atalanta",
+      "country": "italy",
+      "league": "serie-a",
+      "file": "italy/serie-a/atalanta.png",
+      "thesportsdb_id": "134782"
+    },
+    "bologna": {
+      "name": "Bologna",
+      "country": "italy",
+      "league": "serie-a",
+      "file": "italy/serie-a/bologna.png",
+      "thesportsdb_id": "134781"
+    },
+    "cagliari": {
+      "name": "Cagliari",
+      "country": "italy",
+      "league": "serie-a",
+      "file": "italy/serie-a/cagliari.png",
+      "thesportsdb_id": "134783"
+    },
+    "como": {
+      "name": "Como",
+      "country": "italy",
+      "league": "serie-a",
+      "file": "italy/serie-a/como.png",
+      "thesportsdb_id": "134243"
+    },
+    "cremonese": {
+      "name": "Cremonese",
+      "country": "italy",
+      "league": "serie-a",
+      "file": "italy/serie-a/cremonese.png",
+      "thesportsdb_id": "134224"
+    },
+    "fiorentina": {
+      "name": "Fiorentina",
+      "country": "italy",
+      "league": "serie-a",
+      "file": "italy/serie-a/fiorentina.png",
+      "thesportsdb_id": "133674"
+    },
+    "genoa": {
+      "name": "Genoa",
+      "country": "italy",
+      "league": "serie-a",
+      "file": "italy/serie-a/genoa.png",
+      "thesportsdb_id": "133675"
+    },
+    "hellas-verona": {
+      "name": "Hellas Verona",
+      "country": "italy",
+      "league": "serie-a",
+      "file": "italy/serie-a/hellas-verona.png",
+      "thesportsdb_id": "134784"
+    },
+    "inter-milan": {
+      "name": "Inter Milan",
+      "country": "italy",
+      "league": "serie-a",
+      "file": "italy/serie-a/inter-milan.png",
+      "thesportsdb_id": "133681"
+    },
+    "juventus": {
+      "name": "Juventus",
+      "country": "italy",
+      "league": "serie-a",
+      "file": "italy/serie-a/juventus.png",
+      "thesportsdb_id": "133676"
+    },
+    "lazio": {
+      "name": "Lazio",
+      "country": "italy",
+      "league": "serie-a",
+      "file": "italy/serie-a/lazio.png",
+      "thesportsdb_id": "133668"
+    },
+    "lecce": {
+      "name": "Lecce",
+      "country": "italy",
+      "league": "serie-a",
+      "file": "italy/serie-a/lecce.png",
+      "thesportsdb_id": "133678"
+    },
+    "napoli": {
+      "name": "Napoli",
+      "country": "italy",
+      "league": "serie-a",
+      "file": "italy/serie-a/napoli.png",
+      "thesportsdb_id": "133670"
+    },
+    "parma": {
+      "name": "Parma",
+      "country": "italy",
+      "league": "serie-a",
+      "file": "italy/serie-a/parma.png",
+      "thesportsdb_id": "135728"
+    },
+    "pisa": {
+      "name": "Pisa",
+      "country": "italy",
+      "league": "serie-a",
+      "file": "italy/serie-a/pisa.png",
+      "thesportsdb_id": "133859"
+    },
+    "roma": {
+      "name": "Roma",
+      "country": "italy",
+      "league": "serie-a",
+      "file": "italy/serie-a/roma.png",
+      "thesportsdb_id": "133682"
+    },
+    "sassuolo": {
+      "name": "Sassuolo",
+      "country": "italy",
+      "league": "serie-a",
+      "file": "italy/serie-a/sassuolo.png",
+      "thesportsdb_id": "133701"
+    },
+    "torino": {
+      "name": "Torino",
+      "country": "italy",
+      "league": "serie-a",
+      "file": "italy/serie-a/torino.png",
+      "thesportsdb_id": "133687"
+    },
+    "udinese": {
+      "name": "Udinese",
+      "country": "italy",
+      "league": "serie-a",
+      "file": "italy/serie-a/udinese.png",
+      "thesportsdb_id": "133679"
+    },
+    "avellino": {
+      "name": "Avellino",
+      "country": "italy",
+      "league": "serie-b",
+      "file": "italy/serie-b/avellino.png",
+      "thesportsdb_id": "133858"
+    },
+    "bari": {
+      "name": "Bari",
+      "country": "italy",
+      "league": "serie-b",
+      "file": "italy/serie-b/bari.png",
+      "thesportsdb_id": "133688"
+    },
+    "carrarese": {
+      "name": "Carrarese",
+      "country": "italy",
+      "league": "serie-b",
+      "file": "italy/serie-b/carrarese.png",
+      "thesportsdb_id": "134666"
+    },
+    "catanzaro": {
+      "name": "Catanzaro",
+      "country": "italy",
+      "league": "serie-b",
+      "file": "italy/serie-b/catanzaro.png",
+      "thesportsdb_id": "134223"
+    },
+    "cesena": {
+      "name": "Cesena",
+      "country": "italy",
+      "league": "serie-b",
+      "file": "italy/serie-b/cesena.png",
+      "thesportsdb_id": "133669"
+    },
+    "empoli": {
+      "name": "Empoli",
+      "country": "italy",
+      "league": "serie-b",
+      "file": "italy/serie-b/empoli.png",
+      "thesportsdb_id": "133695"
+    },
+    "frosinone": {
+      "name": "Frosinone",
+      "country": "italy",
+      "league": "serie-b",
+      "file": "italy/serie-b/frosinone.png",
+      "thesportsdb_id": "133818"
+    },
+    "juve-stabia": {
+      "name": "Juve Stabia",
+      "country": "italy",
+      "league": "serie-b",
+      "file": "italy/serie-b/juve-stabia.png",
+      "thesportsdb_id": "133696"
+    },
+    "mantova": {
+      "name": "Mantova",
+      "country": "italy",
+      "league": "serie-b",
+      "file": "italy/serie-b/mantova.png",
+      "thesportsdb_id": "133845"
+    },
+    "modena": {
+      "name": "Modena",
+      "country": "italy",
+      "league": "serie-b",
+      "file": "italy/serie-b/modena.png",
+      "thesportsdb_id": "133700"
+    },
+    "monza": {
+      "name": "Monza",
+      "country": "italy",
+      "league": "serie-b",
+      "file": "italy/serie-b/monza.png",
+      "thesportsdb_id": "134270"
+    },
+    "padova": {
+      "name": "Padova",
+      "country": "italy",
+      "league": "serie-b",
+      "file": "italy/serie-b/padova.png",
+      "thesportsdb_id": "135950"
+    },
+    "palermo": {
+      "name": "Palermo",
+      "country": "italy",
+      "league": "serie-b",
+      "file": "italy/serie-b/palermo.png",
+      "thesportsdb_id": "138166"
+    },
+    "pescara": {
+      "name": "Pescara",
+      "country": "italy",
+      "league": "serie-b",
+      "file": "italy/serie-b/pescara.png",
+      "thesportsdb_id": "133685"
+    },
+    "reggiana": {
+      "name": "Reggiana",
+      "country": "italy",
+      "league": "serie-b",
+      "file": "italy/serie-b/reggiana.png",
+      "thesportsdb_id": "137121"
+    },
+    "sampdoria": {
+      "name": "Sampdoria",
+      "country": "italy",
+      "league": "serie-b",
+      "file": "italy/serie-b/sampdoria.png",
+      "thesportsdb_id": "133683"
+    },
+    "spezia": {
+      "name": "Spezia",
+      "country": "italy",
+      "league": "serie-b",
+      "file": "italy/serie-b/spezia.png",
+      "thesportsdb_id": "133879"
+    },
+    "sudtirol": {
+      "name": "Südtirol",
+      "country": "italy",
+      "league": "serie-b",
+      "file": "italy/serie-b/sudtirol.png",
+      "thesportsdb_id": "134654"
+    },
+    "venezia": {
+      "name": "Venezia",
+      "country": "italy",
+      "league": "serie-b",
+      "file": "italy/serie-b/venezia.png",
+      "thesportsdb_id": "134234"
+    },
+    "virtus-entella": {
+      "name": "Virtus Entella",
+      "country": "italy",
+      "league": "serie-b",
+      "file": "italy/serie-b/virtus-entella.png",
+      "thesportsdb_id": "134633"
+    },
+    "athletic-bilbao": {
+      "name": "Athletic Bilbao",
+      "country": "spain",
+      "league": "la-liga",
+      "file": "spain/la-liga/athletic-bilbao.png",
+      "thesportsdb_id": "133727"
+    },
+    "atletico-madrid": {
+      "name": "Atlético Madrid",
+      "country": "spain",
+      "league": "la-liga",
+      "file": "spain/la-liga/atletico-madrid.png",
+      "thesportsdb_id": "133729"
+    },
+    "barcelona": {
+      "name": "Barcelona",
+      "country": "spain",
+      "league": "la-liga",
+      "file": "spain/la-liga/barcelona.png",
+      "thesportsdb_id": "133739"
+    },
+    "celta-vigo": {
+      "name": "Celta Vigo",
+      "country": "spain",
+      "league": "la-liga",
+      "file": "spain/la-liga/celta-vigo.png",
+      "thesportsdb_id": "133937"
+    },
+    "deportivo-alaves": {
+      "name": "Deportivo Alavés",
+      "country": "spain",
+      "league": "la-liga",
+      "file": "spain/la-liga/deportivo-alaves.png",
+      "thesportsdb_id": "134221"
+    },
+    "elche": {
+      "name": "Elche",
+      "country": "spain",
+      "league": "la-liga",
+      "file": "spain/la-liga/elche.png",
+      "thesportsdb_id": "134384"
+    },
+    "espanyol": {
+      "name": "Espanyol",
+      "country": "spain",
+      "league": "la-liga",
+      "file": "spain/la-liga/espanyol.png",
+      "thesportsdb_id": "133734"
+    },
+    "getafe": {
+      "name": "Getafe",
+      "country": "spain",
+      "league": "la-liga",
+      "file": "spain/la-liga/getafe.png",
+      "thesportsdb_id": "133731"
+    },
+    "girona": {
+      "name": "Girona",
+      "country": "spain",
+      "league": "la-liga",
+      "file": "spain/la-liga/girona.png",
+      "thesportsdb_id": "134700"
+    },
+    "levante": {
+      "name": "Levante",
+      "country": "spain",
+      "league": "la-liga",
+      "file": "spain/la-liga/levante.png",
+      "thesportsdb_id": "133732"
+    },
+    "mallorca": {
+      "name": "Mallorca",
+      "country": "spain",
+      "league": "la-liga",
+      "file": "spain/la-liga/mallorca.png",
+      "thesportsdb_id": "133733"
+    },
+    "osasuna": {
+      "name": "Osasuna",
+      "country": "spain",
+      "league": "la-liga",
+      "file": "spain/la-liga/osasuna.png",
+      "thesportsdb_id": "133730"
+    },
+    "rayo-vallecano": {
+      "name": "Rayo Vallecano",
+      "country": "spain",
+      "league": "la-liga",
+      "file": "spain/la-liga/rayo-vallecano.png",
+      "thesportsdb_id": "133728"
+    },
+    "real-betis": {
+      "name": "Real Betis",
+      "country": "spain",
+      "league": "la-liga",
+      "file": "spain/la-liga/real-betis.png",
+      "thesportsdb_id": "133722"
+    },
+    "real-madrid": {
+      "name": "Real Madrid",
+      "country": "spain",
+      "league": "la-liga",
+      "file": "spain/la-liga/real-madrid.png",
+      "thesportsdb_id": "133738"
+    },
+    "real-oviedo": {
+      "name": "Real Oviedo",
+      "country": "spain",
+      "league": "la-liga",
+      "file": "spain/la-liga/real-oviedo.png",
+      "thesportsdb_id": "135455"
+    },
+    "real-sociedad": {
+      "name": "Real Sociedad",
+      "country": "spain",
+      "league": "la-liga",
+      "file": "spain/la-liga/real-sociedad.png",
+      "thesportsdb_id": "133724"
+    },
+    "sevilla": {
+      "name": "Sevilla",
+      "country": "spain",
+      "league": "la-liga",
+      "file": "spain/la-liga/sevilla.png",
+      "thesportsdb_id": "133735"
+    },
+    "valencia": {
+      "name": "Valencia",
+      "country": "spain",
+      "league": "la-liga",
+      "file": "spain/la-liga/valencia.png",
+      "thesportsdb_id": "133725"
+    },
+    "villarreal": {
+      "name": "Villarreal",
+      "country": "spain",
+      "league": "la-liga",
+      "file": "spain/la-liga/villarreal.png",
+      "thesportsdb_id": "133740"
+    },
+    "albacete": {
+      "name": "Albacete",
+      "country": "spain",
+      "league": "la-liga-2",
+      "file": "spain/la-liga-2/albacete.png",
+      "thesportsdb_id": "134232"
+    },
+    "almeria": {
+      "name": "Almería",
+      "country": "spain",
+      "league": "la-liga-2",
+      "file": "spain/la-liga-2/almeria.png",
+      "thesportsdb_id": "133817"
+    },
+    "burgos": {
+      "name": "Burgos",
+      "country": "spain",
+      "league": "la-liga-2",
+      "file": "spain/la-liga-2/burgos.png",
+      "thesportsdb_id": "138161"
+    },
+    "cadiz": {
+      "name": "Cádiz",
+      "country": "spain",
+      "league": "la-liga-2",
+      "file": "spain/la-liga-2/cadiz.png",
+      "thesportsdb_id": "134222"
+    },
+    "castellon": {
+      "name": "Castellón",
+      "country": "spain",
+      "league": "la-liga-2",
+      "file": "spain/la-liga-2/castellon.png",
+      "thesportsdb_id": "138286"
+    },
+    "ceuta": {
+      "name": "Ceuta",
+      "country": "spain",
+      "league": "la-liga-2",
+      "file": "spain/la-liga-2/ceuta.png",
+      "thesportsdb_id": "144243"
+    },
+    "cordoba": {
+      "name": "Córdoba",
+      "country": "spain",
+      "league": "la-liga-2",
+      "file": "spain/la-liga-2/cordoba.png",
+      "thesportsdb_id": "134627"
+    },
+    "cultural-leonesa": {
+      "name": "Cultural Leonesa",
+      "country": "spain",
+      "league": "la-liga-2",
+      "file": "spain/la-liga-2/cultural-leonesa.png",
+      "thesportsdb_id": "135888"
+    },
+    "deportivo-de-la-coruna": {
+      "name": "Deportivo de La Coruña",
+      "country": "spain",
+      "league": "la-liga-2",
+      "file": "spain/la-liga-2/deportivo-de-la-coruna.png",
+      "thesportsdb_id": "133816"
+    },
+    "eibar": {
+      "name": "Eibar",
+      "country": "spain",
+      "league": "la-liga-2",
+      "file": "spain/la-liga-2/eibar.png",
+      "thesportsdb_id": "134626"
+    },
+    "fc-andorra": {
+      "name": "FC Andorra",
+      "country": "spain",
+      "league": "la-liga-2",
+      "file": "spain/la-liga-2/fc-andorra.png",
+      "thesportsdb_id": "138280"
+    },
+    "granada": {
+      "name": "Granada",
+      "country": "spain",
+      "league": "la-liga-2",
+      "file": "spain/la-liga-2/granada.png",
+      "thesportsdb_id": "133721"
+    },
+    "huesca": {
+      "name": "Huesca",
+      "country": "spain",
+      "league": "la-liga-2",
+      "file": "spain/la-liga-2/huesca.png",
+      "thesportsdb_id": "135454"
+    },
+    "las-palmas": {
+      "name": "Las Palmas",
+      "country": "spain",
+      "league": "la-liga-2",
+      "file": "spain/la-liga-2/las-palmas.png",
+      "thesportsdb_id": "134259"
+    },
+    "leganes": {
+      "name": "Leganés",
+      "country": "spain",
+      "league": "la-liga-2",
+      "file": "spain/la-liga-2/leganes.png",
+      "thesportsdb_id": "134701"
+    },
+    "malaga": {
+      "name": "Málaga",
+      "country": "spain",
+      "league": "la-liga-2",
+      "file": "spain/la-liga-2/malaga.png",
+      "thesportsdb_id": "133736"
+    },
+    "mirandes": {
+      "name": "Mirandés",
+      "country": "spain",
+      "league": "la-liga-2",
+      "file": "spain/la-liga-2/mirandes.png",
+      "thesportsdb_id": "134698"
+    },
+    "racing-de-santander": {
+      "name": "Racing de Santander",
+      "country": "spain",
+      "league": "la-liga-2",
+      "file": "spain/la-liga-2/racing-de-santander.png",
+      "thesportsdb_id": "133726"
+    },
+    "real-sociedad-b": {
+      "name": "Real Sociedad B",
+      "country": "spain",
+      "league": "la-liga-2",
+      "file": "spain/la-liga-2/real-sociedad-b.png",
+      "thesportsdb_id": "138160"
+    },
+    "real-valladolid": {
+      "name": "Real Valladolid",
+      "country": "spain",
+      "league": "la-liga-2",
+      "file": "spain/la-liga-2/real-valladolid.png",
+      "thesportsdb_id": "133841"
+    },
+    "real-zaragoza": {
+      "name": "Real Zaragoza",
+      "country": "spain",
+      "league": "la-liga-2",
+      "file": "spain/la-liga-2/real-zaragoza.png",
+      "thesportsdb_id": "133737"
+    },
+    "sporting-de-gijon": {
+      "name": "Sporting de Gijón",
+      "country": "spain",
+      "league": "la-liga-2",
+      "file": "spain/la-liga-2/sporting-de-gijon.png",
+      "thesportsdb_id": "133723"
+    },
+    "angers": {
+      "name": "Angers",
+      "country": "france",
+      "league": "ligue-1",
+      "file": "france/ligue-1/angers.png",
+      "thesportsdb_id": "134709"
+    },
+    "auxerre": {
+      "name": "Auxerre",
+      "country": "france",
+      "league": "ligue-1",
+      "file": "france/ligue-1/auxerre.png",
+      "thesportsdb_id": "134788"
+    },
+    "brest": {
+      "name": "Brest",
+      "country": "france",
+      "league": "ligue-1",
+      "file": "france/ligue-1/brest.png",
+      "thesportsdb_id": "133704"
+    },
+    "le-havre": {
+      "name": "Le Havre",
+      "country": "france",
+      "league": "ligue-1",
+      "file": "france/ligue-1/le-havre.png",
+      "thesportsdb_id": "133862"
+    },
+    "lens": {
+      "name": "Lens",
+      "country": "france",
+      "league": "ligue-1",
+      "file": "france/ligue-1/lens.png",
+      "thesportsdb_id": "133822"
+    },
+    "lille": {
+      "name": "Lille",
+      "country": "france",
+      "league": "ligue-1",
+      "file": "france/ligue-1/lille.png",
+      "thesportsdb_id": "133711"
+    },
+    "lorient": {
+      "name": "Lorient",
+      "country": "france",
+      "league": "ligue-1",
+      "file": "france/ligue-1/lorient.png",
+      "thesportsdb_id": "133715"
+    },
+    "lyon": {
+      "name": "Lyon",
+      "country": "france",
+      "league": "ligue-1",
+      "file": "france/ligue-1/lyon.png",
+      "thesportsdb_id": "133713"
+    },
+    "marseille": {
+      "name": "Marseille",
+      "country": "france",
+      "league": "ligue-1",
+      "file": "france/ligue-1/marseille.png",
+      "thesportsdb_id": "133707"
+    },
+    "metz": {
+      "name": "Metz",
+      "country": "france",
+      "league": "ligue-1",
+      "file": "france/ligue-1/metz.png",
+      "thesportsdb_id": "133883"
+    },
+    "monaco": {
+      "name": "Monaco",
+      "country": "france",
+      "league": "ligue-1",
+      "file": "france/ligue-1/monaco.png",
+      "thesportsdb_id": "133823"
+    },
+    "nantes": {
+      "name": "Nantes",
+      "country": "france",
+      "league": "ligue-1",
+      "file": "france/ligue-1/nantes.png",
+      "thesportsdb_id": "133861"
+    },
+    "nice": {
+      "name": "Nice",
+      "country": "france",
+      "league": "ligue-1",
+      "file": "france/ligue-1/nice.png",
+      "thesportsdb_id": "133712"
+    },
+    "paris-fc": {
+      "name": "Paris FC",
+      "country": "france",
+      "league": "ligue-1",
+      "file": "france/ligue-1/paris-fc.png",
+      "thesportsdb_id": "135465"
+    },
+    "paris-sg": {
+      "name": "Paris SG",
+      "country": "france",
+      "league": "ligue-1",
+      "file": "france/ligue-1/paris-sg.png",
+      "thesportsdb_id": "133714"
+    },
+    "rennes": {
+      "name": "Rennes",
+      "country": "france",
+      "league": "ligue-1",
+      "file": "france/ligue-1/rennes.png",
+      "thesportsdb_id": "133719"
+    },
+    "strasbourg": {
+      "name": "Strasbourg",
+      "country": "france",
+      "league": "ligue-1",
+      "file": "france/ligue-1/strasbourg.png",
+      "thesportsdb_id": "133882"
+    },
+    "toulouse": {
+      "name": "Toulouse",
+      "country": "france",
+      "league": "ligue-1",
+      "file": "france/ligue-1/toulouse.png",
+      "thesportsdb_id": "133703"
+    },
+    "amiens": {
+      "name": "Amiens",
+      "country": "france",
+      "league": "ligue-2",
+      "file": "france/ligue-2/amiens.png",
+      "thesportsdb_id": "135658"
+    },
+    "annecy": {
+      "name": "Annecy",
+      "country": "france",
+      "league": "ligue-2",
+      "file": "france/ligue-2/annecy.png",
+      "thesportsdb_id": "139928"
+    },
+    "bastia": {
+      "name": "Bastia",
+      "country": "france",
+      "league": "ligue-2",
+      "file": "france/ligue-2/bastia.png",
+      "thesportsdb_id": "133933"
+    },
+    "boulogne": {
+      "name": "Boulogne",
+      "country": "france",
+      "league": "ligue-2",
+      "file": "france/ligue-2/boulogne.png",
+      "thesportsdb_id": "133849"
+    },
+    "clermont-foot": {
+      "name": "Clermont Foot",
+      "country": "france",
+      "league": "ligue-2",
+      "file": "france/ligue-2/clermont-foot.png",
+      "thesportsdb_id": "134713"
+    },
+    "grenoble": {
+      "name": "Grenoble",
+      "country": "france",
+      "league": "ligue-2",
+      "file": "france/ligue-2/grenoble.png",
+      "thesportsdb_id": "133847"
+    },
+    "guingamp": {
+      "name": "Guingamp",
+      "country": "france",
+      "league": "ligue-2",
+      "file": "france/ligue-2/guingamp.png",
+      "thesportsdb_id": "134244"
+    },
+    "laval": {
+      "name": "Laval",
+      "country": "france",
+      "league": "ligue-2",
+      "file": "france/ligue-2/laval.png",
+      "thesportsdb_id": "134708"
+    },
+    "le-mans": {
+      "name": "Le Mans",
+      "country": "france",
+      "league": "ligue-2",
+      "file": "france/ligue-2/le-mans.png",
+      "thesportsdb_id": "133848"
+    },
+    "montpellier": {
+      "name": "Montpellier",
+      "country": "france",
+      "league": "ligue-2",
+      "file": "france/ligue-2/montpellier.png",
+      "thesportsdb_id": "133709"
+    },
+    "nancy-lorraine": {
+      "name": "Nancy Lorraine",
+      "country": "france",
+      "league": "ligue-2",
+      "file": "france/ligue-2/nancy-lorraine.png",
+      "thesportsdb_id": "133710"
+    },
+    "pau-fc": {
+      "name": "Pau FC",
+      "country": "france",
+      "league": "ligue-2",
+      "file": "france/ligue-2/pau-fc.png",
+      "thesportsdb_id": "138309"
+    },
+    "red-star": {
+      "name": "Red Star",
+      "country": "france",
+      "league": "ligue-2",
+      "file": "france/ligue-2/red-star.png",
+      "thesportsdb_id": "135467"
+    },
+    "rodez-af": {
+      "name": "Rodez AF",
+      "country": "france",
+      "league": "ligue-2",
+      "file": "france/ligue-2/rodez-af.png",
+      "thesportsdb_id": "137652"
+    },
+    "st-etienne": {
+      "name": "St Etienne",
+      "country": "france",
+      "league": "ligue-2",
+      "file": "france/ligue-2/st-etienne.png",
+      "thesportsdb_id": "133717"
+    },
+    "stade-de-reims": {
+      "name": "Stade de Reims",
+      "country": "france",
+      "league": "ligue-2",
+      "file": "france/ligue-2/stade-de-reims.png",
+      "thesportsdb_id": "133934"
+    },
+    "troyes": {
+      "name": "Troyes",
+      "country": "france",
+      "league": "ligue-2",
+      "file": "france/ligue-2/troyes.png",
+      "thesportsdb_id": "134789"
+    },
+    "usl-dunkerque": {
+      "name": "USL Dunkerque",
+      "country": "france",
+      "league": "ligue-2",
+      "file": "france/ligue-2/usl-dunkerque.png",
+      "thesportsdb_id": "138821"
+    },
+    "alverca": {
+      "name": "Alverca",
+      "country": "portugal",
+      "league": "primeira-liga",
+      "file": "portugal/primeira-liga/alverca.png",
+      "thesportsdb_id": "143704"
+    },
+    "arouca": {
+      "name": "Arouca",
+      "country": "portugal",
+      "league": "primeira-liga",
+      "file": "portugal/primeira-liga/arouca.png",
+      "thesportsdb_id": "134387"
+    },
+    "avs": {
+      "name": "AVS",
+      "country": "portugal",
+      "league": "primeira-liga",
+      "file": "portugal/primeira-liga/avs.png",
+      "thesportsdb_id": "147479"
+    },
+    "benfica": {
+      "name": "Benfica",
+      "country": "portugal",
+      "league": "primeira-liga",
+      "file": "portugal/primeira-liga/benfica.png",
+      "thesportsdb_id": "134108"
+    },
+    "braga": {
+      "name": "Braga",
+      "country": "portugal",
+      "league": "primeira-liga",
+      "file": "portugal/primeira-liga/braga.png",
+      "thesportsdb_id": "134098"
+    },
+    "casa-pia": {
+      "name": "Casa Pia",
+      "country": "portugal",
+      "league": "primeira-liga",
+      "file": "portugal/primeira-liga/casa-pia.png",
+      "thesportsdb_id": "138864"
+    },
+    "estoril-praia": {
+      "name": "Estoril Praia",
+      "country": "portugal",
+      "league": "primeira-liga",
+      "file": "portugal/primeira-liga/estoril-praia.png",
+      "thesportsdb_id": "134106"
+    },
+    "estrela-amadora": {
+      "name": "Estrela Amadora",
+      "country": "portugal",
+      "league": "primeira-liga",
+      "file": "portugal/primeira-liga/estrela-amadora.png",
+      "thesportsdb_id": "140008"
+    },
+    "famalicao": {
+      "name": "Famalicao",
+      "country": "portugal",
+      "league": "primeira-liga",
+      "file": "portugal/primeira-liga/famalicao.png",
+      "thesportsdb_id": "136854"
+    },
+    "fc-porto": {
+      "name": "FC Porto",
+      "country": "portugal",
+      "league": "primeira-liga",
+      "file": "portugal/primeira-liga/fc-porto.png",
+      "thesportsdb_id": "134114"
+    },
+    "gil-vicente": {
+      "name": "Gil Vicente",
+      "country": "portugal",
+      "league": "primeira-liga",
+      "file": "portugal/primeira-liga/gil-vicente.png",
+      "thesportsdb_id": "134113"
+    },
+    "moreirense": {
+      "name": "Moreirense",
+      "country": "portugal",
+      "league": "primeira-liga",
+      "file": "portugal/primeira-liga/moreirense.png",
+      "thesportsdb_id": "134112"
+    },
+    "nacional-de-madeira": {
+      "name": "Nacional de Madeira",
+      "country": "portugal",
+      "league": "primeira-liga",
+      "file": "portugal/primeira-liga/nacional-de-madeira.png",
+      "thesportsdb_id": "134109"
+    },
+    "rio-ave": {
+      "name": "Rio Ave",
+      "country": "portugal",
+      "league": "primeira-liga",
+      "file": "portugal/primeira-liga/rio-ave.png",
+      "thesportsdb_id": "134107"
+    },
+    "santa-clara": {
+      "name": "Santa Clara",
+      "country": "portugal",
+      "league": "primeira-liga",
+      "file": "portugal/primeira-liga/santa-clara.png",
+      "thesportsdb_id": "136192"
+    },
+    "sporting-cp": {
+      "name": "Sporting CP",
+      "country": "portugal",
+      "league": "primeira-liga",
+      "file": "portugal/primeira-liga/sporting-cp.png",
+      "thesportsdb_id": "135708"
+    },
+    "tondela": {
+      "name": "Tondela",
+      "country": "portugal",
+      "league": "primeira-liga",
+      "file": "portugal/primeira-liga/tondela.png",
+      "thesportsdb_id": "135502"
+    },
+    "vitoria-de-guimaraes": {
+      "name": "Vitória de Guimarães",
+      "country": "portugal",
+      "league": "primeira-liga",
+      "file": "portugal/primeira-liga/vitoria-de-guimaraes.png",
+      "thesportsdb_id": "134115"
+    },
+    "academico-de-viseu": {
+      "name": "Académico de Viseu",
+      "country": "portugal",
+      "league": "liga-portugal-2",
+      "file": "portugal/liga-portugal-2/academico-de-viseu.png",
+      "thesportsdb_id": "138856"
+    },
+    "benfica-b": {
+      "name": "Benfica B",
+      "country": "portugal",
+      "league": "liga-portugal-2",
+      "file": "portugal/liga-portugal-2/benfica-b.png",
+      "thesportsdb_id": "138860"
+    },
+    "chaves": {
+      "name": "Chaves",
+      "country": "portugal",
+      "league": "liga-portugal-2",
+      "file": "portugal/liga-portugal-2/chaves.png",
+      "thesportsdb_id": "135674"
+    },
+    "farense": {
+      "name": "Farense",
+      "country": "portugal",
+      "league": "liga-portugal-2",
+      "file": "portugal/liga-portugal-2/farense.png",
+      "thesportsdb_id": "138853"
+    },
+    "fc-porto-b": {
+      "name": "FC Porto B",
+      "country": "portugal",
+      "league": "liga-portugal-2",
+      "file": "portugal/liga-portugal-2/fc-porto-b.png",
+      "thesportsdb_id": "138861"
+    },
+    "feirense": {
+      "name": "Feirense",
+      "country": "portugal",
+      "league": "liga-portugal-2",
+      "file": "portugal/liga-portugal-2/feirense.png",
+      "thesportsdb_id": "135675"
+    },
+    "felgueiras": {
+      "name": "Felgueiras",
+      "country": "portugal",
+      "league": "liga-portugal-2",
+      "file": "portugal/liga-portugal-2/felgueiras.png",
+      "thesportsdb_id": "143710"
+    },
+    "leixoes": {
+      "name": "Leixões",
+      "country": "portugal",
+      "league": "liga-portugal-2",
+      "file": "portugal/liga-portugal-2/leixoes.png",
+      "thesportsdb_id": "138858"
+    },
+    "lusitania-lourosa": {
+      "name": "Lusitânia Lourosa",
+      "country": "portugal",
+      "league": "liga-portugal-2",
+      "file": "portugal/liga-portugal-2/lusitania-lourosa.png",
+      "thesportsdb_id": "143711"
+    },
+    "maritimo": {
+      "name": "Marítimo",
+      "country": "portugal",
+      "league": "liga-portugal-2",
+      "file": "portugal/liga-portugal-2/maritimo.png",
+      "thesportsdb_id": "134023"
+    },
+    "oliveirense": {
+      "name": "Oliveirense",
+      "country": "portugal",
+      "league": "liga-portugal-2",
+      "file": "portugal/liga-portugal-2/oliveirense.png",
+      "thesportsdb_id": "138859"
+    },
+    "pacos-de-ferreira": {
+      "name": "Paços de Ferreira",
+      "country": "portugal",
+      "league": "liga-portugal-2",
+      "file": "portugal/liga-portugal-2/pacos-de-ferreira.png",
+      "thesportsdb_id": "134111"
+    },
+    "penafiel": {
+      "name": "Penafiel",
+      "country": "portugal",
+      "league": "liga-portugal-2",
+      "file": "portugal/liga-portugal-2/penafiel.png",
+      "thesportsdb_id": "134587"
+    },
+    "portimonense": {
+      "name": "Portimonense",
+      "country": "portugal",
+      "league": "liga-portugal-2",
+      "file": "portugal/liga-portugal-2/portimonense.png",
+      "thesportsdb_id": "136031"
+    },
+    "sporting-b": {
+      "name": "Sporting B",
+      "country": "portugal",
+      "league": "liga-portugal-2",
+      "file": "portugal/liga-portugal-2/sporting-b.png",
+      "thesportsdb_id": "143719"
+    },
+    "torreense": {
+      "name": "Torreense",
+      "country": "portugal",
+      "league": "liga-portugal-2",
+      "file": "portugal/liga-portugal-2/torreense.png",
+      "thesportsdb_id": "143720"
+    },
+    "uniao-de-leiria": {
+      "name": "União de Leiria",
+      "country": "portugal",
+      "league": "liga-portugal-2",
+      "file": "portugal/liga-portugal-2/uniao-de-leiria.png",
+      "thesportsdb_id": "140355"
+    },
+    "vizela": {
+      "name": "Vizela",
+      "country": "portugal",
+      "league": "liga-portugal-2",
+      "file": "portugal/liga-portugal-2/vizela.png",
+      "thesportsdb_id": "140097"
+    }
+  },
+  "metadata": {
+    "total_teams": 197,
+    "generated_at": "2025-12-25T21:31:10.801603",
+    "source": "TheSportsDB"
+  }
+}
