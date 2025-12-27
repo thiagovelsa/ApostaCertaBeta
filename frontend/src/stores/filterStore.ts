@@ -1,11 +1,13 @@
 import { create } from 'zustand';
-import type { FiltroEstatisticas, MandoFilter } from '@/types';
+import type { FiltroEstatisticas, MandoFilter, PeriodoFilter } from '@/types';
 
 interface FilterState {
   filtro: FiltroEstatisticas;
+  periodo: PeriodoFilter;
   homeMando: MandoFilter;
   awayMando: MandoFilter;
   setFiltro: (filtro: FiltroEstatisticas) => void;
+  setPeriodo: (periodo: PeriodoFilter) => void;
   setHomeMando: (mando: MandoFilter) => void;
   setAwayMando: (mando: MandoFilter) => void;
   toggleHomeMando: (mando: 'casa' | 'fora') => void;
@@ -14,9 +16,11 @@ interface FilterState {
 
 export const useFilterStore = create<FilterState>((set) => ({
   filtro: 'geral',
+  periodo: 'integral',
   homeMando: null,
   awayMando: null,
   setFiltro: (filtro) => set({ filtro }),
+  setPeriodo: (periodo) => set({ periodo }),
   setHomeMando: (mando) => set({ homeMando: mando }),
   setAwayMando: (mando) => set({ awayMando: mando }),
   // Toggle: se já está ativo, desativa; se não, ativa

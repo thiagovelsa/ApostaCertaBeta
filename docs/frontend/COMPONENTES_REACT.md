@@ -1,9 +1,9 @@
 # Componentes React - Catálogo Atomic Design
 
-**Versão:** 1.2
+**Versão:** 1.3
 **Data:** 27 de dezembro de 2025
 **Pattern:** Atomic Design (Atoms → Molecules → Organisms → Pages)
-**Total de Componentes:** 22 (v1.2)
+**Total de Componentes:** 23 (v1.3)
 
 Catálogo completo de componentes React + TypeScript para implementação do frontend.
 
@@ -12,7 +12,7 @@ Catálogo completo de componentes React + TypeScript para implementação do fro
 ## 📋 Índice
 
 1. [ATOMS (6)](#atoms---6-componentes)
-2. [MOLECULES (5)](#molecules---5-componentes)
+2. [MOLECULES (6)](#molecules---6-componentes)
 3. [ORGANISMS (6)](#organisms---6-componentes) *(+3 novos: RaceBadges, PredictionsCard, DisciplineCard)*
 4. [LAYOUT (3)](#layout---3-componentes)
 5. [PAGES (2)](#pages---2-páginas-v1)
@@ -384,7 +384,7 @@ export const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
 
 ---
 
-## MOLECULES - 5 Componentes
+## MOLECULES - 6 Componentes
 
 ### 7. TeamCard
 
@@ -693,9 +693,75 @@ export const RaceRow: React.FC<RaceRowProps> = ({
 
 ---
 
+### 12. PeriodoToggle (v1.3)
+
+Toggle para selecionar período do jogo (Integral/1T/2T).
+
+```typescript
+// src/components/molecules/PeriodoToggle.tsx
+
+import type { PeriodoFilter } from '@/types';
+
+interface PeriodoToggleProps {
+  value: PeriodoFilter;
+  onChange: (value: PeriodoFilter) => void;
+}
+
+const options: { value: PeriodoFilter; label: string }[] = [
+  { value: 'integral', label: 'Integral' },
+  { value: '1T', label: '1T' },
+  { value: '2T', label: '2T' },
+];
+
+export function PeriodoToggle({ value, onChange }: PeriodoToggleProps) {
+  return (
+    <div className="inline-flex bg-dark-tertiary rounded-lg p-1 gap-1">
+      {options.map((option) => (
+        <button
+          key={option.value}
+          onClick={() => onChange(option.value)}
+          className={`
+            px-4 py-2 rounded-md text-sm font-medium transition-all duration-200
+            ${
+              value === option.value
+                ? 'bg-info text-dark-primary shadow-glow'
+                : 'text-gray-400 hover:text-white hover:bg-dark-quaternary'
+            }
+          `}
+        >
+          {option.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+// Exemplo de Uso:
+// <PeriodoToggle value={periodo} onChange={setPeriodo} />
+// Integração com useFilterStore:
+// const { periodo, setPeriodo } = useFilterStore();
+```
+
+**Props:**
+- `value`: Período selecionado (`'integral'` | `'1T'` | `'2T'`)
+- `onChange`: Callback ao mudar seleção
+
+**Uso no Sistema de Filtros:**
+Este componente faz parte do sistema de 3 filtros:
+1. **FilterToggle**: Filtro principal (Temporada/Últimos 5/Últimos 10)
+2. **PeriodoToggle**: Sub-filtro de período (Integral/1T/2T)
+3. **MandoToggle**: Sub-filtro casa/fora (por time)
+
+**Casos de Uso para Apostas:**
+- Over/Under 0.5 gols no 1T
+- Time marca mais no 2T em casa?
+- Comparar 1T vs 2T para padrões
+
+---
+
 ## ORGANISMS - 6 Componentes
 
-### 12. MatchCard
+### 13. MatchCard
 
 Card completo de partida para grid.
 
@@ -788,7 +854,7 @@ export const MatchCard: React.FC<MatchCardProps> = ({
 
 ---
 
-### 13. StatsPanel
+### 14. StatsPanel
 
 Painel de estatísticas comparando mandante e visitante.
 
@@ -877,7 +943,7 @@ export function StatsPanel({ stats, isLoading, error }: StatsPanelProps) {
 
 ---
 
-### 14. StatsCategory
+### 15. StatsCategory
 
 Seção de uma categoria de estatística com feitos/sofridos.
 
@@ -940,7 +1006,7 @@ export function StatsCategory({ title, icon, homeStats, awayStats }: StatsCatego
 
 ---
 
-### 15. RaceBadges (v1.1)
+### 16. RaceBadges (v1.1)
 
 Badges de sequência de resultados (V/E/D) para exibir forma recente dos times.
 
@@ -1002,7 +1068,7 @@ function RaceBadges({ results, limit }: RaceBadgesProps) {
 
 ---
 
-### 16. PredictionsCard (v1.1)
+### 17. PredictionsCard (v1.1)
 
 Card de previsões com análise preditiva baseada em médias.
 
@@ -1064,7 +1130,7 @@ export function PredictionsCard({
 
 ---
 
-### 17. DisciplineCard (v1.2)
+### 18. DisciplineCard (v1.2)
 
 Card de disciplina com métricas de cartões e faltas, incluindo dados do árbitro (competição + temporada).
 
@@ -1154,7 +1220,7 @@ export function DisciplineCard({
 
 ## LAYOUT - 3 Componentes
 
-### 18. PageLayout
+### 19. PageLayout
 
 Layout principal com header e footer.
 
@@ -1198,7 +1264,7 @@ export const PageLayout: React.FC<PageLayoutProps> = ({
 
 ---
 
-### 19. Container
+### 20. Container
 
 Container responsivo.
 
@@ -1224,7 +1290,7 @@ export const Container: React.FC<ContainerProps> = ({
 
 ---
 
-### 20. Grid
+### 21. Grid
 
 Grid system responsivo.
 
@@ -1274,7 +1340,7 @@ export const Grid: React.FC<GridProps> = ({
 
 ## PAGES - 2 Páginas (v1)
 
-### 21. HomePage/PartidasPage (Combinadas)
+### 22. HomePage/PartidasPage (Combinadas)
 
 Página única com DatePicker e grid de MatchCards animados.
 
@@ -1336,7 +1402,7 @@ export const HomePage: React.FC = () => {
 
 ---
 
-### 22. EstatisticasPage
+### 23. EstatisticasPage
 
 Página de estatísticas detalhadas com previsões e sequência de resultados.
 
@@ -1405,6 +1471,7 @@ src/
 │   │   ├── StatMetric.tsx
 │   │   ├── ComparisonBar.tsx
 │   │   ├── FilterToggle.tsx
+│   │   ├── PeriodoToggle.tsx     # Sub-filtro de período (1T/2T/Integral)
 │   │   ├── RaceRow.tsx
 │   │   └── index.ts
 │   │

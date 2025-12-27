@@ -1,7 +1,7 @@
 # Arquitetura Frontend - Sistema de Análise de Estatísticas de Futebol
 
-**Versão:** 1.0
-**Data:** 24 de dezembro de 2025
+**Versão:** 1.1
+**Data:** 27 de dezembro de 2025
 **Framework:** React 18 + TypeScript 5 + Vite 5
 
 Guia técnico completo da arquitetura frontend, organização de código, state management, routing e otimizações de performance.
@@ -36,6 +36,7 @@ frontend/
 │   │   ├── molecules/
 │   │   │   ├── ComparisonBar.tsx
 │   │   │   ├── FilterToggle.tsx
+│   │   │   ├── PeriodoToggle.tsx    # Sub-filtro de período (1T/2T/Integral)
 │   │   │   ├── RaceRow.tsx
 │   │   │   ├── StatMetric.tsx
 │   │   │   └── TeamCard.tsx
@@ -155,12 +156,17 @@ import { create } from 'zustand';
 import { devtools, persist } from 'zustand/middleware';
 
 export type FilterType = 'geral' | '5' | '10';
+export type PeriodoFilter = 'integral' | '1T' | '2T';
 export type MandoFilter = 'casa' | 'fora' | null;
 
 interface FilterStore {
   // Filtro principal (temporada/últimos 5/últimos 10)
   filtro: FilterType;
   setFiltro: (filtro: FilterType) => void;
+
+  // Sub-filtro de período (integral/1T/2T)
+  periodo: PeriodoFilter;
+  setPeriodo: (periodo: PeriodoFilter) => void;
 
   // Sub-filtro Casa/Fora (independente por time)
   homeMando: MandoFilter;
@@ -178,10 +184,12 @@ export const useFilterStore = create<FilterStore>()(
     persist(
       (set, get) => ({
         filtro: 'geral',
+        periodo: 'integral',
         homeMando: null,
         awayMando: null,
 
         setFiltro: (filtro) => set({ filtro }),
+        setPeriodo: (periodo) => set({ periodo }),
         setHomeMando: (mando) => set({ homeMando: mando }),
         setAwayMando: (mando) => set({ awayMando: mando }),
 
@@ -195,7 +203,7 @@ export const useFilterStore = create<FilterStore>()(
           set({ awayMando: current === mando ? null : mando });
         },
 
-        reset: () => set({ filtro: 'geral', homeMando: null, awayMando: null }),
+        reset: () => set({ filtro: 'geral', periodo: 'integral', homeMando: null, awayMando: null }),
       }),
       { name: 'filter-storage' }
     )
@@ -345,7 +353,7 @@ export function ErrorBoundary({ children }: { children: React.ReactNode }) {
 ### Barrel Export (src/stores/index.ts)
 
 ```typescript
-export { useFilterStore, type FilterType } from './filterStore';
+export { useFilterStore, type FilterType, type PeriodoFilter, type MandoFilter } from './filterStore';
 export { useDateStore } from './dateStore';
 export { useUIStore } from './uiStore';
 ```
@@ -587,14 +595,15 @@ export default function EstatisticasPage() {
 │                                                         │
 │  useParams() → matchId                                  │
 │      ↓                                                  │
-│  useFilterStore → filtro, homeMando, awayMando          │
+│  useFilterStore → filtro, periodo, homeMando, awayMando │
 │      ↓                                                  │
-│  useStats(matchId, filtro, homeMando, awayMando)        │
+│  useStats(matchId, filtro, periodo, homeMando, awayMando)│
 │      ↓                                                  │
-│  statsService.getMatchStats(matchId, filtro, mando...)  │
+│  statsService.getMatchStats(matchId, filtro, periodo...)│
 │      ↓                                                  │
 │  GET /api/partida/{matchId}/stats                       │
 │      ?filtro=geral|5|10                                 │
+│      &periodo=integral|1T|2T (opcional)                 │
 │      &home_mando=casa|fora (opcional)                   │
 │      &away_mando=casa|fora (opcional)                   │
 │      ↓                                                  │
@@ -602,10 +611,11 @@ export default function EstatisticasPage() {
 │      ↓                                                  │
 │  StatsPanel (3 colunas: mandante | info | visitante)    │
 │  ├─ TeamCard (mandante) + RaceBadges + MandoToggle      │
-│  ├─ Match info + FilterToggle                           │
+│  ├─ Match info + FilterToggle + PeriodoToggle           │
 │  └─ TeamCard (visitante) + RaceBadges + MandoToggle     │
 │      ↓                                                  │
 │  FilterToggle onChange → setFiltro(novoFiltro)          │
+│  PeriodoToggle onChange → setPeriodo(novoPeriodo)       │
 │  MandoToggle onClick → toggleHomeMando/toggleAwayMando  │
 │      ↓                                                  │
 │  useStats refetch automático (mudança de query key)     │
@@ -621,10 +631,10 @@ SERVICES & QUERIES (Background):
 │ staleTime: 1h                                          │
 │ gcTime: 2h                                             │
 ├────────────────────────────────────────────────────────┤
-│ queryKey: ['stats', matchId, filtro, homeMando, away..]│
-│ staleTime: 6h                                          │
-│ gcTime: 12h                                            │
-│ (homeMando/awayMando fazem parte da query key)         │
+│ queryKey: ['stats', matchId, filtro, periodo, homeMando, away..]│
+│ staleTime: 0 (sem cache - sempre busca dados frescos)  │
+│ gcTime: 0                                              │
+│ (periodo/homeMando/awayMando fazem parte da query key) │
 ├────────────────────────────────────────────────────────┤
 │ queryKey: ['competicoes']                              │
 │ staleTime: 24h                                         │

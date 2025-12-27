@@ -1,6 +1,6 @@
 # Integração API - Services e React Query Hooks
 
-**Versão:** 1.2
+**Versão:** 1.3
 **Data:** 27 de dezembro de 2025
 **Framework:** React Query 5 (TanStack Query)
 **HTTP Client:** Axios 1.6+
@@ -192,28 +192,33 @@ Busca estatísticas detalhadas de uma partida.
 // src/services/statsService.ts
 
 import api from './api';
-import { StatsResponse, MandoFilter } from '@/types';
+import { StatsResponse, MandoFilter, PeriodoFilter } from '@/types';
 
 type FilterType = 'geral' | '5' | '10';
 
 export const statsService = {
   /**
    * Busca estatísticas de uma partida
-   * GET /api/partida/{matchId}/stats?filtro=geral|5|10&home_mando=casa|fora&away_mando=casa|fora
+   * GET /api/partida/{matchId}/stats?filtro=geral|5|10&periodo=integral|1T|2T&home_mando=casa|fora&away_mando=casa|fora
    *
    * @param matchId - ID da partida
    * @param filtro - Filtro principal (geral, últimas 5, últimas 10)
+   * @param periodo - Sub-filtro de período do jogo (integral, 1T, 2T)
    * @param homeMando - Sub-filtro Casa/Fora para o mandante (opcional)
    * @param awayMando - Sub-filtro Casa/Fora para o visitante (opcional)
    */
   async getMatchStats(
     matchId: string,
     filtro: FilterType = 'geral',
+    periodo: PeriodoFilter = 'integral',
     homeMando: MandoFilter = null,
     awayMando: MandoFilter = null
   ): Promise<StatsResponse> {
     try {
       const params: Record<string, string> = { filtro };
+
+      // Adiciona periodo apenas se não for o default
+      if (periodo !== 'integral') params.periodo = periodo;
 
       // Adiciona parâmetros de mando apenas se definidos
       if (homeMando) params.home_mando = homeMando;
@@ -250,15 +255,17 @@ export const statsService = {
 ```
 
 **Endpoint Mapping:**
-- Backend: `GET /api/partida/{matchId}/stats?filtro=geral|5|10&home_mando=casa|fora&away_mando=casa|fora`
+- Backend: `GET /api/partida/{matchId}/stats?filtro=geral|5|10&periodo=integral|1T|2T&home_mando=casa|fora&away_mando=casa|fora`
 - Response: `StatsResponse`
 - Cache TTL: 6 horas (match backend `CACHE_TTL_SEASONSTATS=21600`)
 
-**Parâmetros de Mando (Sub-filtro Casa/Fora):**
+**Parâmetros:**
+- `filtro` - Filtro principal de quantidade de partidas: `geral` (temporada), `5` (últimas 5), `10` (últimas 10)
+- `periodo` - Sub-filtro de tempo do jogo: `integral` (jogo completo), `1T` (1º tempo), `2T` (2º tempo)
 - `home_mando` - Filtra partidas do mandante: `casa` (apenas jogos em casa) ou `fora` (apenas fora)
 - `away_mando` - Filtra partidas do visitante: `casa` ou `fora`
-- Ambos são opcionais e independentes (pode aplicar a um time, ambos, ou nenhum)
-- Combinável com o filtro principal (`geral`, `5`, `10`)
+- Todos os sub-filtros são opcionais e independentes
+- Combinável: "Últimos 5" + "1T" + "Casa" = Stats do 1º tempo dos últimos 5 jogos em casa
 
 ---
 
@@ -431,7 +438,7 @@ function MyComponent() {
 
 import { useQuery, UseQueryResult } from '@tanstack/react-query';
 import { statsService } from '@/services';
-import { StatsResponse, MandoFilter } from '@/types';
+import { StatsResponse, MandoFilter, PeriodoFilter } from '@/types';
 
 interface UseStatsOptions {
   enabled?: boolean;
@@ -440,16 +447,17 @@ interface UseStatsOptions {
 export const useStats = (
   matchId: string | undefined,
   filtro: 'geral' | '5' | '10' = 'geral',
+  periodo: PeriodoFilter = 'integral',
   homeMando: MandoFilter = null,
   awayMando: MandoFilter = null,
   options?: UseStatsOptions
 ): UseQueryResult<StatsResponse, Error> => {
   return useQuery({
     // Query key inclui todos os filtros para cache separado
-    queryKey: ['stats', matchId, filtro, homeMando, awayMando],
-    queryFn: () => statsService.getMatchStats(matchId!, filtro, homeMando, awayMando),
-    staleTime: 1000 * 60 * 60 * 6,  // 6 horas (match backend CACHE_TTL_SEASONSTATS)
-    gcTime: 1000 * 60 * 60 * 12,  // 12 horas
+    queryKey: ['stats', matchId, filtro, periodo, homeMando, awayMando],
+    queryFn: () => statsService.getMatchStats(matchId!, filtro, periodo, homeMando, awayMando),
+    staleTime: 0,  // Sem cache - sempre busca dados frescos
+    gcTime: 0,
     enabled: !!matchId && (options?.enabled !== false),
     refetchOnWindowFocus: false,
   });
@@ -459,10 +467,10 @@ export const useStats = (
 /*
 function EstatisticasPage() {
   const { matchId } = useParams();
-  const { filtro, homeMando, awayMando, toggleHomeMando, toggleAwayMando } = useFilterStore();
+  const { filtro, periodo, homeMando, awayMando, toggleHomeMando, toggleAwayMando } = useFilterStore();
 
   // Hook refaz fetch automaticamente quando qualquer filtro muda
-  const { data: stats, isLoading } = useStats(matchId, filtro, homeMando, awayMando);
+  const { data: stats, isLoading } = useStats(matchId, filtro, periodo, homeMando, awayMando);
 
   return (
     <StatsPanel
@@ -479,9 +487,10 @@ function EstatisticasPage() {
 ```
 
 **Cache Behavior:**
-- `staleTime: 6h` - Alinhado com backend TTL de season stats
-- Cache key inclui `filtro`, `homeMando`, `awayMando` - Diferentes combinações = diferentes caches
+- `staleTime: 0` - Sem cache, sempre busca dados frescos (garante precisão dos filtros)
+- Cache key inclui `filtro`, `periodo`, `homeMando`, `awayMando` - Diferentes combinações = diferentes caches
 - Refetch automático ao mudar qualquer filtro (query key muda)
+- `periodo`: `'integral'` (default), `'1T'` (1º tempo), `'2T'` (2º tempo)
 - `homeMando` e `awayMando` são independentes (podem ser `null`, `'casa'`, ou `'fora'`)
 
 ---
@@ -621,6 +630,9 @@ export interface PartidaListResponse {
 
 // Tipo para filtro principal (temporada/últimos 5/últimos 10)
 export type FiltroEstatisticas = 'geral' | '5' | '10';
+
+// Tipo para sub-filtro de período do jogo (1T/2T/Integral)
+export type PeriodoFilter = 'integral' | '1T' | '2T';
 
 // Tipo para sub-filtro Casa/Fora (independente por time)
 export type MandoFilter = 'casa' | 'fora' | null;

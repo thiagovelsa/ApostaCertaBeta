@@ -16,6 +16,7 @@ export type {
   TimeComEstatisticas,
   FiltroEstatisticas,
   MandoFilter,
+  PeriodoFilter,
   ArbitroInfo,
   StatsResponse,
   CompeticaoInfo,

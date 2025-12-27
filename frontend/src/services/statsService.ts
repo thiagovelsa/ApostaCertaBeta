@@ -1,12 +1,18 @@
 import { api } from './api';
-import type { StatsResponse, FiltroEstatisticas, MandoFilter, CompeticaoInfo, EscudoResponse } from '@/types';
+import type { StatsResponse, FiltroEstatisticas, MandoFilter, PeriodoFilter, CompeticaoInfo, EscudoResponse } from '@/types';
 
 function buildStatsParams(
   filtro: FiltroEstatisticas,
+  periodo: PeriodoFilter,
   homeMando: MandoFilter,
   awayMando: MandoFilter
 ): Record<string, string> {
   const params: Record<string, string> = { filtro };
+
+  // Só envia periodo se não for o default (integral)
+  if (periodo !== 'integral') {
+    params.periodo = periodo;
+  }
 
   if (homeMando) {
     params.home_mando = homeMando;
@@ -33,12 +39,14 @@ async function fetchMatchStats(
  *
  * @param matchId - ID da partida
  * @param filtro - Filtro de período (geral, 5, 10)
+ * @param periodo - Subfiltro de período do jogo (integral, 1T, 2T)
  * @param homeMando - Subfiltro de mando para o mandante (casa/fora/null)
  * @param awayMando - Subfiltro de mando para o visitante (casa/fora/null)
  */
 export async function getMatchStats(
   matchId: string,
   filtro: FiltroEstatisticas = 'geral',
+  periodo: PeriodoFilter = 'integral',
   homeMando: MandoFilter = null,
   awayMando: MandoFilter = null
 ): Promise<StatsResponse> {
@@ -46,13 +54,13 @@ export async function getMatchStats(
   const sameSubfilter = homeMando && awayMando && homeMando === awayMando;
 
   if (noSubfilters || sameSubfilter) {
-    return fetchMatchStats(matchId, buildStatsParams(filtro, homeMando, awayMando));
+    return fetchMatchStats(matchId, buildStatsParams(filtro, periodo, homeMando, awayMando));
   }
 
   // Fetch each side separately so one subfilter does not affect the other.
   const [homeResponse, awayResponse] = await Promise.all([
-    fetchMatchStats(matchId, buildStatsParams(filtro, homeMando, null)),
-    fetchMatchStats(matchId, buildStatsParams(filtro, null, awayMando)),
+    fetchMatchStats(matchId, buildStatsParams(filtro, periodo, homeMando, null)),
+    fetchMatchStats(matchId, buildStatsParams(filtro, periodo, null, awayMando)),
   ]);
 
   return {

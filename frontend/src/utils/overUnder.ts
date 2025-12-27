@@ -1,6 +1,10 @@
 /**
  * Funções de cálculo de probabilidades Over/Under
  * Usa distribuições de Poisson (eventos discretos) e Normal (alta frequência)
+ *
+ * MELHORIAS IMPLEMENTADAS (v1.1):
+ * - Sigma calculado corretamente via variância combinada independente
+ * - Threshold dinâmico para seleção Poisson/Normal baseado em λ
  */
 
 import jstat from 'jstat';
@@ -33,11 +37,14 @@ const BASE_LINES: Record<string, number[]> = {
 };
 
 /**
- * Distribuição estatística por tipo de estatística
+ * Distribuição estatística PREFERIDA por tipo de estatística
  * - Poisson: eventos discretos de baixa/média frequência
  * - Normal: eventos de alta frequência (CLT)
+ *
+ * MELHORIA v1.1: Estas são preferências, mas a seleção final
+ * é dinâmica baseada no λ (threshold = 7)
  */
-const DISTRIBUTIONS: Record<string, DistributionType> = {
+const PREFERRED_DISTRIBUTIONS: Record<string, DistributionType> = {
   gols: 'poisson',
   escanteios: 'poisson',
   finalizacoes: 'normal',
@@ -45,6 +52,37 @@ const DISTRIBUTIONS: Record<string, DistributionType> = {
   cartoes_amarelos: 'poisson',
   faltas: 'normal',
 };
+
+/**
+ * Threshold de λ para usar Normal em vez de Poisson
+ *
+ * Quando λ > 7, a distribuição de Poisson converge para Normal
+ * e usar Normal é mais preciso computacionalmente.
+ */
+const POISSON_NORMAL_THRESHOLD = 7;
+
+/**
+ * Seleciona a distribuição apropriada baseado no λ
+ *
+ * MELHORIA v1.1: Seleção dinâmica
+ * - Se λ > 7: usa Normal (mesmo para stats que preferem Poisson)
+ * - Senão: usa a distribuição preferida
+ *
+ * @param statKey - Chave da estatística
+ * @param lambda - Valor esperado
+ * @returns Tipo de distribuição a usar
+ */
+function selectDistribution(statKey: string, lambda: number): DistributionType {
+  const preferred = PREFERRED_DISTRIBUTIONS[statKey] || 'poisson';
+
+  // Se λ é alto, Poisson converge para Normal
+  // Mais preciso usar Normal para λ > 7
+  if (lambda > POISSON_NORMAL_THRESHOLD && preferred === 'poisson') {
+    return 'normal';
+  }
+
+  return preferred;
+}
 
 /**
  * Ícones por estatística
@@ -119,20 +157,53 @@ function calculateOverProbability(
 }
 
 /**
- * Calcula sigma (desvio padrão) para distribuição Normal
- * Baseado no CV médio dos times
- *
- * @param lambda - Valor esperado
- * @param cv - Coeficiente de Variação médio
- * @returns Desvio padrão
+ * Parâmetros para cálculo de sigma combinado
  */
-function calculateSigma(lambda: number, cv: number): number {
-  // σ = CV * μ
-  // Com limites de segurança
-  const safeCv = Math.min(1.5, Math.max(0.1, cv));
-  const sigma = safeCv * lambda;
-  return Math.max(0.5, sigma); // Sigma mínimo de 0.5
+interface SigmaParams {
+  mediaHome: number;
+  mediaAway: number;
+  cvHome: number;
+  cvAway: number;
 }
+
+/**
+ * Calcula sigma (desvio padrão) para distribuição Normal
+ *
+ * MELHORIA v1.1: Usa variância combinada correta (independente)
+ *
+ * Antes (incorreto):
+ *   σ = CV_médio × λ_total
+ *   Problema: assume correlação entre times
+ *
+ * Depois (correto):
+ *   var_home = (CV_home × μ_home)²
+ *   var_away = (CV_away × μ_away)²
+ *   σ = √(var_home + var_away)
+ *
+ * @param params - Parâmetros com médias e CVs individuais
+ * @returns Desvio padrão combinado
+ */
+function calculateSigmaCombined(params: SigmaParams): number {
+  const { mediaHome, mediaAway, cvHome, cvAway } = params;
+
+  // Limita CVs para evitar valores extremos
+  const safeCvHome = Math.min(1.5, Math.max(0.1, cvHome));
+  const safeCvAway = Math.min(1.5, Math.max(0.1, cvAway));
+
+  // Calcula variância de cada time: var = (σ)² = (CV × μ)²
+  const varHome = Math.pow(safeCvHome * mediaHome, 2);
+  const varAway = Math.pow(safeCvAway * mediaAway, 2);
+
+  // Variância combinada (eventos independentes): var_total = var_home + var_away
+  const varTotal = varHome + varAway;
+
+  // Sigma = raiz da variância
+  const sigma = Math.sqrt(varTotal);
+
+  // Sigma mínimo de 0.5 para evitar distribuições degeneradas
+  return Math.max(0.5, sigma);
+}
+
 
 /**
  * Gera linhas dinâmicas com corte em ≥98%
@@ -229,33 +300,60 @@ function getConfiancaLabel(confianca: number): ConfiancaLabel {
 }
 
 /**
+ * Parâmetros para criar estatística Over/Under
+ */
+interface CreateOverUnderParams {
+  statKey: string;
+  lambdaTotal: number;
+  mediaHome: number;
+  mediaAway: number;
+  cvHome: number;
+  cvAway: number;
+  partidasAnalisadas: number;
+}
+
+/**
  * Cria um OverUnderStat para uma estatística específica
  *
- * @param statKey - Chave da estatística (gols, escanteios, etc.)
- * @param lambda - Valor esperado (do PrevisaoPartida.total.valor)
- * @param cvHome - CV do mandante
- * @param cvAway - CV do visitante
- * @param partidasAnalisadas - Número de partidas
+ * MELHORIA v1.1:
+ * - Usa seleção dinâmica de distribuição baseada em λ
+ * - Calcula sigma via variância combinada correta
+ *
+ * @param params - Parâmetros para cálculo
  * @returns OverUnderStat completo
  */
-function createOverUnderStat(
-  statKey: string,
-  lambda: number,
-  cvHome: number,
-  cvAway: number,
-  partidasAnalisadas: number
-): OverUnderStat {
-  const distribution = DISTRIBUTIONS[statKey] || 'poisson';
+function createOverUnderStat(params: CreateOverUnderParams): OverUnderStat {
+  const {
+    statKey,
+    lambdaTotal,
+    mediaHome,
+    mediaAway,
+    cvHome,
+    cvAway,
+    partidasAnalisadas,
+  } = params;
+
   const baseLines = BASE_LINES[statKey] || [0.5, 1.5, 2.5, 3.5];
 
-  // CV médio dos times
+  // Lambda seguro
+  const safeLambda = Math.max(0.1, lambdaTotal);
+
+  // MELHORIA v1.1: Seleção dinâmica de distribuição
+  const distribution = selectDistribution(statKey, safeLambda);
+
+  // CV médio dos times (para confiança)
   const cvMedio = (cvHome + cvAway) / 2;
 
-  // Lambda seguro
-  const safeLambda = Math.max(0.1, lambda);
-
-  // Calcula sigma para distribuições normais
-  const sigma = distribution === 'normal' ? calculateSigma(safeLambda, cvMedio) : null;
+  // MELHORIA v1.1: Calcula sigma via variância combinada correta
+  let sigma: number | null = null;
+  if (distribution === 'normal') {
+    sigma = calculateSigmaCombined({
+      mediaHome,
+      mediaAway,
+      cvHome,
+      cvAway,
+    });
+  }
 
   // Gera linhas dinâmicas
   const lines = generateDynamicLines(
@@ -289,6 +387,10 @@ function createOverUnderStat(
 /**
  * Calcula todas as probabilidades Over/Under da partida
  *
+ * MELHORIA v1.1:
+ * - Passa médias individuais para cálculo correto de sigma
+ * - Usa seleção dinâmica de distribuição
+ *
  * @param previsoes - Previsões calculadas (de calcularPrevisoes)
  * @param mandanteStats - Estatísticas do mandante
  * @param visitanteStats - Estatísticas do visitante
@@ -302,47 +404,59 @@ export function calcularOverUnder(
   partidasAnalisadas: number
 ): OverUnderPartida {
   return {
-    gols: createOverUnderStat(
-      'gols',
-      previsoes.gols.total.valor,
-      mandanteStats.gols.feitos.cv,
-      visitanteStats.gols.feitos.cv,
-      partidasAnalisadas
-    ),
-    escanteios: createOverUnderStat(
-      'escanteios',
-      previsoes.escanteios.total.valor,
-      mandanteStats.escanteios.feitos.cv,
-      visitanteStats.escanteios.feitos.cv,
-      partidasAnalisadas
-    ),
-    finalizacoes: createOverUnderStat(
-      'finalizacoes',
-      previsoes.finalizacoes.total.valor,
-      mandanteStats.finalizacoes.feitos.cv,
-      visitanteStats.finalizacoes.feitos.cv,
-      partidasAnalisadas
-    ),
-    finalizacoes_gol: createOverUnderStat(
-      'finalizacoes_gol',
-      previsoes.finalizacoes_gol.total.valor,
-      mandanteStats.finalizacoes_gol.feitos.cv,
-      visitanteStats.finalizacoes_gol.feitos.cv,
-      partidasAnalisadas
-    ),
-    cartoes_amarelos: createOverUnderStat(
-      'cartoes_amarelos',
-      previsoes.cartoes_amarelos.total.valor,
-      mandanteStats.cartoes_amarelos.cv,
-      visitanteStats.cartoes_amarelos.cv,
-      partidasAnalisadas
-    ),
-    faltas: createOverUnderStat(
-      'faltas',
-      previsoes.faltas.total.valor,
-      mandanteStats.faltas.cv,
-      visitanteStats.faltas.cv,
-      partidasAnalisadas
-    ),
+    gols: createOverUnderStat({
+      statKey: 'gols',
+      lambdaTotal: previsoes.gols.total.valor,
+      mediaHome: previsoes.gols.home.valor,
+      mediaAway: previsoes.gols.away.valor,
+      cvHome: mandanteStats.gols.feitos.cv,
+      cvAway: visitanteStats.gols.feitos.cv,
+      partidasAnalisadas,
+    }),
+    escanteios: createOverUnderStat({
+      statKey: 'escanteios',
+      lambdaTotal: previsoes.escanteios.total.valor,
+      mediaHome: previsoes.escanteios.home.valor,
+      mediaAway: previsoes.escanteios.away.valor,
+      cvHome: mandanteStats.escanteios.feitos.cv,
+      cvAway: visitanteStats.escanteios.feitos.cv,
+      partidasAnalisadas,
+    }),
+    finalizacoes: createOverUnderStat({
+      statKey: 'finalizacoes',
+      lambdaTotal: previsoes.finalizacoes.total.valor,
+      mediaHome: previsoes.finalizacoes.home.valor,
+      mediaAway: previsoes.finalizacoes.away.valor,
+      cvHome: mandanteStats.finalizacoes.feitos.cv,
+      cvAway: visitanteStats.finalizacoes.feitos.cv,
+      partidasAnalisadas,
+    }),
+    finalizacoes_gol: createOverUnderStat({
+      statKey: 'finalizacoes_gol',
+      lambdaTotal: previsoes.finalizacoes_gol.total.valor,
+      mediaHome: previsoes.finalizacoes_gol.home.valor,
+      mediaAway: previsoes.finalizacoes_gol.away.valor,
+      cvHome: mandanteStats.finalizacoes_gol.feitos.cv,
+      cvAway: visitanteStats.finalizacoes_gol.feitos.cv,
+      partidasAnalisadas,
+    }),
+    cartoes_amarelos: createOverUnderStat({
+      statKey: 'cartoes_amarelos',
+      lambdaTotal: previsoes.cartoes_amarelos.total.valor,
+      mediaHome: previsoes.cartoes_amarelos.home.valor,
+      mediaAway: previsoes.cartoes_amarelos.away.valor,
+      cvHome: mandanteStats.cartoes_amarelos.cv,
+      cvAway: visitanteStats.cartoes_amarelos.cv,
+      partidasAnalisadas,
+    }),
+    faltas: createOverUnderStat({
+      statKey: 'faltas',
+      lambdaTotal: previsoes.faltas.total.valor,
+      mediaHome: previsoes.faltas.home.valor,
+      mediaAway: previsoes.faltas.away.valor,
+      cvHome: mandanteStats.faltas.cv,
+      cvAway: visitanteStats.faltas.cv,
+      partidasAnalisadas,
+    }),
   };
 }

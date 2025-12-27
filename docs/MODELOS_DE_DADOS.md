@@ -1,6 +1,6 @@
 # Modelos de Dados - Pydantic Schemas
 
-**Versão:** 1.2
+**Versão:** 1.3
 **Data:** 27 de Dezembro de 2025
 **Framework:** Pydantic v2.x (com FastAPI)
 
@@ -734,13 +734,19 @@ router = APIRouter(prefix="/api", tags=["stats"])
 )
 async def get_stats(
     matchId: str = Path(..., description="ID da partida"),
-    filtro: Literal["geral", "5", "10"] = Query("geral", description="Período de análise")
+    filtro: Literal["geral", "5", "10"] = Query("geral", description="Período de análise"),
+    periodo: Literal["integral", "1T", "2T"] = Query("integral", description="Tempo do jogo (integral, 1º tempo, 2º tempo)"),
+    home_mando: Optional[Literal["casa", "fora"]] = Query(None, description="Filtro casa/fora do mandante"),
+    away_mando: Optional[Literal["casa", "fora"]] = Query(None, description="Filtro casa/fora do visitante")
 ) -> StatsResponse:
     """
     Busca estatísticas detalhadas de uma partida.
 
     - **matchId**: ID único da partida
     - **filtro**: "geral" (toda temporada), "5" (últimas 5 partidas), "10" (últimas 10 partidas)
+    - **periodo**: "integral" (jogo completo), "1T" (1º tempo), "2T" (2º tempo)
+    - **home_mando**: "casa" ou "fora" para filtrar jogos do mandante (opcional)
+    - **away_mando**: "casa" ou "fora" para filtrar jogos do visitante (opcional)
     """
     pass
 ```

@@ -42,10 +42,36 @@ class StatsService:
         self.vstats = vstats_repo
         self.cache = cache
 
+    def _get_period_indices(self, periodo: str, is_home: bool) -> tuple:
+        """
+        Retorna (idx, opp_idx) baseado no período e posição do time.
+
+        Arrays da API: [home_FT, away_FT, home_1T, away_1T, home_2T, away_2T]
+
+        Args:
+            periodo: "integral", "1T" ou "2T"
+            is_home: True se o time é mandante
+
+        Returns:
+            Tupla (idx, opp_idx) com os índices corretos para o período
+        """
+        base_indices = {
+            "integral": (0, 1),
+            "1T": (2, 3),
+            "2T": (4, 5),
+        }
+        home_idx, away_idx = base_indices.get(periodo, (0, 1))
+
+        if is_home:
+            return (home_idx, away_idx)
+        else:
+            return (away_idx, home_idx)
+
     async def calcular_stats(
         self,
         match_id: str,
         filtro: Literal["geral", "5", "10"] = "geral",
+        periodo: Literal["integral", "1T", "2T"] = "integral",
         home_mando: Optional[Literal["casa", "fora"]] = None,
         away_mando: Optional[Literal["casa", "fora"]] = None,
     ) -> StatsResponse:
@@ -55,16 +81,17 @@ class StatsService:
         Args:
             match_id: ID da partida
             filtro: Periodo de analise (geral, ultimas 5, ultimas 10)
+            periodo: Tempo do jogo (integral, 1T, 2T)
             home_mando: Subfiltro para mandante (casa/fora/None)
             away_mando: Subfiltro para visitante (casa/fora/None)
 
         Returns:
             StatsResponse com estatisticas calculadas
         """
-        logger.info(f"[STATS] Calculando stats para partida {match_id[:8]}... (filtro={filtro}, home_mando={home_mando}, away_mando={away_mando})")
+        logger.info(f"[STATS] Calculando stats para partida {match_id[:8]}... (filtro={filtro}, periodo={periodo}, home_mando={home_mando}, away_mando={away_mando})")
 
-        # Tenta cache de stats (incluindo subfiltros de mando)
-        cache_key = self.cache.build_key("stats", match_id, filtro, home_mando or "all", away_mando or "all")
+        # Tenta cache de stats (incluindo subfiltros de mando e periodo)
+        cache_key = self.cache.build_key("stats", match_id, filtro, periodo, home_mando or "all", away_mando or "all")
         cached = await self.cache.get(cache_key)
         if cached:
             # Verifica se o cache tem dados validos do arbitro (nao apenas null)
@@ -108,8 +135,8 @@ class StatsService:
 
         # Busca estatisticas de cada time e arbitro em paralelo
         home_stats, away_stats, arbitro = await asyncio.gather(
-            self._get_team_stats(tournament_id, home_id, filtro, home_mando),
-            self._get_team_stats(tournament_id, away_id, filtro, away_mando),
+            self._get_team_stats(tournament_id, home_id, filtro, periodo, home_mando),
+            self._get_team_stats(tournament_id, away_id, filtro, periodo, away_mando),
             self._get_referee_info(match_id),
         )
 
@@ -164,6 +191,7 @@ class StatsService:
         tournament_id: str,
         team_id: str,
         filtro: str,
+        periodo: Literal["integral", "1T", "2T"] = "integral",
         mando: Optional[Literal["casa", "fora"]] = None,
     ) -> dict:
         """
@@ -171,12 +199,13 @@ class StatsService:
         Agora usa partidas individuais para TODOS os filtros (CV real).
 
         Args:
+            periodo: Tempo do jogo (integral, 1T, 2T)
             mando: Subfiltro de mando (casa=apenas jogos em casa, fora=apenas jogos fora)
         """
         limit = self._get_limit(filtro)
 
         # SEMPRE usa partidas individuais para calcular CV real
-        return await self._get_recent_matches_stats(tournament_id, team_id, limit, mando)
+        return await self._get_recent_matches_stats(tournament_id, team_id, limit, periodo, mando)
 
     async def _get_season_stats(self, tournament_id: str, team_id: str) -> dict:
         """Busca estatisticas agregadas da temporada via seasonstats."""
@@ -197,6 +226,7 @@ class StatsService:
         tournament_id: str,
         team_id: str,
         limit: int,
+        periodo: Literal["integral", "1T", "2T"] = "integral",
         mando: Optional[Literal["casa", "fora"]] = None,
     ) -> dict:
         """
@@ -205,6 +235,7 @@ class StatsService:
         Tambem retorna recent_form (W/D/L) calculado dos gols de cada partida.
 
         Args:
+            periodo: Tempo do jogo (integral, 1T, 2T)
             mando: Subfiltro de mando (casa=apenas jogos em casa, fora=apenas jogos fora)
         """
         # 1. Busca IDs das ultimas partidas
@@ -221,7 +252,7 @@ class StatsService:
         logger.info(f"[FETCH] Buscando stats de {len(match_ids)} partidas para time {team_id[:8]}...")
 
         # 2. Busca stats de cada partida em paralelo
-        match_stats_list = await self._fetch_matches_stats(match_ids, team_id)
+        match_stats_list = await self._fetch_matches_stats(match_ids, team_id, periodo)
 
         if not match_stats_list:
             logger.warning(f"Nenhuma estatistica encontrada para time {team_id}")
@@ -367,12 +398,18 @@ class StatsService:
         self,
         match_ids: List[str],
         team_id: str,
+        periodo: Literal["integral", "1T", "2T"] = "integral",
     ) -> List[dict]:
-        """Busca estatisticas de cada partida em paralelo."""
+        """
+        Busca estatisticas de cada partida em paralelo.
+
+        Args:
+            periodo: Tempo do jogo (integral, 1T, 2T)
+        """
         async def fetch_one(match_id: str) -> Optional[dict]:
             try:
                 stats = await self.vstats.fetch_game_played_stats(match_id)
-                return self._extract_team_match_stats(stats, team_id)
+                return self._extract_team_match_stats(stats, team_id, periodo)
             except Exception as e:
                 logger.debug(f"Erro ao buscar stats da partida {match_id}: {e}")
                 return None
@@ -380,25 +417,41 @@ class StatsService:
         results = await asyncio.gather(*[fetch_one(mid) for mid in match_ids])
         return [r for r in results if r is not None]
 
-    def _extract_team_match_stats(self, match_data: dict, team_id: str) -> Optional[dict]:
-        """Extrai estatisticas de um time de uma partida especifica."""
+    def _extract_team_match_stats(
+        self,
+        match_data: dict,
+        team_id: str,
+        periodo: Literal["integral", "1T", "2T"] = "integral",
+    ) -> Optional[dict]:
+        """
+        Extrai estatisticas de um time de uma partida especifica.
+
+        Args:
+            periodo: Tempo do jogo para extrair stats (integral, 1T, 2T)
+                     Arrays da API: [home_FT, away_FT, home_1T, away_1T, home_2T, away_2T]
+        """
         try:
             stats_block = match_data.get("stats")
             home_id = match_data.get("homeId")
             away_id = match_data.get("awayId")
             if stats_block and home_id and away_id:
-                if team_id == home_id:
-                    idx = 0
-                    opp_idx = 1
-                    goals = match_data.get("homeScore")
-                    goals_conceded = match_data.get("awayScore")
-                elif team_id == away_id:
-                    idx = 1
-                    opp_idx = 0
-                    goals = match_data.get("awayScore")
-                    goals_conceded = match_data.get("homeScore")
-                else:
+                is_home = team_id == home_id
+                is_away = team_id == away_id
+
+                if not is_home and not is_away:
                     return None
+
+                # Usa indices dinamicos baseados no periodo
+                idx, opp_idx = self._get_period_indices(periodo, is_home)
+
+                # Gols: homeScore/awayScore sao sempre full-time
+                # Para 1T/2T, tentamos extrair do array "goals" se existir
+                if is_home:
+                    goals_ft = match_data.get("homeScore") or 0
+                    goals_conceded_ft = match_data.get("awayScore") or 0
+                else:
+                    goals_ft = match_data.get("awayScore") or 0
+                    goals_conceded_ft = match_data.get("homeScore") or 0
 
                 def get_stat_value(name: str, index: int, default: float = 0.0) -> float:
                     values = stats_block.get(name) or []
@@ -407,28 +460,43 @@ class StatsService:
                             return float(values[index])
                         except (TypeError, ValueError):
                             return default
+                    # Fallback: se array menor que esperado (ex: sem dados por tempo)
                     return default
 
+                # Stats com dados por periodo (6 elementos)
                 total_scoring_att = get_stat_value("attempts", idx)
                 total_scoring_att_conceded = get_stat_value("attempts", opp_idx)
                 on_target = get_stat_value("attemptsOnGoal", idx)
                 on_target_conceded = get_stat_value("attemptsOnGoal", opp_idx)
                 won_corners = get_stat_value("corners", idx)
                 lost_corners = get_stat_value("corners", opp_idx)
+                yellow_cards = get_stat_value("yellowCards", idx)
+                fouls = get_stat_value("fouls", idx)
+                saves = get_stat_value("saves", idx)
+
+                # Gols por periodo (se disponivel no array "goals")
+                goals_array = stats_block.get("goals") or []
+                if len(goals_array) > max(idx, opp_idx):
+                    goals = get_stat_value("goals", idx)
+                    goals_conceded = get_stat_value("goals", opp_idx)
+                else:
+                    # Fallback para full-time se nao tem por periodo
+                    goals = float(goals_ft)
+                    goals_conceded = float(goals_conceded_ft)
 
                 return {
                     "wonCorners": won_corners,
                     "lostCorners": lost_corners,
-                    "goals": float(goals or 0),
-                    "goalsConceded": float(goals_conceded or 0),
+                    "goals": goals,
+                    "goalsConceded": goals_conceded,
                     "totalScoringAtt": total_scoring_att,
                     "totalShotsConceded": total_scoring_att_conceded,
                     "ontargetScoringAtt": on_target,
                     "ontargetScoringAttConceded": on_target_conceded,
-                    "totalYellowCard": get_stat_value("yellowCards", idx),
+                    "totalYellowCard": yellow_cards,
                     "totalRedCard": get_stat_value("redCards", idx),
-                    "fkFoulLost": get_stat_value("fouls", idx),
-                    "saves": get_stat_value("saves", idx),
+                    "fkFoulLost": fouls,
+                    "saves": saves,
                 }
 
             lineup = match_data.get("liveData", {}).get("lineUp", [])

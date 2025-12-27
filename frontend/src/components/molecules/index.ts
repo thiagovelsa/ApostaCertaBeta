@@ -4,6 +4,7 @@ export { StatsCard } from './StatsCard';
 export { DisciplineCard } from './DisciplineCard';
 export { ComparisonBar } from './ComparisonBar';
 export { FilterToggle } from './FilterToggle';
+export { PeriodoToggle } from './PeriodoToggle';
 export { RaceRow } from './RaceRow';
 export { PredictionsCard } from './PredictionsCard';
 export { OverUnderCard } from './OverUnderCard';

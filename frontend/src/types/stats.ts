@@ -93,6 +93,14 @@ export type FiltroEstatisticas = 'geral' | '5' | '10';
 export type MandoFilter = 'casa' | 'fora' | null;
 
 /**
+ * Subfiltro de período (tempo do jogo)
+ * integral = jogo completo (90 min)
+ * 1T = primeiro tempo (0-45 min)
+ * 2T = segundo tempo (45-90 min)
+ */
+export type PeriodoFilter = 'integral' | '1T' | '2T';
+
+/**
  * Informações do árbitro da partida (alinhado com backend ArbitroInfo)
  */
 export interface ArbitroInfo {

@@ -38,6 +38,10 @@ async def get_stats(
         default="geral",
         description="Periodo de analise (geral, ultimas 5, ultimas 10)",
     ),
+    periodo: Literal["integral", "1T", "2T"] = Query(
+        default="integral",
+        description="Tempo do jogo para analise (integral, 1T=primeiro tempo, 2T=segundo tempo)",
+    ),
     home_mando: Optional[Literal["casa", "fora"]] = Query(
         default=None,
         description="Subfiltro de mando para o mandante (casa=apenas jogos em casa, fora=apenas jogos fora)",
@@ -56,6 +60,10 @@ async def get_stats(
         - `geral`: Toda a temporada
         - `5`: Ultimas 5 partidas
         - `10`: Ultimas 10 partidas
+    - **periodo**: Tempo do jogo para analise
+        - `integral`: Jogo completo (90 minutos)
+        - `1T`: Primeiro tempo (0-45 min)
+        - `2T`: Segundo tempo (45-90 min)
     - **home_mando**: Subfiltro de mando para o mandante (opcional)
         - `casa`: Apenas jogos em casa
         - `fora`: Apenas jogos fora
@@ -67,7 +75,7 @@ async def get_stats(
     coeficiente de variacao (CV) e classificacao de estabilidade.
     """
     try:
-        return await service.calcular_stats(match_id, filtro, home_mando, away_mando)
+        return await service.calcular_stats(match_id, filtro, periodo, home_mando, away_mando)
     except ValueError as e:
         error_msg = str(e)
         # Diferencia erro de cache miss de outros erros de validacao

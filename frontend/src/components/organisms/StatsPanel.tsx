@@ -190,7 +190,14 @@ export function StatsPanel({
   const { mandante, visitante, filtro_aplicado, partidas_analisadas } = stats;
 
   // Calcula previsões para a partida
-  const previsoes = calcularPrevisoes(mandante, visitante, partidas_analisadas);
+  // MELHORIA v1.1: Passa contexto de mando para ajuste automático
+  const previsoes = calcularPrevisoes(
+    mandante,
+    visitante,
+    partidas_analisadas,
+    homeMando ?? null,
+    awayMando ?? null
+  );
 
   // Calcula probabilidades Over/Under
   const overUnderData = calcularOverUnder(
