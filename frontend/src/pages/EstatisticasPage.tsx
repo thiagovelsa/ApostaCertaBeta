@@ -7,8 +7,8 @@ import { FilterToggle } from '@/components/molecules';
 
 export function EstatisticasPage() {
   const { matchId } = useParams<{ matchId: string }>();
-  const { filtro, setFiltro } = useFilterStore();
-  const { data: stats, isLoading, error } = useStats(matchId, filtro);
+  const { filtro, setFiltro, homeMando, awayMando, toggleHomeMando, toggleAwayMando } = useFilterStore();
+  const { data: stats, isLoading, error } = useStats(matchId, filtro, homeMando, awayMando);
 
   return (
     <PageLayout
@@ -27,6 +27,10 @@ export function EstatisticasPage() {
           stats={stats}
           isLoading={isLoading}
           error={error}
+          homeMando={homeMando}
+          awayMando={awayMando}
+          onToggleHomeMando={toggleHomeMando}
+          onToggleAwayMando={toggleAwayMando}
         />
       </Container>
     </PageLayout>

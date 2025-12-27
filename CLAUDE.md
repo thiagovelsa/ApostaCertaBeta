@@ -194,6 +194,7 @@ Match List (Cards with Teams, Time, Competition)
     ↓
 Statistics Panel (Home vs Away Team Comparison)
     ├─ Filter Options (All Season | Last 5 | Last 10)
+    ├─ Sub-Filter Casa/Fora (per team, independent)
     ├─ Recent Form Badges (V/E/D sequence)
     ├─ CV Legend (expandable explanation)
     ├─ Predictions Card (calculated insights)

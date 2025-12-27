@@ -5,12 +5,64 @@ Constantes da Aplicacao
 Valores fixos utilizados em toda a aplicacao.
 """
 
-# Limiares para classificacao do Coeficiente de Variacao
+# Limiares para classificacao do Coeficiente de Variacao (fallback)
 CV_THRESHOLDS = {
     "muito_estavel": 0.15,
     "estavel": 0.30,
     "moderado": 0.50,
     "instavel": 0.75,
+}
+
+# Limiares CALIBRADOS por tipo de estatistica
+# Baseado na distribuicao de Poisson/Normal de cada metrica:
+# - Gols (media ~1.5): CV teorico minimo ~0.82, thresholds mais altos
+# - Escanteios (media ~5): CV teorico ~0.45, thresholds medios
+# - Finalizacoes (media ~12): CV teorico ~0.29, thresholds baixos
+CV_THRESHOLDS_BY_STAT = {
+    # Gols - Poisson, media ~1.5/jogo, CV natural alto
+    "gols": {
+        "muito_estavel": 0.50,
+        "estavel": 0.70,
+        "moderado": 0.90,
+        "instavel": 1.10,
+    },
+    # Escanteios - Poisson, media ~5/jogo
+    "escanteios": {
+        "muito_estavel": 0.25,
+        "estavel": 0.40,
+        "moderado": 0.55,
+        "instavel": 0.75,
+    },
+    # Finalizacoes totais - Normal, media ~12/jogo
+    "finalizacoes": {
+        "muito_estavel": 0.15,
+        "estavel": 0.25,
+        "moderado": 0.40,
+        "instavel": 0.55,
+    },
+    # Finalizacoes no gol - Poisson, media ~4/jogo
+    "finalizacoes_gol": {
+        "muito_estavel": 0.30,
+        "estavel": 0.45,
+        "moderado": 0.60,
+        "instavel": 0.80,
+    },
+    # Cartoes amarelos - Poisson, media ~1.5/jogo
+    "cartoes_amarelos": {
+        "muito_estavel": 0.45,
+        "estavel": 0.65,
+        "moderado": 0.85,
+        "instavel": 1.05,
+    },
+    # Cartoes vermelhos - Evento muito raro, nao calcular CV
+    "cartoes_vermelhos": None,
+    # Faltas - Normal, media ~12/jogo
+    "faltas": {
+        "muito_estavel": 0.15,
+        "estavel": 0.25,
+        "moderado": 0.40,
+        "instavel": 0.55,
+    },
 }
 
 # IDs de Competicoes Suportadas (VStats API) - Temporada 2025/26

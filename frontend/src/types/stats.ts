@@ -1,13 +1,38 @@
 /**
- * Classificação do Coeficiente de Variação
- * Thresholds: <0.15 MuitoEstável, <0.30 Estável, <0.50 Moderado, <0.75 Instável, >=0.75 MuitoInstável
+ * Classificação do Coeficiente de Variação (calibrado por estatística)
+ * Thresholds variam por tipo de estatística (gols, escanteios, etc)
  */
 export type CVClassificacao =
   | 'Muito Estável'
   | 'Estável'
   | 'Moderado'
   | 'Instável'
-  | 'Muito Instável';
+  | 'Muito Instável'
+  | 'N/A';
+
+/**
+ * Label de estabilidade simplificado (3 categorias)
+ * Usado para visualização mais intuitiva
+ */
+export type EstabilidadeLabel = 'Alta' | 'Média' | 'Baixa' | 'N/A';
+
+/**
+ * Converte classificação CV para EstabilidadeLabel simplificado
+ */
+export function toEstabilidadeLabel(classificacao: CVClassificacao): EstabilidadeLabel {
+  switch (classificacao) {
+    case 'Muito Estável':
+    case 'Estável':
+      return 'Alta';
+    case 'Moderado':
+      return 'Média';
+    case 'Instável':
+    case 'Muito Instável':
+      return 'Baixa';
+    default:
+      return 'N/A';
+  }
+}
 
 /**
  * Métrica estatística individual (alinhado com backend EstatisticaMetrica)
@@ -16,6 +41,7 @@ export interface EstatisticaMetrica {
   media: number;
   cv: number;
   classificacao: CVClassificacao;
+  estabilidade: number; // 0-100%, onde 100% = muito estável
 }
 
 /**
@@ -35,8 +61,8 @@ export interface EstatisticasTime {
   finalizacoes: EstatisticaFeitos;
   finalizacoes_gol: EstatisticaFeitos;
   cartoes_amarelos: EstatisticaMetrica;
-  cartoes_vermelhos: EstatisticaMetrica;
   faltas: EstatisticaMetrica;
+  // cartoes_vermelhos removido - evento muito raro para análise de CV
 }
 
 /**
@@ -59,6 +85,12 @@ export interface TimeComEstatisticas {
  * Filtro de período para estatísticas
  */
 export type FiltroEstatisticas = 'geral' | '5' | '10';
+
+/**
+ * Subfiltro de mando (casa/fora)
+ * null = sem subfiltro (usa todos os jogos)
+ */
+export type MandoFilter = 'casa' | 'fora' | null;
 
 /**
  * Informações do árbitro da partida (alinhado com backend ArbitroInfo)
@@ -143,4 +175,50 @@ export interface PrevisaoPartida {
   finalizacoes_gol: PrevisaoEstatistica;
   cartoes_amarelos: PrevisaoEstatistica;
   faltas: PrevisaoEstatistica;
+}
+
+// ============================================================
+// TIPOS DE OVER/UNDER
+// ============================================================
+
+import type { IconName } from '@/components/atoms';
+
+/**
+ * Tipo de distribuição estatística
+ */
+export type DistributionType = 'poisson' | 'normal';
+
+/**
+ * Linha individual de probabilidade Over/Under
+ */
+export interface OverUnderLine {
+  line: number;   // Ex: 2.5
+  over: number;   // Probabilidade 0-1
+  under: number;  // Probabilidade 0-1
+}
+
+/**
+ * Probabilidades Over/Under para uma estatística
+ */
+export interface OverUnderStat {
+  label: string;
+  icon: IconName;
+  lambda: number;           // Valor esperado (média)
+  sigma: number | null;     // Desvio padrão (null para Poisson)
+  distribution: DistributionType;
+  lines: OverUnderLine[];   // 3-4 linhas dinâmicas
+  confidence: number;       // 0-1
+  confidenceLabel: ConfiancaLabel;
+}
+
+/**
+ * Todas as probabilidades Over/Under da partida
+ */
+export interface OverUnderPartida {
+  gols: OverUnderStat;
+  escanteios: OverUnderStat;
+  finalizacoes: OverUnderStat;
+  finalizacoes_gol: OverUnderStat;
+  cartoes_amarelos: OverUnderStat;
+  faltas: OverUnderStat;
 }

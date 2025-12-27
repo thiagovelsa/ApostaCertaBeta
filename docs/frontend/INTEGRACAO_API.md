@@ -192,22 +192,35 @@ Busca estatísticas detalhadas de uma partida.
 // src/services/statsService.ts
 
 import api from './api';
-import { StatsResponse } from '@/types';
+import { StatsResponse, MandoFilter } from '@/types';
 
 type FilterType = 'geral' | '5' | '10';
 
 export const statsService = {
   /**
    * Busca estatísticas de uma partida
-   * GET /api/partida/{matchId}/stats?filtro=geral|5|10
+   * GET /api/partida/{matchId}/stats?filtro=geral|5|10&home_mando=casa|fora&away_mando=casa|fora
+   *
+   * @param matchId - ID da partida
+   * @param filtro - Filtro principal (geral, últimas 5, últimas 10)
+   * @param homeMando - Sub-filtro Casa/Fora para o mandante (opcional)
+   * @param awayMando - Sub-filtro Casa/Fora para o visitante (opcional)
    */
   async getMatchStats(
     matchId: string,
-    filtro: FilterType = 'geral'
+    filtro: FilterType = 'geral',
+    homeMando: MandoFilter = null,
+    awayMando: MandoFilter = null
   ): Promise<StatsResponse> {
     try {
+      const params: Record<string, string> = { filtro };
+
+      // Adiciona parâmetros de mando apenas se definidos
+      if (homeMando) params.home_mando = homeMando;
+      if (awayMando) params.away_mando = awayMando;
+
       const response = await api.get(`/api/partida/${matchId}/stats`, {
-        params: { filtro },
+        params,
       });
       return response.data;
     } catch (error) {
@@ -237,9 +250,15 @@ export const statsService = {
 ```
 
 **Endpoint Mapping:**
-- Backend: `GET /api/partida/{matchId}/stats?filtro=geral|5|10`
+- Backend: `GET /api/partida/{matchId}/stats?filtro=geral|5|10&home_mando=casa|fora&away_mando=casa|fora`
 - Response: `StatsResponse`
 - Cache TTL: 6 horas (match backend `CACHE_TTL_SEASONSTATS=21600`)
+
+**Parâmetros de Mando (Sub-filtro Casa/Fora):**
+- `home_mando` - Filtra partidas do mandante: `casa` (apenas jogos em casa) ou `fora` (apenas fora)
+- `away_mando` - Filtra partidas do visitante: `casa` ou `fora`
+- Ambos são opcionais e independentes (pode aplicar a um time, ambos, ou nenhum)
+- Combinável com o filtro principal (`geral`, `5`, `10`)
 
 ---
 
@@ -412,20 +431,23 @@ function MyComponent() {
 
 import { useQuery, UseQueryResult } from '@tanstack/react-query';
 import { statsService } from '@/services';
-import { StatsResponse } from '@/types';
+import { StatsResponse, MandoFilter } from '@/types';
 
 interface UseStatsOptions {
   enabled?: boolean;
 }
 
 export const useStats = (
-  matchId: string,
+  matchId: string | undefined,
   filtro: 'geral' | '5' | '10' = 'geral',
+  homeMando: MandoFilter = null,
+  awayMando: MandoFilter = null,
   options?: UseStatsOptions
 ): UseQueryResult<StatsResponse, Error> => {
   return useQuery({
-    queryKey: ['stats', matchId, filtro],  // Include filtro in key
-    queryFn: () => statsService.getMatchStats(matchId, filtro),
+    // Query key inclui todos os filtros para cache separado
+    queryKey: ['stats', matchId, filtro, homeMando, awayMando],
+    queryFn: () => statsService.getMatchStats(matchId!, filtro, homeMando, awayMando),
     staleTime: 1000 * 60 * 60 * 6,  // 6 horas (match backend CACHE_TTL_SEASONSTATS)
     gcTime: 1000 * 60 * 60 * 12,  // 12 horas
     enabled: !!matchId && (options?.enabled !== false),
@@ -435,18 +457,22 @@ export const useStats = (
 
 // Exemplo de Uso:
 /*
-function StatsPanel() {
-  const [filtro, setFiltro] = useState<'geral' | '5' | '10'>('geral');
-  const { data: stats, isLoading } = useStats(matchId, filtro);
+function EstatisticasPage() {
+  const { matchId } = useParams();
+  const { filtro, homeMando, awayMando, toggleHomeMando, toggleAwayMando } = useFilterStore();
+
+  // Hook refaz fetch automaticamente quando qualquer filtro muda
+  const { data: stats, isLoading } = useStats(matchId, filtro, homeMando, awayMando);
 
   return (
-    <div>
-      <FilterToggle
-        selected={filtro}
-        onChange={(f) => setFiltro(f as any)}
-      />
-      {isLoading ? <Spinner /> : <StatsContent stats={stats} />}
-    </div>
+    <StatsPanel
+      stats={stats}
+      isLoading={isLoading}
+      homeMando={homeMando}
+      awayMando={awayMando}
+      onToggleHomeMando={toggleHomeMando}
+      onToggleAwayMando={toggleAwayMando}
+    />
   );
 }
 */
@@ -454,8 +480,9 @@ function StatsPanel() {
 
 **Cache Behavior:**
 - `staleTime: 6h` - Alinhado com backend TTL de season stats
-- Cache key inclui `filtro` - Diferentes filtros = diferentes caches
-- Apenas refetch se `matchId` mudar
+- Cache key inclui `filtro`, `homeMando`, `awayMando` - Diferentes combinações = diferentes caches
+- Refetch automático ao mudar qualquer filtro (query key muda)
+- `homeMando` e `awayMando` são independentes (podem ser `null`, `'casa'`, ou `'fora'`)
 
 ---
 
@@ -587,6 +614,16 @@ export interface PartidaListResponse {
   total_partidas: number;
   partidas: PartidaResumo[];
 }
+
+/**
+ * FILTER TYPES
+ */
+
+// Tipo para filtro principal (temporada/últimos 5/últimos 10)
+export type FiltroEstatisticas = 'geral' | '5' | '10';
+
+// Tipo para sub-filtro Casa/Fora (independente por time)
+export type MandoFilter = 'casa' | 'fora' | null;
 
 /**
  * STATISTICS TYPES

@@ -117,7 +117,7 @@ export function PredictionsCard({
       {/* Header do card */}
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
-          <Icon name="chart" size="sm" className="text-primary-400" />
+          <Icon name="stats" size="sm" className="text-primary-400" />
           <h3 className="text-sm font-medium text-white">Previsões da Partida</h3>
         </div>
         <div className="flex items-center gap-2">

@@ -1,5 +1,6 @@
 import { Icon, Badge } from '@/components/atoms';
-import type { EstatisticaMetrica, CVClassificacao, ArbitroInfo } from '@/types';
+import type { EstatisticaMetrica, ArbitroInfo } from '@/types';
+import type { EstabilidadeLabel } from '@/types/stats';
 
 interface DisciplineMetric {
   label: string;
@@ -15,23 +16,12 @@ interface DisciplineCardProps {
 }
 
 /**
- * Retorna a cor da barra de progresso baseada na classificação CV
+ * Retorna a cor da barra de estabilidade baseada no valor
  */
-function getCVBarColor(classificacao: CVClassificacao): string {
-  switch (classificacao) {
-    case 'Muito Estável':
-      return 'bg-cv-muitoEstavel';
-    case 'Estável':
-      return 'bg-cv-estavel';
-    case 'Moderado':
-      return 'bg-cv-moderado';
-    case 'Instável':
-      return 'bg-cv-instavel';
-    case 'Muito Instável':
-      return 'bg-cv-muitoInstavel';
-    default:
-      return 'bg-gray-500';
-  }
+function getEstabilidadeBarColor(estabilidade: number): string {
+  if (estabilidade >= 70) return 'bg-cv-muitoEstavel';
+  if (estabilidade >= 50) return 'bg-cv-moderado';
+  return 'bg-danger';
 }
 
 /**
@@ -50,19 +40,11 @@ function DisciplineMetricRow({
   homeTeamName: string;
   awayTeamName: string;
 }) {
-  // Determina a pior classificação para o badge
-  const classificationOrder: CVClassificacao[] = [
-    'Muito Instável',
-    'Instável',
-    'Moderado',
-    'Estável',
-    'Muito Estável',
-  ];
-  const worstClassification =
-    classificationOrder.indexOf(home.classificacao) <
-    classificationOrder.indexOf(away.classificacao)
-      ? home.classificacao
-      : away.classificacao;
+  // Calcula estabilidade média para o badge
+  const avgEstabilidade = (home.estabilidade + away.estabilidade) / 2;
+  const badgeLabel: EstabilidadeLabel =
+    avgEstabilidade >= 70 ? 'Alta' :
+    avgEstabilidade >= 50 ? 'Média' : 'Baixa';
 
   const total = home.media + away.media;
   const percentHome = total > 0 ? (home.media / total) * 100 : 50;
@@ -72,7 +54,7 @@ function DisciplineMetricRow({
       {/* Header com label e badge - altura fixa */}
       <div className="flex items-center justify-between mb-2 h-6">
         <span className="text-sm text-gray-300">{label}</span>
-        <Badge classificacao={worstClassification} size="sm" />
+        <Badge estabilidade={badgeLabel} size="sm" />
       </div>
 
       {/* Valores comparativos - altura fixa */}
@@ -93,7 +75,7 @@ function DisciplineMetricRow({
         />
       </div>
 
-      {/* CV por time - layout vertical para consistência */}
+      {/* Estabilidade por time - layout vertical para consistência */}
       <div className="space-y-2">
         <div className="flex items-center gap-2">
           <span className="text-xs text-gray-500 truncate w-24" title={homeTeamName}>
@@ -101,11 +83,11 @@ function DisciplineMetricRow({
           </span>
           <div className="flex-1 h-1 bg-dark-quaternary rounded-full overflow-hidden">
             <div
-              className={`h-full ${getCVBarColor(home.classificacao)} transition-all duration-500`}
-              style={{ width: `${Math.min(home.cv * 100, 100)}%` }}
+              className={`h-full ${getEstabilidadeBarColor(home.estabilidade)} transition-all duration-500`}
+              style={{ width: `${home.estabilidade}%` }}
             />
           </div>
-          <span className="text-xs text-gray-400 w-8 text-right">{(home.cv * 100).toFixed(0)}%</span>
+          <span className="text-xs text-gray-400 w-8 text-right">{home.estabilidade}%</span>
         </div>
         <div className="flex items-center gap-2">
           <span className="text-xs text-gray-500 truncate w-24" title={awayTeamName}>
@@ -113,11 +95,11 @@ function DisciplineMetricRow({
           </span>
           <div className="flex-1 h-1 bg-dark-quaternary rounded-full overflow-hidden">
             <div
-              className={`h-full ${getCVBarColor(away.classificacao)} transition-all duration-500`}
-              style={{ width: `${Math.min(away.cv * 100, 100)}%` }}
+              className={`h-full ${getEstabilidadeBarColor(away.estabilidade)} transition-all duration-500`}
+              style={{ width: `${away.estabilidade}%` }}
             />
           </div>
-          <span className="text-xs text-gray-400 w-8 text-right">{(away.cv * 100).toFixed(0)}%</span>
+          <span className="text-xs text-gray-400 w-8 text-right">{away.estabilidade}%</span>
         </div>
       </div>
     </div>
@@ -151,7 +133,7 @@ function RefereeInfo({ arbitro }: { arbitro: ArbitroInfo }) {
 
 /**
  * Card de disciplina com múltiplas métricas simples
- * Layout full-width com cartões amarelos, vermelhos e faltas
+ * Layout full-width com cartões amarelos e faltas
  */
 export function DisciplineCard({
   metrics,

@@ -1,5 +1,6 @@
 import { Icon, Badge, type IconName } from '@/components/atoms';
-import type { EstatisticaFeitos, CVClassificacao } from '@/types';
+import type { EstatisticaFeitos } from '@/types';
+import { toEstabilidadeLabel, type EstabilidadeLabel } from '@/types/stats';
 
 interface StatsCardProps {
   title: string;
@@ -11,39 +12,27 @@ interface StatsCardProps {
 }
 
 /**
- * Retorna a cor da barra de progresso baseada na classificação CV
+ * Retorna a cor da barra de estabilidade baseada no valor
+ * Barra cheia = verde (estável), barra vazia = vermelho (instável)
  */
-function getCVBarColor(classificacao: CVClassificacao): string {
-  switch (classificacao) {
-    case 'Muito Estável':
-      return 'bg-cv-muitoEstavel';
-    case 'Estável':
-      return 'bg-cv-estavel';
-    case 'Moderado':
-      return 'bg-cv-moderado';
-    case 'Instável':
-      return 'bg-cv-instavel';
-    case 'Muito Instável':
-      return 'bg-cv-muitoInstavel';
-    default:
-      return 'bg-gray-500';
-  }
+function getEstabilidadeBarColor(estabilidade: number): string {
+  if (estabilidade >= 70) return 'bg-cv-muitoEstavel';
+  if (estabilidade >= 50) return 'bg-cv-moderado';
+  return 'bg-danger';
 }
 
 /**
- * Componente para exibir o CV de um time com barra de progresso colorida
+ * Componente para exibir a estabilidade de um time com barra de progresso colorida
+ * Barra cheia = 100% estável = bom (verde)
  */
-function CVTeamBar({
+function EstabilidadeTeamBar({
   teamName,
-  cv,
-  classificacao,
+  estabilidade,
 }: {
   teamName: string;
-  cv: number;
-  classificacao: CVClassificacao;
+  estabilidade: number;
 }) {
-  const cvPercent = Math.min(cv * 100, 100);
-  const barColor = getCVBarColor(classificacao);
+  const barColor = getEstabilidadeBarColor(estabilidade);
 
   return (
     <div className="flex items-center gap-2">
@@ -53,11 +42,11 @@ function CVTeamBar({
       <div className="flex-1 h-1.5 bg-dark-quaternary rounded-full overflow-hidden">
         <div
           className={`h-full ${barColor} transition-all duration-500`}
-          style={{ width: `${cvPercent}%` }}
+          style={{ width: `${estabilidade}%` }}
         />
       </div>
       <span className="text-xs text-gray-300 font-medium w-10 text-right">
-        {cvPercent.toFixed(0)}%
+        {estabilidade}%
       </span>
     </div>
   );
@@ -72,20 +61,16 @@ function MetricColumn({
   awayValue,
   homeTeamName,
   awayTeamName,
-  homeCv,
-  awayCv,
-  homeClassificacao,
-  awayClassificacao,
+  homeEstabilidade,
+  awayEstabilidade,
 }: {
   label: string;
   homeValue: number;
   awayValue: number;
   homeTeamName: string;
   awayTeamName: string;
-  homeCv: number;
-  awayCv: number;
-  homeClassificacao: CVClassificacao;
-  awayClassificacao: CVClassificacao;
+  homeEstabilidade: number;
+  awayEstabilidade: number;
 }) {
   const total = homeValue + awayValue;
   const percentHome = total > 0 ? (homeValue / total) * 100 : 50;
@@ -115,17 +100,15 @@ function MetricColumn({
         />
       </div>
 
-      {/* CV por time */}
+      {/* Estabilidade por time */}
       <div className="space-y-1.5">
-        <CVTeamBar
+        <EstabilidadeTeamBar
           teamName={homeTeamName}
-          cv={homeCv}
-          classificacao={homeClassificacao}
+          estabilidade={homeEstabilidade}
         />
-        <CVTeamBar
+        <EstabilidadeTeamBar
           teamName={awayTeamName}
-          cv={awayCv}
-          classificacao={awayClassificacao}
+          estabilidade={awayEstabilidade}
         />
       </div>
     </div>
@@ -134,7 +117,7 @@ function MetricColumn({
 
 /**
  * Card de estatísticas com layout compacto
- * Mostra Feitos e Sofridos lado a lado com CV por time
+ * Mostra Feitos e Sofridos lado a lado com Estabilidade por time
  */
 export function StatsCard({
   title,
@@ -144,27 +127,19 @@ export function StatsCard({
   homeTeamName,
   awayTeamName,
 }: StatsCardProps) {
-  // Determina a classificação geral do card (usa a mais instável)
-  const classifications = [
-    homeFeitos.feitos.classificacao,
-    homeFeitos.sofridos.classificacao,
-    awayFeitos.feitos.classificacao,
-    awayFeitos.sofridos.classificacao,
+  // Calcula estabilidade média para determinar o badge do card
+  const estabilidades = [
+    homeFeitos.feitos.estabilidade,
+    homeFeitos.sofridos.estabilidade,
+    awayFeitos.feitos.estabilidade,
+    awayFeitos.sofridos.estabilidade,
   ];
+  const avgEstabilidade = estabilidades.reduce((a, b) => a + b, 0) / estabilidades.length;
 
-  const classificationOrder: CVClassificacao[] = [
-    'Muito Instável',
-    'Instável',
-    'Moderado',
-    'Estável',
-    'Muito Estável',
-  ];
-
-  const worstClassification = classifications.reduce((worst, current) => {
-    const worstIndex = classificationOrder.indexOf(worst);
-    const currentIndex = classificationOrder.indexOf(current);
-    return currentIndex < worstIndex ? current : worst;
-  }, 'Muito Estável' as CVClassificacao);
+  // Determina o label simplificado baseado na estabilidade média
+  const cardLabel: EstabilidadeLabel =
+    avgEstabilidade >= 70 ? 'Alta' :
+    avgEstabilidade >= 50 ? 'Média' : 'Baixa';
 
   return (
     <div className="bg-dark-secondary rounded-xl p-4 border border-dark-tertiary hover:border-dark-quaternary transition-colors">
@@ -174,7 +149,7 @@ export function StatsCard({
           <Icon name={icon} size="sm" className="text-primary-400" />
           <h3 className="text-sm font-medium text-white">{title}</h3>
         </div>
-        <Badge classificacao={worstClassification} size="sm" />
+        <Badge estabilidade={cardLabel} size="sm" />
       </div>
 
       {/* Divisor */}
@@ -188,10 +163,8 @@ export function StatsCard({
           awayValue={awayFeitos.feitos.media}
           homeTeamName={homeTeamName}
           awayTeamName={awayTeamName}
-          homeCv={homeFeitos.feitos.cv}
-          awayCv={awayFeitos.feitos.cv}
-          homeClassificacao={homeFeitos.feitos.classificacao}
-          awayClassificacao={awayFeitos.feitos.classificacao}
+          homeEstabilidade={homeFeitos.feitos.estabilidade}
+          awayEstabilidade={awayFeitos.feitos.estabilidade}
         />
 
         {/* Separador vertical */}
@@ -203,10 +176,8 @@ export function StatsCard({
           awayValue={awayFeitos.sofridos.media}
           homeTeamName={homeTeamName}
           awayTeamName={awayTeamName}
-          homeCv={homeFeitos.sofridos.cv}
-          awayCv={awayFeitos.sofridos.cv}
-          homeClassificacao={homeFeitos.sofridos.classificacao}
-          awayClassificacao={awayFeitos.sofridos.classificacao}
+          homeEstabilidade={homeFeitos.sofridos.estabilidade}
+          awayEstabilidade={awayFeitos.sofridos.estabilidade}
         />
       </div>
     </div>

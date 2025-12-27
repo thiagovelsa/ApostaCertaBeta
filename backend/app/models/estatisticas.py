@@ -13,7 +13,7 @@ from .partida import PartidaResumo
 
 
 class EstatisticaMetrica(BaseModel):
-    """Metrica de estatistica com media, CV e classificacao."""
+    """Metrica de estatistica com media, CV, classificacao e estabilidade."""
 
     media: float = Field(..., ge=0, description="Valor medio")
     cv: float = Field(..., ge=0, description="Coeficiente de Variacao")
@@ -23,7 +23,14 @@ class EstatisticaMetrica(BaseModel):
         "Moderado",
         "Instável",
         "Muito Instável",
-    ] = Field(..., description="Classificacao baseada no CV")
+        "N/A",
+    ] = Field(..., description="Classificacao baseada no CV calibrado")
+    estabilidade: int = Field(
+        default=50,
+        ge=0,
+        le=100,
+        description="Estabilidade em porcentagem (0-100%, onde 100% = muito estavel)",
+    )
 
     @field_validator("media", "cv")
     @classmethod
@@ -36,7 +43,8 @@ class EstatisticaMetrica(BaseModel):
             "example": {
                 "media": 5.88,
                 "cv": 0.32,
-                "classificacao": "Moderado",
+                "classificacao": "Estável",
+                "estabilidade": 68,
             }
         }
     }
@@ -70,8 +78,8 @@ class EstatisticasTime(BaseModel):
         ..., description="Finalizacoes no gol"
     )
     cartoes_amarelos: EstatisticaMetrica = Field(..., description="Cartoes amarelos")
-    cartoes_vermelhos: EstatisticaMetrica = Field(..., description="Cartoes vermelhos")
     faltas: EstatisticaMetrica = Field(..., description="Faltas cometidas")
+    # cartoes_vermelhos removido - evento muito raro para analise de CV
 
 
 class TimeComEstatisticas(BaseModel):

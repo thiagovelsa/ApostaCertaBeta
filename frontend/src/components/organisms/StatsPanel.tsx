@@ -1,8 +1,10 @@
 import { useState } from 'react';
-import { StatsCard, DisciplineCard, PredictionsCard } from '@/components/molecules';
+import { StatsCard, DisciplineCard, PredictionsCard, OverUnderCard } from '@/components/molecules';
 import { LoadingSpinner, TeamBadge, Icon, Badge } from '@/components/atoms';
 import { calcularPrevisoes } from '@/utils/predictions';
-import type { StatsResponse, CVClassificacao, FormResult } from '@/types';
+import { calcularOverUnder } from '@/utils/overUnder';
+import type { StatsResponse, FormResult, MandoFilter } from '@/types';
+import type { EstabilidadeLabel } from '@/types/stats';
 
 /**
  * Badges de sequência de resultados (race)
@@ -43,22 +45,68 @@ function RaceBadges({ results, limit }: { results?: FormResult[]; limit?: number
   );
 }
 
+/**
+ * Botões toggle para subfiltro Casa/Fora
+ */
+function MandoToggle({
+  value,
+  onToggle,
+}: {
+  value: MandoFilter;
+  onToggle: (mando: 'casa' | 'fora') => void;
+}) {
+  return (
+    <div className="inline-flex bg-dark-tertiary rounded-lg p-1 gap-1 mt-2">
+      <button
+        onClick={() => onToggle('casa')}
+        className={`
+          px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 flex items-center gap-1.5
+          ${
+            value === 'casa'
+              ? 'bg-primary-500 text-dark-primary shadow-glow'
+              : 'text-gray-400 hover:text-white hover:bg-dark-quaternary'
+          }
+        `}
+      >
+        <Icon name="home" size="sm" />
+        Casa
+      </button>
+      <button
+        onClick={() => onToggle('fora')}
+        className={`
+          px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 flex items-center gap-1.5
+          ${
+            value === 'fora'
+              ? 'bg-info text-dark-primary shadow-glow'
+              : 'text-gray-400 hover:text-white hover:bg-dark-quaternary'
+          }
+        `}
+      >
+        <Icon name="plane" size="sm" />
+        Fora
+      </button>
+    </div>
+  );
+}
+
 interface StatsPanelProps {
   stats: StatsResponse | undefined;
   isLoading: boolean;
   error: Error | null;
+  homeMando?: MandoFilter;
+  awayMando?: MandoFilter;
+  onToggleHomeMando?: (mando: 'casa' | 'fora') => void;
+  onToggleAwayMando?: (mando: 'casa' | 'fora') => void;
 }
 
 /**
- * Legenda explicativa do Coeficiente de Variação (CV)
+ * Legenda explicativa da Estabilidade
  */
-function CVLegend({ isOpen, onToggle }: { isOpen: boolean; onToggle: () => void }) {
-  const legendItems: { classificacao: CVClassificacao; range: string; desc: string }[] = [
-    { classificacao: 'Muito Estável', range: '< 15%', desc: 'Time muito previsível' },
-    { classificacao: 'Estável', range: '15-30%', desc: 'Comportamento consistente' },
-    { classificacao: 'Moderado', range: '30-50%', desc: 'Alguma variação' },
-    { classificacao: 'Instável', range: '50-75%', desc: 'Resultados imprevisíveis' },
-    { classificacao: 'Muito Instável', range: '> 75%', desc: 'Alta imprevisibilidade' },
+function EstabilidadeLegend({ isOpen, onToggle }: { isOpen: boolean; onToggle: () => void }) {
+  const legendItems: { estabilidade: EstabilidadeLabel; range: string; desc: string }[] = [
+    { estabilidade: 'Alta', range: '≥ 70%', desc: 'Time muito previsível e consistente' },
+    { estabilidade: 'Média', range: '50-70%', desc: 'Comportamento com alguma variação' },
+    { estabilidade: 'Baixa', range: '< 50%', desc: 'Resultados imprevisíveis' },
   ];
 
   return (
@@ -68,7 +116,7 @@ function CVLegend({ isOpen, onToggle }: { isOpen: boolean; onToggle: () => void 
         className="flex items-center gap-2 text-xs text-gray-500 hover:text-gray-300 transition-colors"
       >
         <Icon name="info" size="sm" />
-        <span>O que significa o CV?</span>
+        <span>O que significa Estabilidade?</span>
         <Icon
           name="chevron-right"
           size="sm"
@@ -79,14 +127,14 @@ function CVLegend({ isOpen, onToggle }: { isOpen: boolean; onToggle: () => void 
       {isOpen && (
         <div className="mt-3 p-4 bg-dark-tertiary/50 rounded-lg border border-dark-tertiary">
           <p className="text-sm text-gray-300 mb-3">
-            O <strong className="text-white">CV (Coeficiente de Variação)</strong> mede a
-            estabilidade do time. Quanto menor, mais previsível é o desempenho.
+            A <strong className="text-white">Estabilidade</strong> mede a consistência do time.
+            Quanto maior, mais previsível é o desempenho.
           </p>
 
           <div className="space-y-2">
-            {legendItems.map(({ classificacao, range, desc }) => (
-              <div key={classificacao} className="flex items-center gap-3">
-                <Badge classificacao={classificacao} size="sm" />
+            {legendItems.map(({ estabilidade, range, desc }) => (
+              <div key={estabilidade} className="flex items-center gap-3">
+                <Badge estabilidade={estabilidade} size="sm" />
                 <span className="text-xs text-gray-500 w-16">{range}</span>
                 <span className="text-xs text-gray-400">{desc}</span>
               </div>
@@ -95,6 +143,7 @@ function CVLegend({ isOpen, onToggle }: { isOpen: boolean; onToggle: () => void 
 
           <p className="text-xs text-gray-500 mt-3 pt-3 border-t border-dark-tertiary">
             Times mais estáveis tendem a ter resultados mais consistentes.
+            Barra cheia = alta estabilidade = bom para previsões.
           </p>
         </div>
       )}
@@ -102,8 +151,16 @@ function CVLegend({ isOpen, onToggle }: { isOpen: boolean; onToggle: () => void 
   );
 }
 
-export function StatsPanel({ stats, isLoading, error }: StatsPanelProps) {
-  const [showCVLegend, setShowCVLegend] = useState(false);
+export function StatsPanel({
+  stats,
+  isLoading,
+  error,
+  homeMando,
+  awayMando,
+  onToggleHomeMando,
+  onToggleAwayMando,
+}: StatsPanelProps) {
+  const [showEstabilidadeLegend, setShowEstabilidadeLegend] = useState(false);
 
   if (isLoading) {
     return (
@@ -135,6 +192,14 @@ export function StatsPanel({ stats, isLoading, error }: StatsPanelProps) {
   // Calcula previsões para a partida
   const previsoes = calcularPrevisoes(mandante, visitante, partidas_analisadas);
 
+  // Calcula probabilidades Over/Under
+  const overUnderData = calcularOverUnder(
+    previsoes,
+    mandante.estatisticas,
+    visitante.estatisticas,
+    partidas_analisadas
+  );
+
   // Limite de badges a exibir baseado no filtro
   // Temporada (geral) → 5, Últimos 5 → 5, Últimos 10 → 10
   const raceBadgesLimit = filtro_aplicado === '10' ? 10 : 5;
@@ -150,6 +215,9 @@ export function StatsPanel({ stats, isLoading, error }: StatsPanelProps) {
               <p className="font-semibold text-white">{mandante.nome}</p>
               <p className="text-xs text-gray-500">Mandante</p>
               <RaceBadges results={mandante.recent_form} limit={raceBadgesLimit} />
+              {onToggleHomeMando && (
+                <MandoToggle value={homeMando ?? null} onToggle={onToggleHomeMando} />
+              )}
             </div>
           </div>
 
@@ -172,13 +240,18 @@ export function StatsPanel({ stats, isLoading, error }: StatsPanelProps) {
               <div className="flex justify-end">
                 <RaceBadges results={visitante.recent_form} limit={raceBadgesLimit} />
               </div>
+              {onToggleAwayMando && (
+                <div className="flex justify-end">
+                  <MandoToggle value={awayMando ?? null} onToggle={onToggleAwayMando} />
+                </div>
+              )}
             </div>
           </div>
         </div>
 
-        {/* CV Legend */}
+        {/* Estabilidade Legend */}
         <div className="mt-4 pt-4 border-t border-dark-tertiary">
-          <CVLegend isOpen={showCVLegend} onToggle={() => setShowCVLegend(!showCVLegend)} />
+          <EstabilidadeLegend isOpen={showEstabilidadeLegend} onToggle={() => setShowEstabilidadeLegend(!showEstabilidadeLegend)} />
         </div>
       </div>
 
@@ -249,6 +322,9 @@ export function StatsPanel({ stats, isLoading, error }: StatsPanelProps) {
           awayTeamName={visitante.nome}
           arbitro={stats.arbitro}
         />
+
+        {/* Probabilidades Over/Under - Full Width */}
+        <OverUnderCard overUnder={overUnderData} />
       </div>
     </div>
   );

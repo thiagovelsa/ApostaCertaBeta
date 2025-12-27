@@ -6,7 +6,7 @@ GET /api/partida/{matchId}/stats - Estatisticas de uma partida
 """
 
 import logging
-from typing import Literal
+from typing import Literal, Optional
 
 from fastapi import APIRouter, Depends, Query, HTTPException, Path
 
@@ -38,6 +38,14 @@ async def get_stats(
         default="geral",
         description="Periodo de analise (geral, ultimas 5, ultimas 10)",
     ),
+    home_mando: Optional[Literal["casa", "fora"]] = Query(
+        default=None,
+        description="Subfiltro de mando para o mandante (casa=apenas jogos em casa, fora=apenas jogos fora)",
+    ),
+    away_mando: Optional[Literal["casa", "fora"]] = Query(
+        default=None,
+        description="Subfiltro de mando para o visitante (casa=apenas jogos em casa, fora=apenas jogos fora)",
+    ),
     service: StatsService = Depends(get_stats_service),
 ) -> StatsResponse:
     """
@@ -48,12 +56,18 @@ async def get_stats(
         - `geral`: Toda a temporada
         - `5`: Ultimas 5 partidas
         - `10`: Ultimas 10 partidas
+    - **home_mando**: Subfiltro de mando para o mandante (opcional)
+        - `casa`: Apenas jogos em casa
+        - `fora`: Apenas jogos fora
+    - **away_mando**: Subfiltro de mando para o visitante (opcional)
+        - `casa`: Apenas jogos em casa
+        - `fora`: Apenas jogos fora
 
     Retorna estatisticas de ambos os times com medias,
     coeficiente de variacao (CV) e classificacao de estabilidade.
     """
     try:
-        return await service.calcular_stats(match_id, filtro)
+        return await service.calcular_stats(match_id, filtro, home_mando, away_mando)
     except ValueError as e:
         error_msg = str(e)
         # Diferencia erro de cache miss de outros erros de validacao

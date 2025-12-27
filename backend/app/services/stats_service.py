@@ -25,7 +25,7 @@ from ..models import (
     ArbitroInfo,
 )
 from ..repositories import VStatsRepository
-from ..utils.cv_calculator import calculate_cv, classify_cv
+from ..utils.cv_calculator import calculate_cv, classify_cv, calculate_estabilidade
 from .cache_service import CacheService
 
 logger = logging.getLogger(__name__)
@@ -46,6 +46,8 @@ class StatsService:
         self,
         match_id: str,
         filtro: Literal["geral", "5", "10"] = "geral",
+        home_mando: Optional[Literal["casa", "fora"]] = None,
+        away_mando: Optional[Literal["casa", "fora"]] = None,
     ) -> StatsResponse:
         """
         Calcula estatisticas para uma partida.
@@ -53,14 +55,16 @@ class StatsService:
         Args:
             match_id: ID da partida
             filtro: Periodo de analise (geral, ultimas 5, ultimas 10)
+            home_mando: Subfiltro para mandante (casa/fora/None)
+            away_mando: Subfiltro para visitante (casa/fora/None)
 
         Returns:
             StatsResponse com estatisticas calculadas
         """
-        logger.info(f"[STATS] Calculando stats para partida {match_id[:8]}... (filtro={filtro})")
+        logger.info(f"[STATS] Calculando stats para partida {match_id[:8]}... (filtro={filtro}, home_mando={home_mando}, away_mando={away_mando})")
 
-        # Tenta cache de stats
-        cache_key = self.cache.build_key("stats", match_id, filtro)
+        # Tenta cache de stats (incluindo subfiltros de mando)
+        cache_key = self.cache.build_key("stats", match_id, filtro, home_mando or "all", away_mando or "all")
         cached = await self.cache.get(cache_key)
         if cached:
             # Verifica se o cache tem dados validos do arbitro (nao apenas null)
@@ -104,8 +108,8 @@ class StatsService:
 
         # Busca estatisticas de cada time e arbitro em paralelo
         home_stats, away_stats, arbitro = await asyncio.gather(
-            self._get_team_stats(tournament_id, home_id, filtro),
-            self._get_team_stats(tournament_id, away_id, filtro),
+            self._get_team_stats(tournament_id, home_id, filtro, home_mando),
+            self._get_team_stats(tournament_id, away_id, filtro, away_mando),
             self._get_referee_info(match_id),
         )
 
@@ -160,15 +164,19 @@ class StatsService:
         tournament_id: str,
         team_id: str,
         filtro: str,
+        mando: Optional[Literal["casa", "fora"]] = None,
     ) -> dict:
         """
         Busca e calcula estatisticas de um time.
         Agora usa partidas individuais para TODOS os filtros (CV real).
+
+        Args:
+            mando: Subfiltro de mando (casa=apenas jogos em casa, fora=apenas jogos fora)
         """
         limit = self._get_limit(filtro)
 
         # SEMPRE usa partidas individuais para calcular CV real
-        return await self._get_recent_matches_stats(tournament_id, team_id, limit)
+        return await self._get_recent_matches_stats(tournament_id, team_id, limit, mando)
 
     async def _get_season_stats(self, tournament_id: str, team_id: str) -> dict:
         """Busca estatisticas agregadas da temporada via seasonstats."""
@@ -189,14 +197,18 @@ class StatsService:
         tournament_id: str,
         team_id: str,
         limit: int,
+        mando: Optional[Literal["casa", "fora"]] = None,
     ) -> dict:
         """
         Busca estatisticas das ultimas N partidas via get-match-stats.
         Calcula CV real a partir dos dados individuais.
         Tambem retorna recent_form (W/D/L) calculado dos gols de cada partida.
+
+        Args:
+            mando: Subfiltro de mando (casa=apenas jogos em casa, fora=apenas jogos fora)
         """
         # 1. Busca IDs das ultimas partidas
-        matches_data = await self._get_recent_matches_with_form(tournament_id, team_id, limit)
+        matches_data = await self._get_recent_matches_with_form(tournament_id, team_id, limit, mando)
         match_ids = matches_data.get("match_ids", [])
 
         if not match_ids:
@@ -245,12 +257,16 @@ class StatsService:
         tournament_id: str,
         team_id: str,
         limit: int,
+        mando: Optional[Literal["casa", "fora"]] = None,
     ) -> dict:
         """
         Busca IDs das ultimas N partidas realizadas pelo time E calcula W/D/L.
 
         ATUALIZADO (26/12/2025): Agora retorna tambem recent_form (W/D/L)
         calculado a partir de homeScore/awayScore disponiveis no /schedule.
+
+        Args:
+            mando: Subfiltro de mando (casa=apenas jogos em casa, fora=apenas jogos fora)
 
         Returns:
             dict com {
@@ -287,6 +303,14 @@ class StatsService:
 
             # Ordena por data (mais recentes primeiro)
             team_matches.sort(key=lambda m: m.get("localDate", ""), reverse=True)
+
+            # Aplica subfiltro de mando (casa/fora) se especificado
+            if mando == "casa":
+                team_matches = [m for m in team_matches if m.get("_is_home")]
+                logger.info(f"[MANDO] Filtrado para jogos em CASA: {len(team_matches)} partidas")
+            elif mando == "fora":
+                team_matches = [m for m in team_matches if not m.get("_is_home")]
+                logger.info(f"[MANDO] Filtrado para jogos FORA: {len(team_matches)} partidas")
 
             # Extrai IDs e calcula W/D/L das ultimas N
             match_ids = []
@@ -433,9 +457,9 @@ class StatsService:
     def _calculate_metrics_from_matches(self, matches: List[dict]) -> EstatisticasTime:
         """Calcula metricas com CV real a partir de partidas individuais."""
 
-        def calc_metric(field: str) -> EstatisticaMetrica:
+        def calc_metric(field: str, stat_type: str) -> EstatisticaMetrica:
             values = [m.get(field, 0) for m in matches]
-            result = calculate_cv(values)
+            result = calculate_cv(values, stat_type)
 
             if result is None:
                 # Menos de 2 valores - usa media simples sem CV
@@ -444,29 +468,34 @@ class StatsService:
                     media=round(media, 2),
                     cv=0.0,
                     classificacao="Muito Estável",
+                    estabilidade=100,
                 )
 
-            media, cv, classificacao = result
+            media, cv, classificacao, estabilidade = result
             return EstatisticaMetrica(
                 media=media,
                 cv=cv,
                 classificacao=classificacao,
+                estabilidade=estabilidade,
             )
 
-        def calc_feitos(field_made: str, field_conceded: str) -> EstatisticaFeitos:
+        def calc_feitos(
+            field_made: str, field_conceded: str, stat_type: str
+        ) -> EstatisticaFeitos:
             return EstatisticaFeitos(
-                feitos=calc_metric(field_made),
-                sofridos=calc_metric(field_conceded),
+                feitos=calc_metric(field_made, stat_type),
+                sofridos=calc_metric(field_conceded, stat_type),
             )
 
         return EstatisticasTime(
-            escanteios=calc_feitos("wonCorners", "lostCorners"),
-            gols=calc_feitos("goals", "goalsConceded"),
-            finalizacoes=calc_feitos("totalScoringAtt", "totalShotsConceded"),
-            finalizacoes_gol=calc_feitos("ontargetScoringAtt", "ontargetScoringAttConceded"),
-            cartoes_amarelos=calc_metric("totalYellowCard"),
-            cartoes_vermelhos=calc_metric("totalRedCard"),
-            faltas=calc_metric("fkFoulLost"),
+            escanteios=calc_feitos("wonCorners", "lostCorners", "escanteios"),
+            gols=calc_feitos("goals", "goalsConceded", "gols"),
+            finalizacoes=calc_feitos("totalScoringAtt", "totalShotsConceded", "finalizacoes"),
+            finalizacoes_gol=calc_feitos(
+                "ontargetScoringAtt", "ontargetScoringAttConceded", "finalizacoes_gol"
+            ),
+            cartoes_amarelos=calc_metric("totalYellowCard", "cartoes_amarelos"),
+            faltas=calc_metric("fkFoulLost", "faltas"),
         )
 
     def _calculate_metrics_from_season(self, stats: dict, matches: int) -> EstatisticasTime:
@@ -475,18 +504,22 @@ class StatsService:
         CV é estimado pois não temos dados por partida.
         """
 
-        def make_metric(value: float, cv_estimate: float = 0.35) -> EstatisticaMetrica:
+        def make_metric(
+            value: float, stat_type: str, cv_estimate: float = 0.35
+        ) -> EstatisticaMetrica:
             media = round(value / max(matches, 1), 2)
+            estabilidade = calculate_estabilidade(cv_estimate, stat_type)
             return EstatisticaMetrica(
                 media=media,
                 cv=cv_estimate,
-                classificacao=classify_cv(cv_estimate),
+                classificacao=classify_cv(cv_estimate, stat_type),
+                estabilidade=estabilidade,
             )
 
-        def make_feitos(made: float, conceded: float) -> EstatisticaFeitos:
+        def make_feitos(made: float, conceded: float, stat_type: str) -> EstatisticaFeitos:
             return EstatisticaFeitos(
-                feitos=make_metric(made),
-                sofridos=make_metric(conceded),
+                feitos=make_metric(made, stat_type),
+                sofridos=make_metric(conceded, stat_type),
             )
 
         total_shots = stats.get("totalScoringAtt", 0)
@@ -503,22 +536,27 @@ class StatsService:
             escanteios=make_feitos(
                 stats.get("wonCorners", 0),
                 stats.get("lostCorners", 0),
+                "escanteios",
             ),
             gols=make_feitos(
                 stats.get("goals", 0),
                 stats.get("goalsConceded", 0),
+                "gols",
             ),
             finalizacoes=make_feitos(
                 total_shots,
                 shots_conceded,
+                "finalizacoes",
             ),
             finalizacoes_gol=make_feitos(
                 shots_on_target,
                 shots_on_target_conceded,
+                "finalizacoes_gol",
             ),
-            cartoes_amarelos=make_metric(stats.get("totalYellowCard", 0), 0.55),
-            cartoes_vermelhos=make_metric(stats.get("totalRedCard", 0), 0.85),
-            faltas=make_metric(stats.get("fkFoulLost", 0), 0.40),
+            cartoes_amarelos=make_metric(
+                stats.get("totalYellowCard", 0), "cartoes_amarelos", 0.55
+            ),
+            faltas=make_metric(stats.get("fkFoulLost", 0), "faltas", 0.40),
         )
 
     def _get_limit(self, filtro: str) -> int:

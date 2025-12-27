@@ -155,20 +155,47 @@ import { create } from 'zustand';
 import { devtools, persist } from 'zustand/middleware';
 
 export type FilterType = 'geral' | '5' | '10';
+export type MandoFilter = 'casa' | 'fora' | null;
 
 interface FilterStore {
+  // Filtro principal (temporada/últimos 5/últimos 10)
   filtro: FilterType;
   setFiltro: (filtro: FilterType) => void;
+
+  // Sub-filtro Casa/Fora (independente por time)
+  homeMando: MandoFilter;
+  awayMando: MandoFilter;
+  setHomeMando: (mando: MandoFilter) => void;
+  setAwayMando: (mando: MandoFilter) => void;
+  toggleHomeMando: (mando: 'casa' | 'fora') => void;
+  toggleAwayMando: (mando: 'casa' | 'fora') => void;
+
   reset: () => void;
 }
 
 export const useFilterStore = create<FilterStore>()(
   devtools(
     persist(
-      (set) => ({
+      (set, get) => ({
         filtro: 'geral',
+        homeMando: null,
+        awayMando: null,
+
         setFiltro: (filtro) => set({ filtro }),
-        reset: () => set({ filtro: 'geral' }),
+        setHomeMando: (mando) => set({ homeMando: mando }),
+        setAwayMando: (mando) => set({ awayMando: mando }),
+
+        // Toggle: se já está ativo, desativa (null); senão, ativa
+        toggleHomeMando: (mando) => {
+          const current = get().homeMando;
+          set({ homeMando: current === mando ? null : mando });
+        },
+        toggleAwayMando: (mando) => {
+          const current = get().awayMando;
+          set({ awayMando: current === mando ? null : mando });
+        },
+
+        reset: () => set({ filtro: 'geral', homeMando: null, awayMando: null }),
       }),
       { name: 'filter-storage' }
     )
@@ -180,6 +207,7 @@ export const useFilterStore = create<FilterStore>()(
 ```typescript
 import { useFilterStore } from '@/stores';
 
+// Filtro principal
 export function FilterToggle() {
   const { filtro, setFiltro } = useFilterStore();
 
@@ -187,6 +215,20 @@ export function FilterToggle() {
     <button onClick={() => setFiltro('5')}>
       Últimas 5 Partidas
     </button>
+  );
+}
+
+// Sub-filtro Casa/Fora (no StatsPanel)
+export function MandoToggle({ isHome }: { isHome: boolean }) {
+  const { homeMando, awayMando, toggleHomeMando, toggleAwayMando } = useFilterStore();
+  const value = isHome ? homeMando : awayMando;
+  const toggle = isHome ? toggleHomeMando : toggleAwayMando;
+
+  return (
+    <div className="inline-flex bg-dark-tertiary rounded-lg p-1 gap-1">
+      <button onClick={() => toggle('casa')}>Casa</button>
+      <button onClick={() => toggle('fora')}>Fora</button>
+    </div>
   );
 }
 ```
@@ -545,22 +587,26 @@ export default function EstatisticasPage() {
 │                                                         │
 │  useParams() → matchId                                  │
 │      ↓                                                  │
-│  useFilterStore → filtro (geral/5/10)                   │
+│  useFilterStore → filtro, homeMando, awayMando          │
 │      ↓                                                  │
-│  useStats(matchId, filtro) ← React Query Hook           │
+│  useStats(matchId, filtro, homeMando, awayMando)        │
 │      ↓                                                  │
-│  statsService.getMatchStats(matchId, filtro)            │
+│  statsService.getMatchStats(matchId, filtro, mando...)  │
 │      ↓                                                  │
-│  GET /api/partida/{matchId}/stats?filtro=geral|5|10     │
+│  GET /api/partida/{matchId}/stats                       │
+│      ?filtro=geral|5|10                                 │
+│      &home_mando=casa|fora (opcional)                   │
+│      &away_mando=casa|fora (opcional)                   │
 │      ↓                                                  │
 │  API Response: StatsResponse                            │
 │      ↓                                                  │
 │  StatsPanel (3 colunas: mandante | info | visitante)    │
-│  ├─ TeamCard (mandante) + stats                         │
+│  ├─ TeamCard (mandante) + RaceBadges + MandoToggle      │
 │  ├─ Match info + FilterToggle                           │
-│  └─ TeamCard (visitante) + stats                        │
+│  └─ TeamCard (visitante) + RaceBadges + MandoToggle     │
 │      ↓                                                  │
 │  FilterToggle onChange → setFiltro(novoFiltro)          │
+│  MandoToggle onClick → toggleHomeMando/toggleAwayMando  │
 │      ↓                                                  │
 │  useStats refetch automático (mudança de query key)     │
 │                                                         │
@@ -568,25 +614,26 @@ export default function EstatisticasPage() {
 
 SERVICES & QUERIES (Background):
 
-┌────────────────────────────────────┐
-│     React Query Cache Manager      │
-├────────────────────────────────────┤
-│ queryKey: ['partidas', date]       │
-│ staleTime: 1h                      │
-│ gcTime: 2h                         │
-├────────────────────────────────────┤
-│ queryKey: ['stats', matchId, filtro]
-│ staleTime: 6h                      │
-│ gcTime: 12h                        │
-├────────────────────────────────────┤
-│ queryKey: ['competicoes']          │
-│ staleTime: 24h                     │
-│ gcTime: 7d                         │
-├────────────────────────────────────┤
-│ queryKey: ['badge', teamId]        │
-│ staleTime: 7d                      │
-│ gcTime: 30d                        │
-└────────────────────────────────────┘
+┌────────────────────────────────────────────────────────┐
+│              React Query Cache Manager                  │
+├────────────────────────────────────────────────────────┤
+│ queryKey: ['partidas', date]                           │
+│ staleTime: 1h                                          │
+│ gcTime: 2h                                             │
+├────────────────────────────────────────────────────────┤
+│ queryKey: ['stats', matchId, filtro, homeMando, away..]│
+│ staleTime: 6h                                          │
+│ gcTime: 12h                                            │
+│ (homeMando/awayMando fazem parte da query key)         │
+├────────────────────────────────────────────────────────┤
+│ queryKey: ['competicoes']                              │
+│ staleTime: 24h                                         │
+│ gcTime: 7d                                             │
+├────────────────────────────────────────────────────────┤
+│ queryKey: ['badge', teamId]                            │
+│ staleTime: 7d                                          │
+│ gcTime: 30d                                            │
+└────────────────────────────────────────────────────────┘
 ```
 
 ---
@@ -925,4 +972,4 @@ Para aprofundar na arquitetura após ler este documento:
 - 🔄 Backend (Em desenvolvimento)
 - 🔄 Frontend (Planejado)
 
-**Última atualização:** 24 de dezembro de 2025
+**Última atualização:** 26 de dezembro de 2025
