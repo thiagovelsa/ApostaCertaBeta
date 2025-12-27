@@ -1,7 +1,7 @@
 # Integração API - Services e React Query Hooks
 
-**Versão:** 1.1
-**Data:** 26 de dezembro de 2025
+**Versão:** 1.2
+**Data:** 27 de dezembro de 2025
 **Framework:** React Query 5 (TanStack Query)
 **HTTP Client:** Axios 1.6+
 
@@ -672,10 +672,11 @@ export interface TimeComEstatisticas {
 export interface ArbitroInfo {
   id: string;
   nome: string;
-  pais?: string;
-  media_amarelos: number;
-  media_vermelhos: number;
-  total_jogos: number;
+  partidas: number;           // Partidas na competição específica
+  partidas_temporada: number; // Total na temporada (todas competições)
+  media_cartoes_amarelos: number;  // Média na competição
+  media_cartoes_temporada: number; // Média ponderada na temporada
+  media_faltas?: number | null;
 }
 
 export interface StatsResponse {

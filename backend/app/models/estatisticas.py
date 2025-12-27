@@ -101,14 +101,20 @@ class ArbitroInfo(BaseModel):
     id: str = Field(..., description="ID do arbitro")
     nome: str = Field(..., description="Nome do arbitro")
     partidas: int = Field(..., ge=0, description="Partidas apitadas na competicao")
+    partidas_temporada: int = Field(
+        ..., ge=0, description="Total de partidas na temporada (todas competicoes)"
+    )
     media_cartoes_amarelos: float = Field(
-        ..., ge=0, description="Media de cartoes amarelos por jogo"
+        ..., ge=0, description="Media de cartoes amarelos por jogo na competicao"
+    )
+    media_cartoes_temporada: float = Field(
+        ..., ge=0, description="Media ponderada de cartoes na temporada"
     )
     media_faltas: Optional[float] = Field(
         None, ge=0, description="Media de faltas por jogo"
     )
 
-    @field_validator("media_cartoes_amarelos", "media_faltas", mode="before")
+    @field_validator("media_cartoes_amarelos", "media_cartoes_temporada", "media_faltas", mode="before")
     @classmethod
     def parse_float(cls, v):
         """Converte string para float se necessario."""

@@ -1,7 +1,7 @@
 # Modelos de Dados - Pydantic Schemas
 
-**Versão:** 1.1
-**Data:** 26 de Dezembro de 2025
+**Versão:** 1.2
+**Data:** 27 de Dezembro de 2025
 **Framework:** Pydantic v2.x (com FastAPI)
 
 ---
@@ -484,39 +484,60 @@ class StatsResponse(BaseModel):
 
 ```python
 class ArbitroInfo(BaseModel):
-    """Informações do árbitro e estatísticas de cartões."""
+    """Informações do árbitro com estatísticas de competição E temporada."""
 
     id: str = Field(..., description="ID único do árbitro")
     nome: str = Field(..., description="Nome do árbitro")
-    pais: Optional[str] = Field(None, description="País do árbitro")
-    media_amarelos: float = Field(
+    partidas: int = Field(
         ...,
         ge=0,
-        description="Média de cartões amarelos por partida"
+        description="Partidas apitadas NA COMPETIÇÃO específica"
     )
-    media_vermelhos: float = Field(
+    partidas_temporada: int = Field(
         ...,
         ge=0,
-        description="Média de cartões vermelhos por partida"
+        description="Total de partidas na TEMPORADA (todas competições)"
     )
-    total_jogos: int = Field(
+    media_cartoes_amarelos: float = Field(
         ...,
         ge=0,
-        description="Total de jogos apitados na competição"
+        description="Média de cartões amarelos por jogo NA COMPETIÇÃO"
+    )
+    media_cartoes_temporada: float = Field(
+        ...,
+        ge=0,
+        description="Média ponderada de cartões na TEMPORADA"
+    )
+    media_faltas: Optional[float] = Field(
+        None,
+        ge=0,
+        description="Média de faltas por jogo"
     )
 
     class Config:
         json_schema_extra = {
             "example": {
-                "id": "abc123",
-                "nome": "Michael Oliver",
-                "pais": "England",
-                "media_amarelos": 3.5,
-                "media_vermelhos": 0.2,
-                "total_jogos": 15
+                "id": "3e8y9u6dcbjomw0ucdbxi3c44",
+                "nome": "A. Zanotti",
+                "partidas": 2,
+                "partidas_temporada": 9,
+                "media_cartoes_amarelos": 0.5,
+                "media_cartoes_temporada": 3.77,
+                "media_faltas": 26.0
             }
         }
 ```
+
+**Cálculo da Média Ponderada (temporada):**
+```
+media_cartoes_temporada = Σ(partidas × média_cartões) / Σ(partidas)
+```
+
+**Exemplo:**
+- Serie B: 2 jogos × 0.5 = 1 cartão
+- Coppa Italia: 4 jogos × 5.0 = 20 cartões
+- Serie A: 3 jogos × 4.0 = 12 cartões
+- **Total:** (1 + 20 + 12) / 9 = 3.67 cartões/jogo na temporada
 
 ---
 

@@ -1,9 +1,9 @@
 # Componentes React - Catálogo Atomic Design
 
-**Versão:** 1.1
-**Data:** 26 de dezembro de 2025
+**Versão:** 1.2
+**Data:** 27 de dezembro de 2025
 **Pattern:** Atomic Design (Atoms → Molecules → Organisms → Pages)
-**Total de Componentes:** 22 (v1.1)
+**Total de Componentes:** 22 (v1.2)
 
 Catálogo completo de componentes React + TypeScript para implementação do frontend.
 
@@ -25,75 +25,56 @@ Catálogo completo de componentes React + TypeScript para implementação do fro
 
 ### 1. Badge
 
-Pequena tag para indicar status, CV, ou tipo.
+Badge semântico para indicar níveis de estabilidade, confiança ou probabilidade.
 
 ```typescript
 // src/components/atoms/Badge.tsx
 
+import type { EstabilidadeLabel } from '@/types/stats';
+
 interface BadgeProps {
-  variant: 'cv' | 'status';
-  value: string;
-  size?: 'sm' | 'md' | 'lg';
-  className?: string;
+  estabilidade: EstabilidadeLabel;  // 'Alta' | 'Média' | 'Baixa' | 'N/A'
+  size?: 'sm' | 'md';
+  label?: string;  // Prefixo opcional: "Estabilidade", "Confiança", "Probabilidade"
 }
 
-export const Badge: React.FC<BadgeProps> = ({
-  variant,
-  value,
-  size = 'md',
-  className = '',
-}) => {
-  // Variantes e cores por tipo
-  const getBgColor = () => {
-    if (variant === 'cv') {
-      switch (value) {
-        case 'Muito Estável':
-          return 'bg-emerald-500/20 text-emerald-400';
-        case 'Estável':
-          return 'bg-green-500/20 text-green-400';
-        case 'Moderado':
-          return 'bg-yellow-500/20 text-yellow-400';
-        case 'Instável':
-          return 'bg-orange-500/20 text-orange-400';
-        case 'Muito Instável':
-          return 'bg-red-500/20 text-red-400';
-        default:
-          return 'bg-gray-500/20 text-gray-400';
-      }
-    }
-    return 'bg-blue-500/20 text-blue-400';
-  };
+// Cores por nível de estabilidade
+const badgeStyles: Record<EstabilidadeLabel, string> = {
+  Alta: 'bg-cv-muitoEstavel/20 text-cv-muitoEstavel',      // Verde
+  Média: 'bg-cv-moderado/20 text-cv-moderado',              // Amarelo
+  Baixa: 'bg-danger/20 text-danger',                        // Vermelho
+  'N/A': 'bg-gray-500/20 text-gray-400',
+};
 
-  const sizeClasses = {
-    sm: 'px-2 py-1 text-xs',
-    md: 'px-3 py-1.5 text-sm',
-    lg: 'px-4 py-2 text-base',
-  };
+export function Badge({ estabilidade, size = 'sm', label }: BadgeProps) {
+  const sizeClasses = size === 'sm' ? 'px-2 py-0.5 text-xs' : 'px-3 py-1 text-sm';
 
   return (
     <span
-      className={`
-        inline-block rounded-full font-medium
-        ${sizeClasses[size]}
-        ${getBgColor()}
-        ${className}
-      `}
+      className={`inline-flex items-center rounded-full font-medium ${sizeClasses} ${badgeStyles[estabilidade]}`}
     >
-      {value}
+      {label ? `${label} ${estabilidade}` : estabilidade}
     </span>
   );
-};
+}
 
-// Exemplo de Uso:
-// <Badge variant="cv" value="Estável" size="md" />
-// <Badge variant="status" value="Online" />
+// Exemplos de Uso:
+// <Badge estabilidade="Alta" />                        → "Alta"
+// <Badge estabilidade="Alta" label="Estabilidade" />   → "Estabilidade Alta"
+// <Badge estabilidade="Baixa" label="Confiança" />     → "Confiança Baixa"
+// <Badge estabilidade="Média" label="Probabilidade" /> → "Probabilidade Média"
 ```
 
 **Props:**
-- `variant`: Tipo de badge ('cv' para CV classification, 'status' para online/offline)
-- `value`: Texto a exibir
-- `size`: Tamanho (sm/md/lg)
-- `className`: Classes Tailwind adicionais
+- `estabilidade`: Nível ('Alta' | 'Média' | 'Baixa' | 'N/A')
+- `size`: Tamanho do badge ('sm' | 'md')
+- `label`: Prefixo semântico opcional - quando fornecido, exibe "Label Nível" (ex: "Estabilidade Alta")
+
+**Uso por Contexto:**
+- **StatsCard**: `label="Estabilidade"` → "Estabilidade Alta/Média/Baixa"
+- **OverUnderCard**: `label="Confiança"` → "Confiança Alta/Média/Baixa"
+- **PredictionsCard**: `label="Probabilidade"` → "Probabilidade Alta/Média/Baixa"
+- **DisciplineCard**: `label="Estabilidade"` → "Estabilidade Alta/Média/Baixa"
 
 ---
 
@@ -1083,9 +1064,9 @@ export function PredictionsCard({
 
 ---
 
-### 17. DisciplineCard (v1.1)
+### 17. DisciplineCard (v1.2)
 
-Card de disciplina com métricas de cartões e faltas, incluindo dados do árbitro.
+Card de disciplina com métricas de cartões e faltas, incluindo dados do árbitro (competição + temporada).
 
 ```typescript
 // src/components/molecules/DisciplineCard.tsx
@@ -1097,17 +1078,37 @@ interface DisciplineMetric {
 }
 
 interface ArbitroInfo {
+  id: string;
   nome: string;
-  media_amarelos: number;
-  media_vermelhos: number;
-  total_jogos: number;
+  partidas: number;           // Partidas na competição
+  partidas_temporada: number; // Total na temporada
+  media_cartoes_amarelos: number;  // Média na competição
+  media_cartoes_temporada: number; // Média ponderada temporada
+  media_faltas?: number | null;
 }
 
 interface DisciplineCardProps {
   metrics: DisciplineMetric[];
   homeTeamName: string;
   awayTeamName: string;
-  arbitro?: ArbitroInfo;
+  arbitro?: ArbitroInfo | null;
+}
+
+function RefereeInfo({ arbitro }: { arbitro: ArbitroInfo }) {
+  return (
+    <div className="flex flex-col items-center justify-center p-3 bg-dark-tertiary/50 rounded-lg">
+      <div className="w-10 h-10 rounded-full bg-dark-quaternary flex items-center justify-center mb-2">
+        <Icon name="whistle" size="md" className="text-warning" />
+      </div>
+      <p className="text-sm font-medium text-white">{arbitro.nome}</p>
+      <p className="text-xs text-gray-500">
+        {arbitro.partidas} jogos · {arbitro.media_cartoes_amarelos.toFixed(1)} cartões/jogo (competição)
+      </p>
+      <p className="text-xs text-gray-400">
+        {arbitro.partidas_temporada} jogos · {arbitro.media_cartoes_temporada.toFixed(1)} cartões/jogo (temporada)
+      </p>
+    </div>
+  );
 }
 
 export function DisciplineCard({
@@ -1117,30 +1118,22 @@ export function DisciplineCard({
   arbitro,
 }: DisciplineCardProps) {
   return (
-    <div className="card md:col-span-2">
+    <div className="bg-dark-secondary rounded-xl p-4 border border-dark-tertiary col-span-full">
+      {/* Header */}
       <div className="flex items-center gap-2 mb-4">
-        <Icon name="card" className="text-yellow-400" />
-        <h3 className="font-semibold text-white">Disciplina</h3>
+        <Icon name="card" size="sm" className="text-primary-400" />
+        <h3 className="text-sm font-medium text-white">Disciplina</h3>
       </div>
 
-      {/* Métricas */}
-      <div className="space-y-3">
-        {metrics.map((m, i) => (
-          <StatMetric key={i} label={m.label} home={m.home} away={m.away} />
+      {/* Árbitro (centralizado) */}
+      {arbitro && <RefereeInfo arbitro={arbitro} />}
+
+      {/* Métricas em grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 mt-4">
+        {metrics.map((m) => (
+          <DisciplineMetricRow key={m.label} {...m} homeTeamName={homeTeamName} awayTeamName={awayTeamName} />
         ))}
       </div>
-
-      {/* Árbitro */}
-      {arbitro && (
-        <div className="mt-4 pt-4 border-t border-dark-tertiary">
-          <p className="text-sm text-gray-400 mb-2">Árbitro: {arbitro.nome}</p>
-          <div className="flex gap-4 text-xs text-gray-500">
-            <span>🟨 {arbitro.media_amarelos.toFixed(1)}/jogo</span>
-            <span>🟥 {arbitro.media_vermelhos.toFixed(1)}/jogo</span>
-            <span>{arbitro.total_jogos} jogos</span>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
@@ -1150,7 +1143,12 @@ export function DisciplineCard({
 - `metrics`: Array de métricas de disciplina (amarelos, faltas)
 - `homeTeamName`: Nome do time mandante
 - `awayTeamName`: Nome do time visitante
-- `arbitro`: Informações do árbitro (opcional)
+- `arbitro`: Informações do árbitro (opcional) - agora com dados de competição E temporada
+
+**Display do Árbitro (v1.2):**
+- Layout centralizado com ícone de apito maior
+- **Linha 1:** Dados da competição atual (ex: "2 jogos · 0.5 cartões/jogo (competição)")
+- **Linha 2:** Dados da temporada (ex: "9 jogos · 3.8 cartões/jogo (temporada)")
 
 ---
 

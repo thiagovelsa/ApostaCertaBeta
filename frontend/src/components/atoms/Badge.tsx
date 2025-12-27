@@ -3,6 +3,7 @@ import { type EstabilidadeLabel } from '@/types/stats';
 interface BadgeProps {
   estabilidade: EstabilidadeLabel;
   size?: 'sm' | 'md';
+  label?: string;
 }
 
 const badgeStyles: Record<EstabilidadeLabel, string> = {
@@ -12,14 +13,14 @@ const badgeStyles: Record<EstabilidadeLabel, string> = {
   'N/A': 'bg-gray-500/20 text-gray-400',
 };
 
-export function Badge({ estabilidade, size = 'sm' }: BadgeProps) {
+export function Badge({ estabilidade, size = 'sm', label }: BadgeProps) {
   const sizeClasses = size === 'sm' ? 'px-2 py-0.5 text-xs' : 'px-3 py-1 text-sm';
 
   return (
     <span
       className={`inline-flex items-center rounded-full font-medium ${sizeClasses} ${badgeStyles[estabilidade]}`}
     >
-      {estabilidade}
+      {label ? `${label} ${estabilidade}` : estabilidade}
     </span>
   );
 }

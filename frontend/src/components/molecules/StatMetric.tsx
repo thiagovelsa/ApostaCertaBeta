@@ -1,4 +1,5 @@
 import { Badge } from '@/components/atoms';
+import { toEstabilidadeLabel } from '@/types/stats';
 import type { EstatisticaMetrica } from '@/types';
 
 interface StatMetricProps {
@@ -19,7 +20,7 @@ export function StatMetric({ label, home, away, showCV = true }: StatMetricProps
         <div className="flex items-center gap-2">
           <span className="text-white font-semibold text-lg">{home.media.toFixed(1)}</span>
           {showCV && (
-            <Badge classificacao={home.classificacao} size="sm" />
+            <Badge estabilidade={toEstabilidadeLabel(home.classificacao)} size="sm" />
           )}
         </div>
 
@@ -29,7 +30,7 @@ export function StatMetric({ label, home, away, showCV = true }: StatMetricProps
 
         <div className="flex items-center gap-2">
           {showCV && (
-            <Badge classificacao={away.classificacao} size="sm" />
+            <Badge estabilidade={toEstabilidadeLabel(away.classificacao)} size="sm" />
           )}
           <span className="text-white font-semibold text-lg">{away.media.toFixed(1)}</span>
         </div>

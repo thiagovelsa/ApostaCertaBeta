@@ -54,7 +54,7 @@ function DisciplineMetricRow({
       {/* Header com label e badge - altura fixa */}
       <div className="flex items-center justify-between mb-2 h-6">
         <span className="text-sm text-gray-300">{label}</span>
-        <Badge estabilidade={badgeLabel} size="sm" />
+        <Badge estabilidade={badgeLabel} label="Estabilidade" size="sm" />
       </div>
 
       {/* Valores comparativos - altura fixa */}
@@ -108,25 +108,25 @@ function DisciplineMetricRow({
 
 /**
  * Componente para exibir informações do árbitro
+ * Mostra dados da competição e da temporada (todas competições)
  */
 function RefereeInfo({ arbitro }: { arbitro: ArbitroInfo }) {
+  // Fallback para compatibilidade com API antiga
+  const partidasTemp = arbitro.partidas_temporada ?? arbitro.partidas;
+  const mediaTemp = arbitro.media_cartoes_temporada ?? arbitro.media_cartoes_amarelos;
+
   return (
-    <div className="flex items-center justify-between p-3 bg-dark-tertiary/50 rounded-lg">
-      <div className="flex items-center gap-3">
-        <div className="w-8 h-8 rounded-full bg-dark-quaternary flex items-center justify-center">
-          <Icon name="whistle" size="sm" className="text-gray-400" />
-        </div>
-        <div>
-          <p className="text-sm font-medium text-white">{arbitro.nome}</p>
-          <p className="text-xs text-gray-500">
-            {arbitro.partidas} {arbitro.partidas === 1 ? 'partida' : 'partidas'} na competição
-          </p>
-        </div>
+    <div className="flex flex-col items-center justify-center p-3 bg-dark-tertiary/50 rounded-lg">
+      <div className="w-10 h-10 rounded-full bg-dark-quaternary flex items-center justify-center mb-2">
+        <Icon name="whistle" size="md" className="text-warning" />
       </div>
-      <div className="text-right">
-        <p className="text-lg font-bold text-warning">{arbitro.media_cartoes_amarelos.toFixed(1)}</p>
-        <p className="text-xs text-gray-500">cartões/jogo</p>
-      </div>
+      <p className="text-sm font-medium text-white">{arbitro.nome}</p>
+      <p className="text-xs text-gray-500">
+        {arbitro.partidas} jogos · {arbitro.media_cartoes_amarelos.toFixed(1)} cartões/jogo (competição)
+      </p>
+      <p className="text-xs text-gray-400">
+        {partidasTemp} jogos · {mediaTemp.toFixed(1)} cartões/jogo (temporada)
+      </p>
     </div>
   );
 }

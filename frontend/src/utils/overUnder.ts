@@ -64,8 +64,8 @@ const ICONS: Record<string, IconName> = {
 const LABELS: Record<string, string> = {
   gols: 'Gols',
   escanteios: 'Escanteios',
-  finalizacoes: 'Finalizações',
-  finalizacoes_gol: 'Fin. no Gol',
+  finalizacoes: 'Chutes',
+  finalizacoes_gol: 'Chutes ao Gol',
   cartoes_amarelos: 'Cartões',
   faltas: 'Faltas',
 };

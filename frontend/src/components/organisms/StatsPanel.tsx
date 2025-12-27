@@ -284,9 +284,9 @@ export function StatsPanel({
           awayTeamName={visitante.nome}
         />
 
-        {/* Finalizações */}
+        {/* Chutes */}
         <StatsCard
-          title="Finalizações"
+          title="Chutes"
           icon="shot"
           homeFeitos={mandante.estatisticas.finalizacoes}
           awayFeitos={visitante.estatisticas.finalizacoes}
@@ -294,9 +294,9 @@ export function StatsPanel({
           awayTeamName={visitante.nome}
         />
 
-        {/* Finalizações no Gol */}
+        {/* Chutes ao Gol */}
         <StatsCard
-          title="Finalizações no Gol"
+          title="Chutes ao Gol"
           icon="target"
           homeFeitos={mandante.estatisticas.finalizacoes_gol}
           awayFeitos={visitante.estatisticas.finalizacoes_gol}

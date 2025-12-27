@@ -12,7 +12,7 @@ interface FilterState {
   toggleAwayMando: (mando: 'casa' | 'fora') => void;
 }
 
-export const useFilterStore = create<FilterState>((set, get) => ({
+export const useFilterStore = create<FilterState>((set) => ({
   filtro: 'geral',
   homeMando: null,
   awayMando: null,

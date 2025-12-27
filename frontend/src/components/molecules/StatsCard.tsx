@@ -1,6 +1,6 @@
 import { Icon, Badge, type IconName } from '@/components/atoms';
 import type { EstatisticaFeitos } from '@/types';
-import { toEstabilidadeLabel, type EstabilidadeLabel } from '@/types/stats';
+import type { EstabilidadeLabel } from '@/types/stats';
 
 interface StatsCardProps {
   title: string;
@@ -149,7 +149,7 @@ export function StatsCard({
           <Icon name={icon} size="sm" className="text-primary-400" />
           <h3 className="text-sm font-medium text-white">{title}</h3>
         </div>
-        <Badge estabilidade={cardLabel} size="sm" />
+        <Badge estabilidade={cardLabel} label="Estabilidade" size="sm" />
       </div>
 
       {/* Divisor */}

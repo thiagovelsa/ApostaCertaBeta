@@ -73,7 +73,7 @@ function StatSection({ stat }: { stat: OverUnderStat }) {
             (Prev: {stat.lambda.toFixed(1)})
           </span>
         </div>
-        <Badge estabilidade={estabilidadeLabel} size="sm" />
+        <Badge estabilidade={estabilidadeLabel} label="Confiança" size="sm" />
       </div>
 
       {/* Linhas Over/Under */}
@@ -124,7 +124,7 @@ export function OverUnderCard({ overUnder }: OverUnderCardProps) {
         </div>
         <div className="flex items-center gap-2">
           <span className="text-xs text-gray-500">Confiança</span>
-          <Badge estabilidade={estabilidadeLabel} size="sm" />
+          <Badge estabilidade={estabilidadeLabel} label="Confiança" size="sm" />
         </div>
       </div>
 

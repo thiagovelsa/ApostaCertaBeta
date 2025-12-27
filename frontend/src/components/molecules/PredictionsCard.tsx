@@ -1,4 +1,4 @@
-import { Icon } from '@/components/atoms';
+import { Icon, Badge } from '@/components/atoms';
 import type { PrevisaoPartida, PrevisaoEstatistica, ConfiancaLabel } from '@/types';
 
 interface PredictionCellProps {
@@ -50,7 +50,7 @@ function PredictionCell({ label, icon, previsao }: PredictionCellProps) {
           <span className="text-xs font-medium text-gray-300">{label}</span>
         </div>
         <div className="flex items-center gap-1">
-          <span className="text-xs text-gray-500">Prev:</span>
+          <span className="text-xs text-gray-500">Previsão:</span>
           <span className="text-sm font-bold text-primary-400">{total.valor.toFixed(1)}</span>
         </div>
       </div>
@@ -81,7 +81,7 @@ function PredictionCell({ label, icon, previsao }: PredictionCellProps) {
 
       {/* Linha 3: % confiança individual */}
       <div className="flex items-center justify-center gap-1">
-        <span className="text-xs text-gray-500">Conf:</span>
+        <span className="text-xs text-gray-500">Confiança:</span>
         <span className={`text-xs font-medium ${textColor}`}>
           {Math.round(total.confianca * 100)}%
         </span>
@@ -120,12 +120,7 @@ export function PredictionsCard({
           <Icon name="stats" size="sm" className="text-primary-400" />
           <h3 className="text-sm font-medium text-white">Previsões da Partida</h3>
         </div>
-        <div className="flex items-center gap-2">
-          <span className="text-xs text-gray-500">Confiança</span>
-          <span className={`text-sm font-bold ${getTextColor(confiancaLabel)}`}>
-            {Math.round(confiancaMedia * 100)}%
-          </span>
-        </div>
+        <Badge estabilidade={confiancaLabel} label="Probabilidade" size="sm" />
       </div>
 
       {/* Header dos Times - UMA ÚNICA VEZ */}
@@ -158,12 +153,12 @@ export function PredictionsCard({
           previsao={previsoes.escanteios}
         />
         <PredictionCell
-          label="Finalizações"
+          label="Chutes"
           icon="shot"
           previsao={previsoes.finalizacoes}
         />
         <PredictionCell
-          label="Fin. Gol"
+          label="Chutes ao Gol"
           icon="target"
           previsao={previsoes.finalizacoes_gol}
         />

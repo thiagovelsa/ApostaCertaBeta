@@ -732,27 +732,50 @@ class StatsService:
                 last_name = main_referee.get("lastName", "")
                 nome = f"{first_name} {last_name}".strip()
 
-            # Extrai estatisticas do torneio (primeira competicao)
+            # Extrai estatisticas do torneio
             tournament_stats = referee_stats.get("tournamentStats", [])
+
             if tournament_stats:
-                stats = tournament_stats[0]
-                partidas = int(stats.get("matches", 0))
-                avg_cards = float(stats.get("averageCards", 0))
-                avg_fouls = stats.get("averageFouls")
+                # Primeira competicao (assume que é a principal/atual)
+                stats_competicao = tournament_stats[0]
+                partidas_competicao = int(stats_competicao.get("matches", 0))
+                avg_cards_competicao = float(stats_competicao.get("averageCards", 0))
+                avg_fouls = stats_competicao.get("averageFouls")
                 if avg_fouls:
                     avg_fouls = float(avg_fouls)
+
+                # Total na temporada (soma de TODAS as competicoes)
+                partidas_temporada = sum(
+                    int(t.get("matches", 0)) for t in tournament_stats
+                )
+
+                # Media de cartoes na temporada (media ponderada)
+                total_cartoes = sum(
+                    int(t.get("matches", 0)) * float(t.get("averageCards", 0))
+                    for t in tournament_stats
+                )
+                avg_cards_temporada = (
+                    total_cartoes / partidas_temporada if partidas_temporada > 0 else 0.0
+                )
             else:
-                partidas = 0
-                avg_cards = 0.0
+                partidas_competicao = 0
+                partidas_temporada = 0
+                avg_cards_competicao = 0.0
+                avg_cards_temporada = 0.0
                 avg_fouls = None
 
-            logger.info(f"[REFEREE] {nome}: {partidas} partidas, {avg_cards} cartoes/jogo")
+            logger.info(
+                f"[REFEREE] {nome}: {partidas_competicao} jogos/{avg_cards_competicao:.1f} cartoes (comp), "
+                f"{partidas_temporada} jogos/{avg_cards_temporada:.1f} cartoes (temp)"
+            )
 
             return ArbitroInfo(
                 id=referee_id,
                 nome=nome,
-                partidas=partidas,
-                media_cartoes_amarelos=avg_cards,
+                partidas=partidas_competicao,
+                partidas_temporada=partidas_temporada,
+                media_cartoes_amarelos=avg_cards_competicao,
+                media_cartoes_temporada=avg_cards_temporada,
                 media_faltas=avg_fouls,
             )
 

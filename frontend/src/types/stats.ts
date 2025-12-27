@@ -98,8 +98,10 @@ export type MandoFilter = 'casa' | 'fora' | null;
 export interface ArbitroInfo {
   id: string;
   nome: string;
-  partidas: number;
-  media_cartoes_amarelos: number;
+  partidas: number;  // Partidas na competição específica
+  partidas_temporada: number;  // Total na temporada (todas competições)
+  media_cartoes_amarelos: number;  // Média na competição
+  media_cartoes_temporada: number;  // Média ponderada na temporada
   media_faltas?: number | null;
 }
 
