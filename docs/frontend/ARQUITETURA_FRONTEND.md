@@ -1,7 +1,7 @@
 # Arquitetura Frontend - Sistema de Análise de Estatísticas de Futebol
 
-**Versão:** 1.1
-**Data:** 27 de dezembro de 2025
+**Versão:** 1.2
+**Data:** 28 de dezembro de 2025
 **Framework:** React 18 + TypeScript 5 + Vite 5
 
 Guia técnico completo da arquitetura frontend, organização de código, state management, routing e otimizações de performance.
@@ -39,12 +39,17 @@ frontend/
 │   │   │   ├── PeriodoToggle.tsx    # Sub-filtro de período (1T/2T/Integral)
 │   │   │   ├── RaceRow.tsx
 │   │   │   ├── StatMetric.tsx
-│   │   │   └── TeamCard.tsx
+│   │   │   ├── TeamCard.tsx
+│   │   │   └── OpportunityCard.tsx  # Card de oportunidade (v1.2)
 │   │   │
 │   │   ├── organisms/
 │   │   │   ├── MatchCard.tsx
 │   │   │   ├── StatsCategory.tsx
-│   │   │   └── StatsPanel.tsx
+│   │   │   ├── StatsPanel.tsx
+│   │   │   ├── RaceBadges.tsx
+│   │   │   ├── PredictionsCard.tsx
+│   │   │   ├── DisciplineCard.tsx
+│   │   │   └── SmartSearchResults.tsx  # Container busca inteligente (v1.2)
 │   │   │
 │   │   └── layout/
 │   │       ├── Container.tsx
@@ -63,6 +68,7 @@ frontend/
 │   │   ├── useStats.ts         # Fetch stats com filtro
 │   │   ├── useCompetitions.ts  # Fetch competições
 │   │   ├── useBadge.ts         # Fetch escudo do time
+│   │   ├── useSmartSearch.ts   # Busca inteligente de oportunidades (v1.2)
 │   │   └── useLocalStorage.ts  # Persista dados locais (opcional)
 │   │
 │   ├── services/               # API Integration Layer
@@ -83,6 +89,7 @@ frontend/
 │   │   ├── partida.ts          # TimeInfo, PartidaResumo, PartidaListResponse
 │   │   ├── stats.ts            # EstatisticaMetrica, StatsResponse
 │   │   ├── competicao.ts       # CompeticaoInfo
+│   │   ├── smartSearch.ts      # Oportunidade, SmartSearchResult (v1.2)
 │   │   └── api.ts              # API types (AxiosError, etc)
 │   │
 │   ├── utils/                  # Utility Functions
@@ -91,6 +98,7 @@ frontend/
 │   │   ├── cvClassifier.ts     # Classifica CV (Estável, Instável)
 │   │   ├── numberFormatter.ts  # Formata números (2.5 gols)
 │   │   ├── cn.ts               # Class name merger (clsx)
+│   │   ├── smartSearch.ts      # Análise de oportunidades (v1.2)
 │   │   └── constants.ts        # Constantes globais
 │   │
 │   ├── lib/                    # External Library Setup
@@ -954,7 +962,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
 Para aprofundar na arquitetura após ler este documento:
 
 - **[DESIGN_SYSTEM.md](DESIGN_SYSTEM.md)** - Tokens de design (cores, tipografia, spacing, animações)
-- **[COMPONENTES_REACT.md](COMPONENTES_REACT.md)** - Catálogo completo de 19 componentes
+- **[COMPONENTES_REACT.md](COMPONENTES_REACT.md)** - Catálogo completo de 25 componentes
 - **[INTEGRACAO_API.md](INTEGRACAO_API.md)** - Services, hooks React Query, type mappings
 - **[../ARQUITETURA_BACKEND.md](../ARQUITETURA_BACKEND.md)** - Arquitetura do backend FastAPI
 - **[../MODELOS_DE_DADOS.md](../MODELOS_DE_DADOS.md)** - Schemas Pydantic (que mapeiam para TypeScript)
@@ -979,7 +987,7 @@ Para aprofundar na arquitetura após ler este documento:
 
 **Status do Projeto:**
 - ✅ Documentação técnica (✓ Frontend Arquitetura)
-- 🔄 Backend (Em desenvolvimento)
-- 🔄 Frontend (Planejado)
+- ✅ Backend (Implementado)
+- ✅ Frontend (Implementado - inclui Busca Inteligente v1.2)
 
-**Última atualização:** 26 de dezembro de 2025
+**Última atualização:** 28 de dezembro de 2025

@@ -1,7 +1,7 @@
 # Modelos de Dados - Pydantic Schemas
 
-**Versão:** 1.3
-**Data:** 27 de Dezembro de 2025
+**Versão:** 1.4
+**Data:** 28 de Dezembro de 2025
 **Framework:** Pydantic v2.x (com FastAPI)
 
 ---
@@ -911,6 +911,114 @@ def test_estatistica_metrica_classificacao_automatica():
 - **Pydantic Docs:** https://docs.pydantic.dev/latest/
 - **FastAPI Models:** https://fastapi.tiangolo.com/tutorial/body/
 - **JSON Schema:** https://json-schema.org/
+
+---
+
+## 13. Modelos de Busca Inteligente (Frontend)
+
+Modelos TypeScript usados exclusivamente no frontend para a funcionalidade de Busca Inteligente.
+
+### 13.1 TimeResumo
+
+```typescript
+// src/types/smartSearch.ts
+
+export interface TimeResumo {
+  id: string;
+  nome: string;
+  escudo: string | null;
+}
+```
+
+### 13.2 Oportunidade
+
+```typescript
+export type ConfiancaLabel = 'Alta' | 'Média' | 'Baixa';
+
+export interface Oportunidade {
+  matchId: string;
+  mandante: TimeResumo;
+  visitante: TimeResumo;
+  competicao: string;
+  horario: string;
+  estatistica: string;        // 'gols', 'escanteios', etc.
+  estatisticaLabel: string;   // 'Gols', 'Escanteios', etc.
+  tipo: 'over' | 'under';
+  linha: number;              // ex: 2.5
+  probabilidade: number;      // 0.0-1.0
+  confianca: number;          // CV convertido (0.0-1.0)
+  confiancaLabel: ConfiancaLabel;
+  score: number;              // confiança × probabilidade
+}
+```
+
+**Campo `score`:**
+- Fórmula: `score = confiança × probabilidade`
+- Range: 0.0 a 1.0
+- Usado para ranquear oportunidades
+
+### 13.3 SmartSearchResult
+
+```typescript
+export interface SmartSearchResult {
+  partidas_analisadas: number;
+  partidas_com_oportunidades: number;
+  total_oportunidades: number;
+  oportunidades: Oportunidade[];  // Ranqueadas por score
+  timestamp: string;              // ISO 8601
+}
+```
+
+### 13.4 SmartSearchProgress
+
+```typescript
+export interface SmartSearchProgress {
+  total: number;        // Total de partidas a analisar
+  analisadas: number;   // Partidas já processadas
+  porcentagem: number;  // % concluído (0-100)
+}
+```
+
+### 13.5 STAT_THRESHOLDS
+
+```typescript
+export interface StatThresholds {
+  overMin: number;       // Probabilidade mínima para Over (0.60-0.65)
+  underMin: number;      // Probabilidade mínima para Under (0.70-0.75)
+  confiancaMin: number;  // Confiança mínima (0.70)
+}
+
+export const STAT_THRESHOLDS: Record<string, StatThresholds> = {
+  gols: { overMin: 0.60, underMin: 0.70, confiancaMin: 0.70 },
+  escanteios: { overMin: 0.60, underMin: 0.75, confiancaMin: 0.70 },
+  finalizacoes: { overMin: 0.60, underMin: 0.70, confiancaMin: 0.70 },
+  finalizacoes_gol: { overMin: 0.60, underMin: 0.70, confiancaMin: 0.70 },
+  cartoes_amarelos: { overMin: 0.65, underMin: 0.75, confiancaMin: 0.70 },
+  faltas: { overMin: 0.60, underMin: 0.70, confiancaMin: 0.70 },
+};
+```
+
+### 13.6 STAT_LABELS
+
+```typescript
+export const STAT_LABELS: Record<string, string> = {
+  gols: 'Gols',
+  escanteios: 'Escanteios',
+  finalizacoes: 'Finalizações',
+  finalizacoes_gol: 'Finalizações no Gol',
+  cartoes_amarelos: 'Cartões Amarelos',
+  faltas: 'Faltas',
+};
+```
+
+### 13.7 Constantes de Análise
+
+```typescript
+// Limites de probabilidade
+const PROBABILITY_CUTOFF = 0.98;  // Descarta linhas muito óbvias
+const MIN_EDGE = 0.30;            // Edge mínimo (|over - under|)
+const MAX_OPPORTUNITIES = 999;    // Exibe todas oportunidades
+```
 
 ---
 

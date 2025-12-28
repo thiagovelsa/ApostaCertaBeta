@@ -1,498 +1,169 @@
-#!/usr/bin/env python3
 """
-Download de Logos de Times Europeus
-====================================
-
-Baixa logos de todos os times da 1a e 2a divisao das 6 maiores ligas europeias
-usando a API gratuita do TheSportsDB.
-
-Uso:
-    python download_logos.py --all              # Baixar todas as ligas
-    python download_logos.py --country england  # Baixar apenas Inglaterra
-    python download_logos.py --dry-run          # Testar sem baixar
-    python download_logos.py --delay 5          # Intervalo de 5 segundos
+Script para baixar logos dos times usando o endpoint Opta
 """
-
-import argparse
-import json
 import os
-import re
-import sys
-import time
-from datetime import datetime
-from pathlib import Path
-from typing import Dict, List, Optional, Tuple
-from urllib.parse import urlparse
-
 import requests
+import time
 
-# Configuracao
-BASE_URL = "https://www.thesportsdb.com/api/v1/json/3"
-DEFAULT_DELAY = 3  # segundos entre requisicoes
-MAX_RETRIES = 3
-BACKOFF_MULTIPLIER = 2
-INITIAL_BACKOFF = 5  # segundos
-TARGET_SIZE = 256  # pixels
+# Configuração do endpoint Opta
+OPTA_BASE_URL = "https://omo.akamai.opta.net/image.php"
 
-# Diretorios
-SCRIPT_DIR = Path(__file__).parent.absolute()
-PROJECT_DIR = SCRIPT_DIR.parent
-LOGOS_DIR = PROJECT_DIR / "frontend" / "logos"
-PROGRESS_FILE = LOGOS_DIR / ".progress.json"
-INDEX_FILE = LOGOS_DIR / "index.json"
+def get_logo_url(team_id: str, size: int = 150) -> str:
+    """Gera URL do logo do time no Opta"""
+    return f"{OPTA_BASE_URL}?secure=true&h=omo.akamai.opta.net&sport=football&entity=team&description=badges&dimensions={size}&id={team_id}"
 
-# Mapeamento de ligas (nomes exatos da API TheSportsDB)
-LEAGUES = {
-    "england": {
-        "premier-league": "English Premier League",
-        "championship": "English League Championship"
+def download_logo(team_id: str, team_name: str, country: str, output_dir: str, size: int = 150) -> bool:
+    """Baixa o logo de um time"""
+    url = get_logo_url(team_id, size)
+
+    # Criar diretório do país se não existir
+    country_dir = os.path.join(output_dir, country)
+    os.makedirs(country_dir, exist_ok=True)
+
+    # Nome do arquivo: nome_do_time.png
+    safe_name = team_name.replace(" ", "_").replace("/", "-").lower()
+    filepath = os.path.join(country_dir, f"{safe_name}.png")
+
+    try:
+        response = requests.get(url, timeout=10)
+        if response.status_code == 200 and len(response.content) > 100:
+            with open(filepath, 'wb') as f:
+                f.write(response.content)
+            print(f"OK {team_name} ({country})")
+            return True
+        else:
+            print(f"ERRO {team_name} - Resposta invalida")
+            return False
+    except Exception as e:
+        print(f"ERRO {team_name} - {e}")
+        return False
+
+# Times por liga
+TEAMS = {
+    "netherlands": {
+        # Eredivisie
+        "PSV": "24fvcruwqrqvqa3aonf8c3zuy",
+        "Feyenoord": "20vymiy7bo8wkyxai3ew494fz",
+        "Ajax": "d0zdg647gvgc95xdtk1vpbkys",
+        "NEC": "8iawijq7s9s6d85mjz8wdslki",
+        "Groningen": "cos9hxi16eitbcbthof7zrm4m",
+        "AZ": "3kfktv64h7kg7zryax1wktr5r",
+        "Twente": "4tic29sox7m39fy1ztgv0jsiq",
+        "Utrecht": "ccpscwdcm65czscrun048ecn5",
+        "Heerenveen": "4vd2t5schmvvufrfib7f2vjdf",
+        "Sparta": "89w5c6pw7vn0dxypi61tt0g4k",
+        "Fortuna": "3ebril33e08ddzob4bhq8awsr",
+        "Excelsior": "dqk062lu0vm8epvytbm6r4mmf",
+        "Go Ahead": "b79uipsy57y1jqpy07h4i5ovk",
+        "Zwolle": "2uuh2bir8ktof0uxfo06lb4ox",
+        "Telstar": "zjawy6qdzk3y69v5pa3zl2cb",
+        "Volendam": "6g9qrm72224jrk6tkxxxi8a9n",
+        "Heracles": "dac758ef858jbq7pcb3gfwite",
+        "NAC": "59t7flioj4w4mpwnrwbm0m8ck",
+        # Eerste Divisie
+        "ADO": "e8hiwrw6ocxm5iht6sp7jiv19",
+        "Cambuur": "ears40cp6opsgvhsy0dgyszpd",
+        "De Graafschap": "xcevba75jfkrg4s6tl89zl3y",
+        "Roda": "7rmv5ns2rj7bn4otpkur0mx0x",
+        "PSV II": "2xlnfgrl6r18ftv38unwp7h4s",
+        "Almere": "1fttb31hnskynpku8qd09yhm8",
+        "Den Bosch": "eh54mfvjtrttgsg1wbjnvxcqz",
+        "VVV": "cv5ftekuejf0ryxvd5h2my47r",
+        "Willem II": "bk5ltsueqmeng29eovd8m2tml",
+        "Waalwijk": "ed5nwjz5za3oyi20nxzgqivmx",
+        "Emmen": "3t0vjqtxc8wpjzv82i3oi2ova",
+        "Eindhoven": "dvmw7d6jb38qvv7e6ziwu0vyr",
+        "Utrecht II": "ch82doz9w9t1sw9ae3a4ffh0j",
+        "Dordrecht": "z9phg19papi9f5fd6qxzr836",
+        "Helmond": "b94pf87be9ojdgnrs5mst80un",
+        "MVV": "bqm1bnp1bh2apyudlz1o1whr3",
+        "AZ II": "1wyg1tunyt7go9tnjea1hjqxb",
+        "TOP Oss": "dnzj0iv5qtaemm9kthh9pos8q",
+        "Vitesse": "6hsriqr3ybvyg94w2k19oal50",
+        "Ajax II": "6lzy9iiqoysvtdsgx719fng9n",
     },
-    "germany": {
-        "bundesliga": "German Bundesliga",
-        "2-bundesliga": "German 2. Bundesliga"
-    },
-    "italy": {
-        "serie-a": "Italian Serie A",
-        "serie-b": "Italian Serie B"
-    },
-    "spain": {
-        "la-liga": "Spanish La Liga",
-        "la-liga-2": "Spanish La Liga 2"
-    },
-    "france": {
-        "ligue-1": "French Ligue 1",
-        "ligue-2": "French Ligue 2"
+    "turkey": {
+        "Galatasaray": "esa748l653sss1wurz5ps3228",
+        "Fenerbahce": "8lroq0cbhdxj8124qtxwrhvmm",
+        "Trabzonspor": "2yab38jdfl0gk2tei1mq40o06",
+        "Goztepe": "cjbaf8s09qoa1n11r33gc560x",
+        "Besiktas": "2ez9cvam9lp9jyhng3eh3znb4",
+        "Samsunspor": "dpsnqu7pd2b0shfzjyn5j1znf",
+        "Basaksehir": "47njg6cmlx5q3fvdsupd2n6qu",
+        "Kocaelispor": "b703zecenioz21dnj3p63v3f7",
+        "Gaziantep": "2agzb2h4ppg7lfz9hn7eg1rqo",
+        "Alanyaspor": "84fpe0iynjdghwysyo5tizdkk",
+        "Genclerbirligi": "embqktr41hfzczc8uav1scmcn",
+        "Rizespor": "1lbrlj3uu8wi2h9j79snuoae4",
+        "Konyaspor": "cw4lbdzlqqdvbkdkz00c9ye49",
+        "Kasimpasa": "4idg23egrrvtrbgrg7p5x7bwf",
+        "Antalyaspor": "9irsyv431fpuqhqtfq9iwxf2u",
+        "Kayserispor": "c8ns6z3u8kxldv1zh1evu10rv",
+        "Eyupspor": "bmgtxgipsznlb1j20zwjti3xh",
+        "Fatih Karagumruk": "c3txoz57mu7w9y1jprvnv2flr",
     },
     "portugal": {
-        "primeira-liga": "Portuguese Primeira Liga",
-        "liga-portugal-2": "Portuguese LigaPro"
+        "Porto": "66bsnl0zjb7l5akwo00h0y5me",
+        "Sporting": "7catg5lpivcmpf4xhggh6d8rk",
+        "Benfica": "9ldqu49smv1xg2va0n2cy28zl",
+        "Gil Vicente": "bwt8yfk8rkcwiwyr0mopd7wqd",
+        "Braga": "26t6lvlpql4w5wu1ih73qpy36",
+        "Famalicao": "5c0sf1eaipcxvdw9o22of2jdp",
+        "Moreirense": "4a3yqn3kt1l18oklr7zxo4f1s",
+        "Vitoria SC": "8gvg1ranyf93hprfkwx3ofl2y",
+        "Estoril": "22mo7qbsnyi8wtucpvhgvhw2q",
+        "Estrela": "85nuf5511v5omdretfoh0c4k4",
+        "Rio Ave": "cgvbluoerzbzcr7aaxge3wkcv",
+        "Alverca": "2f40cprg8nv4stxq2o4yxpx54",
+        "Nacional": "99xu9ofwhlbp0lg1j4eiplgrg",
+        "Santa Clara": "cmbqc74mshg77ra7mywec2a6b",
+        "Casa Pia": "ewsf6evtguu9j7k6js4tlgl89",
+        "Arouca": "dich5v7sw466smbqap0d9rbyj",
+        "Tondela": "a4hzxqvnwxe9frlt8fvxfmppa",
+        "AVS": "di8rq9fo3z0bnsx08jljhnnys",
+    },
+    # IDs numéricos do Wikidata (P8737)
+    "greece": {
+        "Olympiacos": "202",
+        "PAOK": "237",
+        "Apollon Smyrnis": "3016",
+        "Asteras Tripoli": "2599",
+        "Atromitos": "2059",
+        "Kallithea": "3129",
+        "Kavalas": "3130",
+        "Lamia": "11317",
+        "Larissa": "2241",
+        "Levadiakos": "2600",
+        "Niki Volos": "3664",
+        "Panachaiki": "2629",
+        "Panetolikos": "4990",
+        "Panionios": "2252",
+        "Panserraikos": "2613",
+        "PAS Giannina": "3133",
+        "Volos": "14963",
+    },
+    "austria": {
+        "Red Bull Salzburg": "857",
     }
 }
 
-
-def slugify(text: str) -> str:
-    """Converte texto para slug (nome de arquivo seguro)."""
-    text = text.lower().strip()
-    text = re.sub(r'[àáâãäå]', 'a', text)
-    text = re.sub(r'[èéêë]', 'e', text)
-    text = re.sub(r'[ìíîï]', 'i', text)
-    text = re.sub(r'[òóôõö]', 'o', text)
-    text = re.sub(r'[ùúûü]', 'u', text)
-    text = re.sub(r'[ñ]', 'n', text)
-    text = re.sub(r'[ç]', 'c', text)
-    text = re.sub(r'[^a-z0-9\s-]', '', text)
-    text = re.sub(r'[\s_]+', '-', text)
-    text = re.sub(r'-+', '-', text)
-    return text.strip('-')
-
-
-def load_progress() -> Dict:
-    """Carrega progresso de downloads anteriores."""
-    if PROGRESS_FILE.exists():
-        try:
-            with open(PROGRESS_FILE, 'r', encoding='utf-8') as f:
-                return json.load(f)
-        except Exception:
-            pass
-    return {"downloaded": [], "failed": [], "last_updated": None}
-
-
-def save_progress(progress: Dict) -> None:
-    """Salva progresso atual."""
-    progress["last_updated"] = datetime.now().isoformat()
-    with open(PROGRESS_FILE, 'w', encoding='utf-8') as f:
-        json.dump(progress, f, indent=2, ensure_ascii=False)
-
-
-def verify_league_exists(league_name: str) -> bool:
-    """Verifica se uma liga existe na API antes de buscar times."""
-    url = f"{BASE_URL}/search_all_teams.php"
-    params = {"l": league_name}
-
-    try:
-        response = requests.get(url, params=params, timeout=30)
-        response.raise_for_status()
-        data = response.json()
-        teams = data.get("teams", [])
-        return teams is not None and len(teams) > 0
-    except Exception:
-        return False
-
-
-def fetch_teams(league_name: str, delay: float) -> Optional[List[Dict]]:
-    """Busca times de uma liga na API do TheSportsDB."""
-    url = f"{BASE_URL}/search_all_teams.php"
-    params = {"l": league_name}
-
-    for attempt in range(MAX_RETRIES):
-        try:
-            print(f"  Buscando times de '{league_name}'...")
-            response = requests.get(url, params=params, timeout=30)
-
-            if response.status_code == 429:
-                backoff = INITIAL_BACKOFF * (BACKOFF_MULTIPLIER ** attempt)
-                print(f"  [!] Rate limit! Aguardando {backoff}s...")
-                time.sleep(backoff)
-                continue
-
-            response.raise_for_status()
-            data = response.json()
-
-            teams = data.get("teams", [])
-            if teams:
-                print(f"  [OK] Encontrados {len(teams)} times")
-                time.sleep(delay)
-                return teams
-            else:
-                print(f"  [!] Nenhum time encontrado para '{league_name}'")
-                return []
-
-        except requests.exceptions.RequestException as e:
-            backoff = INITIAL_BACKOFF * (BACKOFF_MULTIPLIER ** attempt)
-            print(f"  [!] Erro: {e}. Tentando novamente em {backoff}s...")
-            time.sleep(backoff)
-
-    print(f"  [X] Falha apos {MAX_RETRIES} tentativas")
-    return None
-
-
-def fetch_team_details(team_name: str, delay: float) -> Optional[Dict]:
-    """Busca detalhes de um time especifico (inclui URL do badge)."""
-    url = f"{BASE_URL}/searchteams.php"
-    params = {"t": team_name}
-
-    for attempt in range(MAX_RETRIES):
-        try:
-            response = requests.get(url, params=params, timeout=30)
-
-            if response.status_code == 429:
-                backoff = INITIAL_BACKOFF * (BACKOFF_MULTIPLIER ** attempt)
-                print(f"    [!] Rate limit! Aguardando {backoff}s...")
-                time.sleep(backoff)
-                continue
-
-            response.raise_for_status()
-            data = response.json()
-
-            teams = data.get("teams", [])
-            if teams:
-                time.sleep(delay)
-                return teams[0]
-            return None
-
-        except requests.exceptions.RequestException as e:
-            backoff = INITIAL_BACKOFF * (BACKOFF_MULTIPLIER ** attempt)
-            if attempt < MAX_RETRIES - 1:
-                time.sleep(backoff)
-
-    return None
-
-
-def download_logo(url: str, dest_path: Path, delay: float) -> bool:
-    """Baixa um logo de uma URL."""
-    if not url:
-        return False
-
-    for attempt in range(MAX_RETRIES):
-        try:
-            response = requests.get(url, timeout=30, stream=True)
-
-            if response.status_code == 429:
-                backoff = INITIAL_BACKOFF * (BACKOFF_MULTIPLIER ** attempt)
-                print(f"    [!] Rate limit! Aguardando {backoff}s...")
-                time.sleep(backoff)
-                continue
-
-            response.raise_for_status()
-
-            # Salvar arquivo
-            dest_path.parent.mkdir(parents=True, exist_ok=True)
-            with open(dest_path, 'wb') as f:
-                for chunk in response.iter_content(chunk_size=8192):
-                    f.write(chunk)
-
-            time.sleep(delay)
-            return True
-
-        except requests.exceptions.RequestException as e:
-            backoff = INITIAL_BACKOFF * (BACKOFF_MULTIPLIER ** attempt)
-            if attempt < MAX_RETRIES - 1:
-                print(f"    [!] Erro: {e}. Tentando novamente em {backoff}s...")
-                time.sleep(backoff)
-
-    return False
-
-
-def process_league(
-    country: str,
-    league_slug: str,
-    league_name: str,
-    progress: Dict,
-    index_data: Dict,
-    delay: float,
-    dry_run: bool = False
-) -> Tuple[int, int]:
-    """Processa uma liga: busca times e baixa logos."""
-    print(f"\n{'='*60}")
-    print(f"Liga: {league_name} ({country}/{league_slug})")
-    print('='*60)
-
-    teams = fetch_teams(league_name, delay)
-    if teams is None:
-        return 0, 1
-
-    success_count = 0
-    fail_count = 0
-
-    for team in teams:
-        team_name = team.get("strTeam", "Unknown")
-        team_id = team.get("idTeam", "")
-
-        team_slug = slugify(team_name)
-        file_path = f"{country}/{league_slug}/{team_slug}.png"
-        full_path = LOGOS_DIR / file_path
-
-        # Verificar se ja foi baixado
-        if file_path in progress.get("downloaded", []):
-            print(f"  [SKIP] {team_name} (ja baixado)")
-            continue
-
-        if dry_run:
-            print(f"  [DRY] {team_name} -> {file_path}")
-            success_count += 1
-            continue
-
-        # Buscar detalhes do time para obter URL do badge
-        print(f"  Buscando: {team_name}...", end=" ", flush=True)
-        team_details = fetch_team_details(team_name, delay)
-
-        if not team_details:
-            print("[NAO ENCONTRADO]")
-            progress.setdefault("failed", []).append({
-                "team": team_name,
-                "reason": "team_not_found",
-                "league": league_name
-            })
-            fail_count += 1
-            save_progress(progress)
-            continue
-
-        # Usar strBadge (nao strTeamBadge)
-        badge_url = team_details.get("strBadge", "")
-        team_id = team_details.get("idTeam", team_id)
-
-        if not badge_url:
-            print("[SEM BADGE]")
-            progress.setdefault("failed", []).append({
-                "team": team_name,
-                "reason": "no_badge_url",
-                "league": league_name
-            })
-            fail_count += 1
-            save_progress(progress)
-            continue
-
-        print(f"Baixando...", end=" ", flush=True)
-
-        if download_logo(badge_url, full_path, delay):
-            print("[OK]")
-            progress.setdefault("downloaded", []).append(file_path)
-
-            # Adicionar ao indice
-            index_data["teams"][team_slug] = {
-                "name": team_name,
-                "country": country,
-                "league": league_slug,
-                "file": file_path,
-                "thesportsdb_id": team_id
-            }
-
-            success_count += 1
-            save_progress(progress)
-        else:
-            print("[FALHOU]")
-            progress.setdefault("failed", []).append({
-                "team": team_name,
-                "reason": "download_failed",
-                "url": badge_url
-            })
-            fail_count += 1
-            save_progress(progress)
-
-    return success_count, fail_count
-
-
 def main():
-    parser = argparse.ArgumentParser(
-        description="Download de logos de times europeus via TheSportsDB"
-    )
-    parser.add_argument(
-        "--all",
-        action="store_true",
-        help="Baixar todas as ligas"
-    )
-    parser.add_argument(
-        "--country",
-        type=str,
-        choices=list(LEAGUES.keys()),
-        help="Baixar apenas um pais especifico"
-    )
-    parser.add_argument(
-        "--league",
-        type=str,
-        help="Baixar apenas uma liga especifica (ex: premier-league)"
-    )
-    parser.add_argument(
-        "--delay",
-        type=float,
-        default=DEFAULT_DELAY,
-        help=f"Intervalo entre requisicoes em segundos (default: {DEFAULT_DELAY})"
-    )
-    parser.add_argument(
-        "--dry-run",
-        action="store_true",
-        help="Simular sem baixar arquivos"
-    )
-    parser.add_argument(
-        "--reset",
-        action="store_true",
-        help="Ignorar progresso anterior e comecar do zero"
-    )
+    output_dir = os.path.join(os.path.dirname(__file__), "..", "frontend", "public", "logos")
+    os.makedirs(output_dir, exist_ok=True)
 
-    args = parser.parse_args()
+    total = 0
+    success = 0
 
-    if not (args.all or args.country or args.league):
-        parser.print_help()
-        print("\n[!] Especifique --all, --country ou --league")
-        sys.exit(1)
+    for country, teams in TEAMS.items():
+        print(f"\n=== {country.upper()} ===")
+        for name, team_id in teams.items():
+            total += 1
+            if download_logo(team_id, name, country, output_dir):
+                success += 1
+            time.sleep(0.2)  # Rate limiting
 
-    # Carregar ou resetar progresso
-    if args.reset:
-        progress = {"downloaded": [], "failed": [], "last_updated": None}
-        print("[!] Progresso resetado")
-    else:
-        progress = load_progress()
-        if progress.get("downloaded"):
-            print(f"[i] Retomando: {len(progress['downloaded'])} logos ja baixados")
-
-    # Inicializar indice
-    if INDEX_FILE.exists() and not args.reset:
-        with open(INDEX_FILE, 'r', encoding='utf-8') as f:
-            index_data = json.load(f)
-    else:
-        index_data = {
-            "teams": {},
-            "metadata": {
-                "total_teams": 0,
-                "generated_at": None,
-                "source": "TheSportsDB"
-            }
-        }
-
-    # Determinar quais ligas processar
-    leagues_to_process = []
-
-    if args.all:
-        for country, leagues in LEAGUES.items():
-            for league_slug, league_name in leagues.items():
-                leagues_to_process.append((country, league_slug, league_name))
-    elif args.country:
-        if args.country in LEAGUES:
-            for league_slug, league_name in LEAGUES[args.country].items():
-                if not args.league or args.league == league_slug:
-                    leagues_to_process.append((args.country, league_slug, league_name))
-    elif args.league:
-        for country, leagues in LEAGUES.items():
-            if args.league in leagues:
-                leagues_to_process.append((country, args.league, leagues[args.league]))
-                break
-
-    if not leagues_to_process:
-        print("[!] Nenhuma liga encontrada com os parametros especificados")
-        sys.exit(1)
-
-    # VERIFICAR TODAS AS LIGAS ANTES DE INICIAR
-    print(f"\n{'#'*60}")
-    print("# Verificando ligas na API...")
-    print(f"{'#'*60}")
-
-    valid_leagues = []
-    invalid_leagues = []
-
-    for country, league_slug, league_name in leagues_to_process:
-        print(f"  Verificando: {league_name}...", end=" ", flush=True)
-        if verify_league_exists(league_name):
-            print("[OK]")
-            valid_leagues.append((country, league_slug, league_name))
-        else:
-            print("[NAO ENCONTRADA]")
-            invalid_leagues.append((country, league_slug, league_name))
-        time.sleep(1)  # Pequeno delay entre verificacoes
-
-    if invalid_leagues:
-        print(f"\n[!] ATENCAO: {len(invalid_leagues)} liga(s) nao encontrada(s):")
-        for country, league_slug, league_name in invalid_leagues:
-            print(f"    - {league_name} ({country}/{league_slug})")
-
-        if not valid_leagues:
-            print("\n[X] Nenhuma liga valida encontrada. Abortando.")
-            sys.exit(1)
-
-        print(f"\n[i] Continuando com {len(valid_leagues)} liga(s) valida(s)...")
-
-    leagues_to_process = valid_leagues
-
-    print(f"\n{'#'*60}")
-    print(f"# Download de Logos - TheSportsDB")
-    print(f"# Ligas validas: {len(leagues_to_process)}")
-    print(f"# Intervalo: {args.delay}s entre requisicoes")
-    print(f"# Modo: {'DRY-RUN (simulacao)' if args.dry_run else 'DOWNLOAD'}")
-    print(f"{'#'*60}")
-
-    total_success = 0
-    total_fail = 0
-
-    for country, league_slug, league_name in leagues_to_process:
-        success, fail = process_league(
-            country,
-            league_slug,
-            league_name,
-            progress,
-            index_data,
-            args.delay,
-            args.dry_run
-        )
-        total_success += success
-        total_fail += fail
-
-    # Salvar indice final
-    if not args.dry_run:
-        index_data["metadata"]["total_teams"] = len(index_data["teams"])
-        index_data["metadata"]["generated_at"] = datetime.now().isoformat()
-
-        with open(INDEX_FILE, 'w', encoding='utf-8') as f:
-            json.dump(index_data, f, indent=2, ensure_ascii=False)
-
-        print(f"\n[OK] Indice salvo: {INDEX_FILE}")
-
-    # Resumo final
-    print(f"\n{'='*60}")
-    print("RESUMO")
-    print('='*60)
-    print(f"Logos baixados: {total_success}")
-    print(f"Falhas: {total_fail}")
-    print(f"Total no indice: {len(index_data['teams'])}")
-
-    if progress.get("failed"):
-        print(f"\nTimes com problemas ({len(progress['failed'])}):")
-        for item in progress["failed"][-10:]:  # Ultimos 10
-            print(f"  - {item.get('team', 'N/A')}: {item.get('reason', 'unknown')}")
-
-    print(f"\nArquivos:")
-    print(f"  Logos: {LOGOS_DIR}")
-    print(f"  Indice: {INDEX_FILE}")
-    print(f"  Progresso: {PROGRESS_FILE}")
-
+    print(f"\n{'='*40}")
+    print(f"Total: {success}/{total} logos baixados com sucesso")
 
 if __name__ == "__main__":
     main()

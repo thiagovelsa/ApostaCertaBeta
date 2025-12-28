@@ -17,6 +17,7 @@ Sistema web completo para análise detalhada de estatísticas de futebol, integr
 - ✅ **Métricas de Estabilidade** - Coeficiente de Variação (CV) para avaliar consistência
 - ✅ **Sequência de Resultados** - Race badges (V/E/D) mostrando forma recente dos times
 - ✅ **Previsões Inteligentes** - Análise preditiva baseada em médias e tendências
+- ✅ **Busca Inteligente** - Análise automática de todas as partidas identificando oportunidades
 - ✅ **Dados do Árbitro** - Estatísticas de cartões por árbitro na competição
 - ✅ **API RESTful Completa** - Endpoints bem documentados com Swagger/OpenAPI
 - ✅ **Caching Inteligente** - Redis para performance (TTLs otimizados)
@@ -109,7 +110,7 @@ docker-compose logs -f backend
 | Documento | Descrição |
 |-----------|-----------|
 | **[docs/frontend/DESIGN_SYSTEM.md](docs/frontend/DESIGN_SYSTEM.md)** | Design tokens, cores, tipografia, componentes visuais |
-| **[docs/frontend/COMPONENTES_REACT.md](docs/frontend/COMPONENTES_REACT.md)** | Catálogo de 19 componentes (Atomic Design) |
+| **[docs/frontend/COMPONENTES_REACT.md](docs/frontend/COMPONENTES_REACT.md)** | Catálogo de 25 componentes (Atomic Design) |
 | **[docs/frontend/INTEGRACAO_API.md](docs/frontend/INTEGRACAO_API.md)** | Services, React Query hooks, type mappings |
 | **[docs/frontend/ARQUITETURA_FRONTEND.md](docs/frontend/ARQUITETURA_FRONTEND.md)** | Folder structure, Zustand stores, React Router |
 | **[docs/frontend/RESPONSIVIDADE_E_ACESSIBILIDADE.md](docs/frontend/RESPONSIVIDADE_E_ACESSIBILIDADE.md)** | Mobile-first design, WCAG AA, PWA |
@@ -375,7 +376,7 @@ Este projeto está licenciado sob MIT License - veja [LICENSE](LICENSE) para det
 - ✅ **Frontend** (Funcional - React + TypeScript + TailwindCSS)
 - 🔄 Deploy em produção (Próximo)
 
-**Última atualização:** 26 de dezembro de 2025
+**Última atualização:** 28 de dezembro de 2025
 
 ---
 

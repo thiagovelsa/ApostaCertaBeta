@@ -1,7 +1,9 @@
 import axios from 'axios';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
-const API_TIMEOUT = Number(import.meta.env.VITE_API_TIMEOUT) || 10000;
+// Use relative URL in development to leverage Vite proxy
+// This avoids CORS issues and extension interference
+const API_URL = import.meta.env.VITE_API_URL || '';
+const API_TIMEOUT = Number(import.meta.env.VITE_API_TIMEOUT) || 30000;
 
 export const api = axios.create({
   baseURL: API_URL,

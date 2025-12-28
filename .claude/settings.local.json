@@ -1,3 +1,18 @@
 {
+  "permissions": {
+    "allow": [
+      "Bash(find:*)",
+      "Bash(npm run build:*)",
+      "Bash(curl:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "WebFetch(domain:escudosfutebolmundo.blogspot.com)",
+      "WebFetch(domain:omo.akamai.opta.net)",
+      "Bash(python:*)",
+      "Bash(if not exist \"C:\\\\Users\\\\User\\\\Desktop\\\\API\\\\scripts\" mkdir \"C:\\\\Users\\\\User\\\\Desktop\\\\API\\\\scripts\")",
+      "Bash(mkdir:*)",
+      "Bash(ls:*)"
+    ]
+  },
   "spinnerTipsEnabled": false
 }

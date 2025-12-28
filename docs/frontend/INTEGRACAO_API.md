@@ -1,7 +1,7 @@
 # Integração API - Services e React Query Hooks
 
-**Versão:** 1.3
-**Data:** 27 de dezembro de 2025
+**Versão:** 1.4
+**Data:** 28 de dezembro de 2025
 **Framework:** React Query 5 (TanStack Query)
 **HTTP Client:** Axios 1.6+
 
@@ -13,7 +13,7 @@ Guia completo de integração entre frontend React e API backend FastAPI.
 
 1. [Setup e Configuração](#setup-e-configuração)
 2. [Services (4 camada de acesso a dados)](#services---camada-de-acesso-a-dados)
-3. [Custom Hooks (4 React Query hooks)](#custom-hooks---react-query-hooks)
+3. [Custom Hooks (5 React Query hooks)](#custom-hooks---react-query-hooks)
 4. [Type Mappings](#type-mappings)
 5. [Error Handling](#error-handling)
 6. [Cache Strategy](#cache-strategy)
@@ -588,6 +588,137 @@ function TeamBadgeWrapper({ teamId, teamName }: { teamId: string; teamName: stri
 
 ---
 
+### 5. useSmartSearch
+
+Hook para análise automática de todas as partidas do dia, identificando oportunidades de aposta.
+
+```typescript
+// src/hooks/useSmartSearch.ts
+
+import { useState, useCallback } from 'react';
+import { getPartidasByDate } from '@/services/partidasService';
+import { getMatchStats } from '@/services/statsService';
+import { calcularPrevisoes } from '@/utils/predictions';
+import { calcularOverUnder } from '@/utils/overUnder';
+import { analisarPartida, criarResultado } from '@/utils/smartSearch';
+import type {
+  SmartSearchResult,
+  SmartSearchProgress,
+  Oportunidade,
+} from '@/types';
+
+// Configuração de rate limiting
+const BATCH_SIZE = 5;    // Requests paralelos por batch
+const BATCH_DELAY = 100; // ms entre batches
+
+interface UseSmartSearchReturn {
+  isLoading: boolean;       // Buscando lista de partidas
+  isAnalyzing: boolean;     // Analisando stats de cada partida
+  progress: SmartSearchProgress | null;  // Progresso (x de y analisadas)
+  result: SmartSearchResult | null;      // Resultado final
+  error: Error | null;
+  search: (date: string) => Promise<void>;  // Inicia busca
+  reset: () => void;                        // Limpa estado
+}
+
+export function useSmartSearch(): UseSmartSearchReturn {
+  const [state, setState] = useState<SmartSearchState>({
+    isLoading: false,
+    isAnalyzing: false,
+    progress: null,
+    result: null,
+    error: null,
+  });
+
+  const search = useCallback(async (date: string) => {
+    // 1. Buscar partidas do dia
+    // 2. Processar em batches de 5 (rate limiting)
+    // 3. Para cada partida: buscar stats → calcular previsões → analisar
+    // 4. Ranquear por score (confiança × probabilidade)
+  }, []);
+
+  return { ...state, search, reset };
+}
+```
+
+**Tipos Relacionados:**
+
+```typescript
+// src/types/smartSearch.ts
+
+export interface SmartSearchProgress {
+  total: number;        // Total de partidas
+  analisadas: number;   // Partidas processadas
+  porcentagem: number;  // % concluído
+}
+
+export interface SmartSearchResult {
+  partidas_analisadas: number;
+  partidas_com_oportunidades: number;
+  total_oportunidades: number;
+  oportunidades: Oportunidade[];  // Ranqueadas por score
+  timestamp: string;
+}
+
+export interface Oportunidade {
+  matchId: string;
+  mandante: TimeResumo;
+  visitante: TimeResumo;
+  competicao: string;
+  horario: string;
+  estatistica: string;        // 'gols', 'escanteios', etc.
+  estatisticaLabel: string;   // 'Gols', 'Escanteios', etc.
+  tipo: 'over' | 'under';
+  linha: number;              // ex: 2.5
+  probabilidade: number;      // 0.0-1.0
+  confianca: number;          // CV convertido (0.0-1.0)
+  confiancaLabel: 'Alta' | 'Média' | 'Baixa';
+  score: number;              // confiança × probabilidade
+}
+```
+
+**Comportamento:**
+- Não usa React Query (processo manual com estado local)
+- Processa em batches para evitar rate limiting
+- Score = `confiança × probabilidade` (range 0.0-1.0)
+- Thresholds: Over ≥60%, Under ≥70%, Confiança ≥70%, Edge ≥30%
+- MAX_OPPORTUNITIES = 999 (exibe todas encontradas)
+
+**Exemplo de Uso:**
+
+```typescript
+// src/pages/HomePage.tsx
+
+function HomePage() {
+  const smartSearch = useSmartSearch();
+
+  const handleSmartSearch = () => {
+    smartSearch.search(selectedDate);
+  };
+
+  return (
+    <>
+      <Button onClick={handleSmartSearch} disabled={smartSearch.isAnalyzing}>
+        Busca Inteligente
+      </Button>
+
+      {smartSearch.isAnalyzing && smartSearch.progress && (
+        <ProgressBar value={smartSearch.progress.porcentagem} />
+      )}
+
+      {smartSearch.result && (
+        <SmartSearchResults
+          result={smartSearch.result}
+          onClose={smartSearch.reset}
+        />
+      )}
+    </>
+  );
+}
+```
+
+---
+
 ## Type Mappings
 
 Mapeamento entre Schemas Pydantic (Backend) e TypeScript Interfaces (Frontend).
@@ -837,7 +968,7 @@ function MatchCard({ partida }: { partida: PartidaResumo }) {
 
 Para entender melhor este documento e o contexto:
 
-- **[COMPONENTES_REACT.md](COMPONENTES_REACT.md)** - Componentes que usam estes hooks (17 molecules/organisms/pages)
+- **[COMPONENTES_REACT.md](COMPONENTES_REACT.md)** - Componentes que usam estes hooks (25 atoms/molecules/organisms/pages)
 - **[API_SPECIFICATION.md](../API_SPECIFICATION.md)** - Especificação detalhada de todos os endpoints
 - **[MODELOS_DE_DADOS.md](../MODELOS_DE_DADOS.md)** - Schemas Pydantic (mapeados para TypeScript aqui)
 - **[ARQUITETURA_BACKEND.md](../ARQUITETURA_BACKEND.md)** - Lógica backend destes endpoints
@@ -845,8 +976,8 @@ Para entender melhor este documento e o contexto:
 
 **Próximos Passos:**
 1. Implemente os **4 services** (partidasService, statsService, competicoesService, escudosService)
-2. Implemente os **4 custom hooks** (usePartidas, useStats, useCompetitions, useBadge)
-3. Use os hooks nos **componentes** (Page, StatsPanel, etc)
+2. Implemente os **5 custom hooks** (usePartidas, useStats, useCompetitions, useBadge, useSmartSearch)
+3. Use os hooks nos **componentes** (Page, StatsPanel, SmartSearchResults, etc)
 4. Implemente **error handling** nos componentes
 5. Monitore cache com **React Query DevTools**
 

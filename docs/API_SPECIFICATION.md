@@ -584,6 +584,7 @@ Para implementar e testar esses endpoints, consulte:
 
 - **[MODELOS_DE_DADOS.md](MODELOS_DE_DADOS.md)** - Definição completa de todos os schemas de request/response
 - **[ARQUITETURA_BACKEND.md](ARQUITETURA_BACKEND.md)** - Como a API é estruturada internamente em camadas
+- **[ENDPOINTS_EXTERNOS_COMPLETO.md](ENDPOINTS_EXTERNOS_COMPLETO.md)** - TODOS endpoints externos (VStats, TheSportsDB, Opta, Wikidata)
 - **[openapi.yaml](../openapi.yaml)** - Especificação OpenAPI 3.0 completa (use em Swagger UI: http://localhost:8000/docs)
 - **[TESTING_STRATEGY.md](TESTING_STRATEGY.md)** - Como testar os endpoints com integration tests
 - **[LOCAL_SETUP.md](LOCAL_SETUP.md)** - Como rodar a API localmente para testar

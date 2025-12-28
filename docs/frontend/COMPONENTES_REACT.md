@@ -1,9 +1,9 @@
 # Componentes React - Catálogo Atomic Design
 
-**Versão:** 1.3
-**Data:** 27 de dezembro de 2025
+**Versão:** 1.4
+**Data:** 28 de dezembro de 2025
 **Pattern:** Atomic Design (Atoms → Molecules → Organisms → Pages)
-**Total de Componentes:** 23 (v1.3)
+**Total de Componentes:** 25 (v1.4)
 
 Catálogo completo de componentes React + TypeScript para implementação do frontend.
 
@@ -12,8 +12,8 @@ Catálogo completo de componentes React + TypeScript para implementação do fro
 ## 📋 Índice
 
 1. [ATOMS (6)](#atoms---6-componentes)
-2. [MOLECULES (6)](#molecules---6-componentes)
-3. [ORGANISMS (6)](#organisms---6-componentes) *(+3 novos: RaceBadges, PredictionsCard, DisciplineCard)*
+2. [MOLECULES (7)](#molecules---7-componentes) *(+1 novo: OpportunityCard)*
+3. [ORGANISMS (7)](#organisms---7-componentes) *(+1 novo: SmartSearchResults)*
 4. [LAYOUT (3)](#layout---3-componentes)
 5. [PAGES (2)](#pages---2-páginas-v1)
 6. [Padrões de Implementação](#padrões-de-implementação)
@@ -384,7 +384,7 @@ export const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
 
 ---
 
-## MOLECULES - 6 Componentes
+## MOLECULES - 7 Componentes
 
 ### 7. TeamCard
 
@@ -759,9 +759,98 @@ Este componente faz parte do sistema de 3 filtros:
 
 ---
 
-## ORGANISMS - 6 Componentes
+### 13. OpportunityCard (v1.4)
 
-### 13. MatchCard
+Card de oportunidade de aposta identificada pela Busca Inteligente. Clicável para navegar para a página de estatísticas da partida.
+
+```typescript
+// src/components/molecules/OpportunityCard.tsx
+
+import { useNavigate } from 'react-router-dom';
+import { Icon, TeamBadge, type IconName } from '@/components/atoms';
+import type { Oportunidade } from '@/types';
+import { formatarProbabilidade, getScoreColor, getTipoBgColor } from '@/utils/smartSearch';
+
+interface OpportunityCardProps {
+  oportunidade: Oportunidade;
+  rank?: number;  // Posição no ranking (opcional)
+}
+
+// Mapeamento de estatísticas para ícones
+const STAT_ICONS: Record<string, IconName> = {
+  gols: 'goal',
+  escanteios: 'corner',
+  finalizacoes: 'shot',
+  finalizacoes_gol: 'target',
+  cartoes_amarelos: 'card',
+  faltas: 'foul',
+};
+
+export function OpportunityCard({ oportunidade, rank }: OpportunityCardProps) {
+  const navigate = useNavigate();
+  const {
+    matchId,
+    mandante,
+    visitante,
+    competicao,
+    horario,
+    estatistica,
+    estatisticaLabel,
+    tipo,
+    linha,
+    probabilidade,
+    confiancaLabel,
+    score,
+  } = oportunidade;
+
+  const handleClick = () => {
+    navigate(`/estatisticas/${matchId}`);
+  };
+
+  return (
+    <div
+      onClick={handleClick}
+      className="bg-dark-secondary rounded-xl p-4 border border-dark-tertiary hover:border-primary-500/50 transition-all cursor-pointer"
+    >
+      {/* Header: Times + Horário */}
+      {/* Body: Estatística + Tipo (over/under) + Linha */}
+      {/* Footer: Probabilidade + Confiança + Score bar */}
+    </div>
+  );
+}
+
+// Exemplo de Uso:
+// <OpportunityCard oportunidade={op} rank={1} />
+// Ao clicar, navega para /estatisticas/{matchId}
+```
+
+**Props:**
+- `oportunidade`: Objeto `Oportunidade` com todos os dados da aposta identificada
+- `rank`: Posição opcional no ranking (exibe badge numérico)
+
+**Layout:**
+- **Header:** Escudos dos times, nomes truncados, horário
+- **Competição:** Nome da competição
+- **Oportunidade:** Ícone da estatística + label + badge Over/Under + linha
+- **Métricas:** Probabilidade (%) + Confiança (Alta/Média/Baixa) + Score bar
+
+**Cores por Tipo:**
+- **Over:** `bg-success/20 text-success` (verde)
+- **Under:** `bg-info/20 text-info` (azul)
+
+**Cores de Confiança:**
+- **Alta:** `text-success` (verde)
+- **Média:** `text-warning` (amarelo)
+- **Baixa:** `text-danger` (vermelho)
+
+**Navegação:**
+- Clique no card → `navigate(`/estatisticas/${matchId}`)` via React Router
+
+---
+
+## ORGANISMS - 7 Componentes
+
+### 14. MatchCard
 
 Card completo de partida para grid.
 
@@ -854,7 +943,7 @@ export const MatchCard: React.FC<MatchCardProps> = ({
 
 ---
 
-### 14. StatsPanel
+### 15. StatsPanel
 
 Painel de estatísticas comparando mandante e visitante.
 
@@ -943,7 +1032,7 @@ export function StatsPanel({ stats, isLoading, error }: StatsPanelProps) {
 
 ---
 
-### 15. StatsCategory
+### 16. StatsCategory
 
 Seção de uma categoria de estatística com feitos/sofridos.
 
@@ -1006,7 +1095,7 @@ export function StatsCategory({ title, icon, homeStats, awayStats }: StatsCatego
 
 ---
 
-### 16. RaceBadges (v1.1)
+### 17. RaceBadges (v1.1)
 
 Badges de sequência de resultados (V/E/D) para exibir forma recente dos times.
 
@@ -1068,7 +1157,7 @@ function RaceBadges({ results, limit }: RaceBadgesProps) {
 
 ---
 
-### 17. PredictionsCard (v1.1)
+### 18. PredictionsCard (v1.1)
 
 Card de previsões com análise preditiva baseada em médias.
 
@@ -1130,7 +1219,7 @@ export function PredictionsCard({
 
 ---
 
-### 18. DisciplineCard (v1.2)
+### 19. DisciplineCard (v1.2)
 
 Card de disciplina com métricas de cartões e faltas, incluindo dados do árbitro (competição + temporada).
 
@@ -1218,9 +1307,141 @@ export function DisciplineCard({
 
 ---
 
+### 20. SmartSearchResults (v1.4)
+
+Container de resultados da Busca Inteligente. Exibe progresso durante análise, estado vazio, e grid de OpportunityCards ordenados por score.
+
+```typescript
+// src/components/organisms/SmartSearchResults.tsx
+
+import { Icon, LoadingSpinner } from '@/components/atoms';
+import { OpportunityCard } from '@/components/molecules';
+import type { SmartSearchResult, SmartSearchProgress } from '@/types/smartSearch';
+
+interface SmartSearchResultsProps {
+  result: SmartSearchResult | null;
+  progress: SmartSearchProgress | null;
+  isAnalyzing: boolean;
+  onClose?: () => void;
+}
+
+// Sub-componente: Barra de progresso
+function ProgressBar({ progress }: { progress: SmartSearchProgress }) {
+  return (
+    <div className="card text-center py-8">
+      <LoadingSpinner size="lg" className="mx-auto mb-4" />
+      <h3 className="text-lg font-semibold text-white mb-2">
+        Analisando partidas...
+      </h3>
+      <p className="text-gray-400 mb-4">
+        {progress.analisadas} de {progress.total} partidas
+      </p>
+      <div className="w-full h-2 bg-dark-quaternary rounded-full overflow-hidden">
+        <div
+          className="h-full bg-primary-500 transition-all duration-300"
+          style={{ width: `${progress.porcentagem}%` }}
+        />
+      </div>
+    </div>
+  );
+}
+
+export function SmartSearchResults({
+  result,
+  progress,
+  isAnalyzing,
+  onClose,
+}: SmartSearchResultsProps) {
+  // Estado: Analisando
+  if (isAnalyzing && progress) {
+    return <ProgressBar progress={progress} />;
+  }
+
+  // Estado: Sem resultados
+  if (result && result.oportunidades.length === 0) {
+    return (
+      <div className="card text-center py-12">
+        <Icon name="search" size="lg" className="text-gray-600 mx-auto mb-4" />
+        <h3 className="text-lg font-semibold text-white mb-2">
+          Nenhuma oportunidade encontrada
+        </h3>
+        <p className="text-gray-400">
+          {result.partidas_analisadas} partidas analisadas
+        </p>
+      </div>
+    );
+  }
+
+  // Estado: Com resultados
+  if (result && result.oportunidades.length > 0) {
+    return (
+      <div>
+        {/* Header com estatísticas */}
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <span className="text-white font-semibold">
+              {result.total_oportunidades}
+            </span>
+            <span className="text-gray-400 ml-1">oportunidades</span>
+          </div>
+          {onClose && (
+            <button onClick={onClose} className="text-gray-500 hover:text-white">
+              <Icon name="close" size="sm" />
+            </button>
+          )}
+        </div>
+
+        {/* Grid de oportunidades ordenadas por score */}
+        <div className="grid gap-4 md:grid-cols-2">
+          {result.oportunidades.map((op, index) => (
+            <OpportunityCard
+              key={`${op.matchId}-${op.estatistica}-${op.tipo}-${op.linha}`}
+              oportunidade={op}
+              rank={index + 1}
+            />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  return null;
+}
+
+// Exemplo de Uso:
+// <SmartSearchResults
+//   result={smartSearch.result}
+//   progress={smartSearch.progress}
+//   isAnalyzing={smartSearch.isAnalyzing}
+//   onClose={smartSearch.reset}
+// />
+```
+
+**Props:**
+- `result`: Resultado completo da busca (`SmartSearchResult | null`)
+- `progress`: Estado de progresso da análise (`SmartSearchProgress | null`)
+- `isAnalyzing`: Boolean indicando se está analisando
+- `onClose`: Callback opcional para fechar/resetar a busca
+
+**Estados:**
+1. **Analisando:** Progress bar com contador "X de Y partidas"
+2. **Vazio:** Ícone + mensagem "Nenhuma oportunidade encontrada"
+3. **Com resultados:** Header com contagem + Grid de OpportunityCards
+
+**Layout do Grid:**
+- Mobile: 1 coluna (`grid-cols-1`)
+- Desktop: 2 colunas (`md:grid-cols-2`)
+- Gap: `gap-4`
+
+**Ordenação:**
+- Cards ordenados por `score` (maior primeiro)
+- Score = `confiança × probabilidade`
+
+---
+
 ## LAYOUT - 3 Componentes
 
-### 19. PageLayout
+### 21. PageLayout
 
 Layout principal com header e footer.
 
@@ -1264,7 +1485,7 @@ export const PageLayout: React.FC<PageLayoutProps> = ({
 
 ---
 
-### 20. Container
+### 22. Container
 
 Container responsivo.
 
@@ -1290,7 +1511,7 @@ export const Container: React.FC<ContainerProps> = ({
 
 ---
 
-### 21. Grid
+### 23. Grid
 
 Grid system responsivo.
 
@@ -1340,9 +1561,9 @@ export const Grid: React.FC<GridProps> = ({
 
 ## PAGES - 2 Páginas (v1)
 
-### 22. HomePage/PartidasPage (Combinadas)
+### 24. HomePage/PartidasPage (Combinadas)
 
-Página única com DatePicker e grid de MatchCards animados.
+Página única com DatePicker e grid de MatchCards animados. Inclui botões de Busca Inteligente.
 
 ```typescript
 // src/pages/HomePage.tsx
@@ -1402,7 +1623,7 @@ export const HomePage: React.FC = () => {
 
 ---
 
-### 23. EstatisticasPage
+### 25. EstatisticasPage
 
 Página de estatísticas detalhadas com previsões e sequência de resultados.
 
@@ -1473,12 +1694,17 @@ src/
 │   │   ├── FilterToggle.tsx
 │   │   ├── PeriodoToggle.tsx     # Sub-filtro de período (1T/2T/Integral)
 │   │   ├── RaceRow.tsx
+│   │   ├── OpportunityCard.tsx   # Card de oportunidade (v1.4)
 │   │   └── index.ts
 │   │
 │   ├── organisms/
 │   │   ├── MatchCard.tsx
 │   │   ├── StatsPanel.tsx
 │   │   ├── StatsCategory.tsx
+│   │   ├── RaceBadges.tsx
+│   │   ├── PredictionsCard.tsx
+│   │   ├── DisciplineCard.tsx
+│   │   ├── SmartSearchResults.tsx # Container busca inteligente (v1.4)
 │   │   └── index.ts
 │   │
 │   └── layout/
@@ -1542,9 +1768,9 @@ Para entender melhor este documento e implementar os componentes:
 
 **Próximos Passos:**
 1. Implemente **6 atoms** (order: Badge, RaceDot, Button, TeamBadge, Icon, LoadingSpinner)
-2. Implemente **5 molecules** (dependem dos atoms)
-3. Implemente **3 organisms** (dependem dos molecules)
-4. Crie **2 pages** (HomePage/PartidasPage combinadas + EstatisticasPage)
+2. Implemente **7 molecules** (dependem dos atoms, inclui OpportunityCard)
+3. Implemente **7 organisms** (dependem dos molecules, inclui SmartSearchResults)
+4. Crie **2 pages** (HomePage + EstatisticasPage)
 5. Integre com **INTEGRACAO_API.md** para conectar dados reais
 
 ---

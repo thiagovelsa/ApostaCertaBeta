@@ -44,19 +44,25 @@ API/
 │   │   │   ├── molecules/              # StatsCard, PredictionsCard, DisciplineCard
 │   │   │   └── organisms/              # StatsPanel (with RaceBadges)
 │   │   ├── pages/                      # HomePage, EstatisticasPage
-│   │   ├── hooks/                      # usePartidas, useStats (React Query)
+│   │   ├── hooks/                      # usePartidas, useStats, useSmartSearch
 │   │   ├── services/                   # API service layer
-│   │   ├── types/                      # TypeScript interfaces
-│   │   └── utils/                      # predictions.ts, etc.
+│   │   ├── types/                      # TypeScript interfaces + smartSearch.ts
+│   │   └── utils/                      # predictions.ts, smartSearch.ts, etc.
 │   ├── package.json
 │   └── vite.config.ts
 │
 ├── docs/                               # Technical documentation
-│   ├── MODELOS_DE_DADOS.md             # Pydantic schemas (v1.1)
+│   ├── MODELOS_DE_DADOS.md             # Pydantic schemas + SmartSearch types (v1.4)
+│   ├── API_SPECIFICATION.md            # REST API endpoints
+│   ├── ENDPOINTS_EXTERNOS_COMPLETO.md  # ALL external APIs (VStats, TheSportsDB, Opta, Wikidata)
 │   ├── frontend/
-│   │   ├── COMPONENTES_REACT.md        # 22 components (v1.1)
-│   │   └── INTEGRACAO_API.md           # Services + React Query (v1.1)
+│   │   ├── COMPONENTES_REACT.md        # 25 components (v1.4)
+│   │   └── INTEGRACAO_API.md           # Services + React Query (v1.4)
 │   └── ...
+│
+├── scripts/                            # Utility scripts
+│   ├── download_logos.py               # Download logos via Opta
+│   └── download_thesportsdb_logos.py   # Download logos via TheSportsDB
 │
 ├── CLAUDE.md                           # This file
 ├── README.md                           # Project overview
@@ -145,9 +151,47 @@ docker-compose down
 
 1. **Match Schedule** → Retrieved via `schedule/month` or `schedule/week`, filtered by date
 2. **Team Stats** → Aggregated via `seasonstats` endpoint for season-long metrics
-3. **Team Logos** → Retrieved from TheSportsDB API (free service)
+3. **Team Logos** → Local files preferred, TheSportsDB API as fallback
 4. **Match Details** → Individual match stats via `get-match-stats` for detailed comparison
 5. **Stability Metrics** → Coefficient of Variation (CV) calculated from match history
+
+### Team Logos System
+
+**Local logos are preferred** over external APIs for performance and reliability.
+
+**File Structure:**
+```
+frontend/public/logos/
+├── england/          (40 logos)
+├── italy/            (40 logos)
+├── spain/            (40 logos)
+├── germany/          (36 logos)
+├── france/           (40 logos)
+├── portugal/         (18 logos)
+├── belgium/          (19 logos)
+├── netherlands/      (38 logos)
+├── turkey/           (18 logos)
+├── greece/           (17 logos)
+├── austria/          (12 logos)
+├── scotland/         (12 logos)
+└── switzerland/      (12 logos)
+```
+
+**Mapping:** `frontend/src/utils/teamLogos.ts` (636+ entries with aliases)
+
+**External Endpoints Used:**
+
+| Source | URL | Usage |
+|--------|-----|-------|
+| **Opta** | `omo.akamai.opta.net/image.php` | VStats-covered leagues (uses contestantId) |
+| **TheSportsDB** | `thesportsdb.com/api/v1/json/3/` | Non-VStats leagues (Scotland, Austria, Switzerland) |
+| **Wikidata** | `query.wikidata.org/sparql` | Numeric Opta IDs (P8737 property) |
+
+**Scripts:**
+- `scripts/download_logos.py` - Download via Opta endpoint
+- `scripts/download_thesportsdb_logos.py` - Download via TheSportsDB
+
+> **Full documentation:** See `docs/ENDPOINTS_EXTERNOS_COMPLETO.md`
 
 ### Key Concepts
 
@@ -190,18 +234,32 @@ Examples (2025/26 season):
 ```
 Home (Date Selection)
     ↓
-Match List (Cards with Teams, Time, Competition)
-    ↓
-Statistics Panel (Home vs Away Team Comparison)
-    ├─ Filter Options (All Season | Last 5 | Last 10)
-    ├─ Sub-Filter Casa/Fora (per team, independent)
-    ├─ Recent Form Badges (V/E/D sequence)
-    ├─ CV Legend (expandable explanation)
-    ├─ Predictions Card (calculated insights)
-    ├─ Team Stats (Goals, Corners, Shots, etc.)
-    ├─ Discipline Card (Cards, Fouls + Referee data)
-    └─ Stability Metrics (CV for predictability)
+    ├─→ [Buscar Partidas] → Match List (Cards with Teams, Time, Competition)
+    │       ↓
+    │   Click Match Card → Statistics Panel
+    │       ├─ Filter Options (All Season | Last 5 | Last 10)
+    │       ├─ Sub-Filter Casa/Fora (per team, independent)
+    │       ├─ Recent Form Badges (V/E/D sequence)
+    │       ├─ CV Legend (expandable explanation)
+    │       ├─ Predictions Card (calculated insights)
+    │       ├─ Team Stats (Goals, Corners, Shots, etc.)
+    │       ├─ Discipline Card (Cards, Fouls + Referee data)
+    │       └─ Stability Metrics (CV for predictability)
+    │
+    └─→ [Busca Inteligente] → Smart Search Results
+            ├─ Progress bar (analyzing X of Y matches)
+            ├─ Grid of OpportunityCards (ranked by score)
+            │   └─ Click → Statistics Panel for that match
+            └─ Summary (matches analyzed, opportunities found)
 ```
+
+**Smart Search Flow (useSmartSearch hook):**
+1. Fetch all matches for selected date
+2. Process in batches of 5 (rate limiting)
+3. For each match: fetch stats → calculate predictions → analyze over/under
+4. Filter by thresholds (Over ≥60%, Under ≥70%, Confidence ≥70%, Edge ≥30%)
+5. Rank by score (confidence × probability)
+6. Display all opportunities (MAX_OPPORTUNITIES = 999)
 
 ### Data Required Per Component
 
