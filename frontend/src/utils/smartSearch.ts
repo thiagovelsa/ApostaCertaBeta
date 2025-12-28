@@ -108,19 +108,18 @@ function analisarEstatistica(
 
 /**
  * Formata horário da partida
+ * Recebe formato HH:MM:SS e retorna HH:MM
  */
-function formatarHorario(dateTime: string | undefined): string {
-  if (!dateTime) return '--:--';
+function formatarHorario(horario: string | undefined): string {
+  if (!horario) return '--:--';
 
-  try {
-    const date = new Date(dateTime);
-    return date.toLocaleTimeString('pt-BR', {
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  } catch {
-    return '--:--';
+  // Se já está no formato HH:MM ou HH:MM:SS, extrai apenas HH:MM
+  const match = horario.match(/^(\d{2}):(\d{2})/);
+  if (match) {
+    return `${match[1]}:${match[2]}`;
   }
+
+  return '--:--';
 }
 
 /**
