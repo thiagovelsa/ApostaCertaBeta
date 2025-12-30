@@ -86,16 +86,22 @@ export interface StatThresholds {
 }
 
 /**
- * Configuração de thresholds para todas as estatísticas
+ * Configuração padrão de thresholds para todas as estatísticas
+ * Use DEFAULT_STAT_THRESHOLDS do settingsStore para valores atualizáveis
  */
-export const STAT_THRESHOLDS: Record<string, StatThresholds> = {
-  gols: { overMin: 0.60, underMin: 0.70, confiancaMin: 0.70 },
-  escanteios: { overMin: 0.65, underMin: 0.70, confiancaMin: 0.70 },
-  finalizacoes: { overMin: 0.65, underMin: 0.70, confiancaMin: 0.70 },
-  finalizacoes_gol: { overMin: 0.65, underMin: 0.70, confiancaMin: 0.70 },
-  cartoes_amarelos: { overMin: 0.60, underMin: 0.75, confiancaMin: 0.70 },
-  faltas: { overMin: 0.65, underMin: 0.70, confiancaMin: 0.70 },
+export const DEFAULT_STAT_THRESHOLDS: Record<string, StatThresholds> = {
+  gols: { overMin: 0.60, underMin: 0.65, confiancaMin: 0.70 },
+  escanteios: { overMin: 0.65, underMin: 0.65, confiancaMin: 0.70 },
+  finalizacoes: { overMin: 0.65, underMin: 0.65, confiancaMin: 0.70 },
+  finalizacoes_gol: { overMin: 0.65, underMin: 0.65, confiancaMin: 0.70 },
+  cartoes_amarelos: { overMin: 0.60, underMin: 0.65, confiancaMin: 0.70 },
+  faltas: { overMin: 0.65, underMin: 0.65, confiancaMin: 0.70 },
 };
+
+/**
+ * @deprecated Use DEFAULT_STAT_THRESHOLDS e o settingsStore para thresholds configuráveis
+ */
+export const STAT_THRESHOLDS = DEFAULT_STAT_THRESHOLDS;
 
 /**
  * Labels legíveis para cada estatística

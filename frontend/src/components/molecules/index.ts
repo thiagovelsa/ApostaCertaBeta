@@ -9,3 +9,4 @@ export { RaceRow } from './RaceRow';
 export { PredictionsCard } from './PredictionsCard';
 export { OverUnderCard } from './OverUnderCard';
 export { OpportunityCard } from './OpportunityCard';
+export { SmartSearchSettings } from './SmartSearchSettings';

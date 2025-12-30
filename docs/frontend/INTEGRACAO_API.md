@@ -1,6 +1,6 @@
 # Integração API - Services e React Query Hooks
 
-**Versão:** 1.4
+**Versão:** 1.6
 **Data:** 28 de dezembro de 2025
 **Framework:** React Query 5 (TanStack Query)
 **HTTP Client:** Axios 1.6+
@@ -17,7 +17,8 @@ Guia completo de integração entre frontend React e API backend FastAPI.
 4. [Type Mappings](#type-mappings)
 5. [Error Handling](#error-handling)
 6. [Cache Strategy](#cache-strategy)
-7. [Ver Também](#ver-também)
+7. [Utilitários de Cálculo](#utilitários-de-cálculo)
+8. [Ver Também](#ver-também)
 
 ---
 
@@ -453,11 +454,11 @@ export const useStats = (
   options?: UseStatsOptions
 ): UseQueryResult<StatsResponse, Error> => {
   return useQuery({
-    // Query key inclui todos os filtros para cache separado
+    // Query key inclui todos os filtros para cache granular por combinação
     queryKey: ['stats', matchId, filtro, periodo, homeMando, awayMando],
     queryFn: () => statsService.getMatchStats(matchId!, filtro, periodo, homeMando, awayMando),
-    staleTime: 0,  // Sem cache - sempre busca dados frescos
-    gcTime: 0,
+    // Usa defaults do QueryClient: staleTime=5min, gcTime=30min
+    // Permite cache ao trocar filtros (ex: Geral → Últimos 5 → Geral = instantâneo)
     enabled: !!matchId && (options?.enabled !== false),
     refetchOnWindowFocus: false,
   });
@@ -469,7 +470,7 @@ function EstatisticasPage() {
   const { matchId } = useParams();
   const { filtro, periodo, homeMando, awayMando, toggleHomeMando, toggleAwayMando } = useFilterStore();
 
-  // Hook refaz fetch automaticamente quando qualquer filtro muda
+  // Hook usa cache - se voltar para filtro já usado, carrega instantâneo!
   const { data: stats, isLoading } = useStats(matchId, filtro, periodo, homeMando, awayMando);
 
   return (
@@ -486,10 +487,11 @@ function EstatisticasPage() {
 */
 ```
 
-**Cache Behavior:**
-- `staleTime: 0` - Sem cache, sempre busca dados frescos (garante precisão dos filtros)
-- Cache key inclui `filtro`, `periodo`, `homeMando`, `awayMando` - Diferentes combinações = diferentes caches
-- Refetch automático ao mudar qualquer filtro (query key muda)
+**Cache Behavior (v1.5):**
+- `staleTime: 5min` - Dados em cache por 5 minutos (usa defaults do QueryClient)
+- `gcTime: 30min` - Dados mantidos em memória por 30 minutos
+- Cache key inclui `filtro`, `periodo`, `homeMando`, `awayMando` - Cada combinação = cache separado
+- **Benefício:** Trocar de "Geral" → "Últimos 5" → voltar para "Geral" = **carrega instantâneo do cache!**
 - `periodo`: `'integral'` (default), `'1T'` (1º tempo), `'2T'` (2º tempo)
 - `homeMando` e `awayMando` são independentes (podem ser `null`, `'casa'`, ou `'fora'`)
 
@@ -681,8 +683,20 @@ export interface Oportunidade {
 - Não usa React Query (processo manual com estado local)
 - Processa em batches para evitar rate limiting
 - Score = `confiança × probabilidade` (range 0.0-1.0)
-- Thresholds: Over ≥60%, Under ≥70%, Confiança ≥70%, Edge ≥30%
+- **Thresholds (v1.5):** Over ≥60-65%, **Under ≥65%**, Confiança ≥70%, Edge ≥30%
 - MAX_OPPORTUNITIES = 999 (exibe todas encontradas)
+
+**Thresholds por Estatística (v1.5):**
+| Estatística | Over Min | Under Min |
+|-------------|----------|-----------|
+| Gols | 60% | 65% |
+| Escanteios | 65% | 65% |
+| Finalizações | 65% | 65% |
+| Fin. ao Gol | 65% | 65% |
+| Cartões | 60% | 65% |
+| Faltas | 65% | 65% |
+
+> **Nota:** Under thresholds foram reduzidos de 70-75% para 65% na v1.5 para permitir mais oportunidades de under.
 
 **Exemplo de Uso:**
 
@@ -930,9 +944,11 @@ Alinhamento de cache frontend com TTLs backend:
 | Recurso | Backend TTL | Frontend staleTime | Frontend gcTime | Uso |
 |---------|-------------|-------------------|-----------------|-----|
 | **Partidas** | 3600s (1h) | 1h | 2h | Muda frequentemente |
-| **Stats** | 21600s (6h) | 6h | 12h | Relativamente estável |
+| **Stats** | 21600s (6h) | 5min | 30min | Cache por filtro (v1.5) |
 | **Competições** | N/A | 24h | 7d | Muito estável |
 | **Badges/Logos** | 604800s (7d) | 7d | 30d | Nunca muda |
+
+> **Nota v1.5:** Stats usa cache de 5min para permitir navegação rápida entre filtros (Geral/5/10). Cada combinação de filtros tem cache separado.
 
 ### Cache Invalidation (quando necessário)
 
@@ -961,6 +977,44 @@ function MatchCard({ partida }: { partida: PartidaResumo }) {
   );
 }
 ```
+
+---
+
+## Utilitários de Cálculo
+
+### `utils/overUnder.ts` - Probabilidades Over/Under
+
+Calcula probabilidades de Over/Under para todas as estatísticas.
+
+**Melhorias Implementadas:**
+
+| Versão | Melhoria |
+|--------|----------|
+| v1.1 | Sigma calculado via variância combinada independente |
+| v1.1 | Threshold dinâmico para seleção Poisson/Normal (λ > 7) |
+| v1.2 | **Dixon-Coles adjustment para GOLS** |
+
+**Dixon-Coles Adjustment (v1.2):**
+
+O modelo Poisson básico assume independência entre gols de cada time, mas na prática há correlação negativa (times que marcam pouco também sofrem pouco → empates mais frequentes).
+
+```typescript
+// Parâmetro ρ padrão: -0.13 (empiricamente validado)
+const DIXON_COLES_RHO = -0.13;
+
+// Fatores de ajuste multiplicativo:
+// P(0,0) × (1 - λ_home × λ_away × ρ)  → AUMENTA
+// P(1,0) × (1 - λ_away × ρ)           → AUMENTA
+// P(0,1) × (1 - λ_home × ρ)           → AUMENTA
+// P(1,1) × (1 - ρ)                    → AUMENTA
+```
+
+**Impacto prático:**
+- Under 0.5 e Under 1.5 gols: probabilidade AUMENTADA
+- Over 0.5 e Over 1.5 gols: probabilidade DIMINUÍDA
+- Maior precisão para jogos fechados (defesas fortes)
+
+**Referência:** Dixon & Coles (1997) - "Modelling Association Football Scores and Inefficiencies in the Football Betting Market", Journal of Royal Statistical Society
 
 ---
 

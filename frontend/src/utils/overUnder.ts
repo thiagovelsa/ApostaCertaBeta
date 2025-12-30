@@ -5,6 +5,11 @@
  * MELHORIAS IMPLEMENTADAS (v1.1):
  * - Sigma calculado corretamente via variância combinada independente
  * - Threshold dinâmico para seleção Poisson/Normal baseado em λ
+ *
+ * MELHORIAS IMPLEMENTADAS (v1.2):
+ * - Dixon-Coles adjustment para GOLS
+ * - Corrige subestimação de placares baixos (0-0, 1-0, 0-1, 1-1)
+ * - Ref: Dixon & Coles (1997) - Journal of Royal Statistical Society
  */
 
 import jstat from 'jstat';
@@ -62,6 +67,18 @@ const PREFERRED_DISTRIBUTIONS: Record<string, DistributionType> = {
 const POISSON_NORMAL_THRESHOLD = 7;
 
 /**
+ * Parâmetro ρ (rho) do modelo Dixon-Coles
+ *
+ * Valor empírico padrão: -0.13 a -0.15
+ * - Negativo porque empates e placares baixos são MAIS frequentes
+ *   do que o modelo Poisson básico prevê
+ * - Corrige subestimação de 0-0, 1-0, 0-1, 1-1
+ *
+ * Ref: Dixon & Coles (1997) - Journal of Royal Statistical Society
+ */
+const DIXON_COLES_RHO = -0.13;
+
+/**
  * Seleciona a distribuição apropriada baseado no λ
  *
  * MELHORIA v1.1: Seleção dinâmica
@@ -82,6 +99,117 @@ function selectDistribution(statKey: string, lambda: number): DistributionType {
   }
 
   return preferred;
+}
+
+/**
+ * Calcula o fator de ajuste Dixon-Coles para placares baixos.
+ *
+ * O modelo Poisson básico assume independência entre gols de cada time,
+ * mas na prática há correlação negativa (times que marcam pouco também
+ * sofrem pouco → empates mais frequentes).
+ *
+ * Dixon & Coles (1997) propõe ajuste multiplicativo:
+ * - P(0,0) × (1 - λ_home × λ_away × ρ)
+ * - P(1,0) × (1 - λ_away × ρ)
+ * - P(0,1) × (1 - λ_home × ρ)
+ * - P(1,1) × (1 - ρ)
+ *
+ * Como ρ é negativo (~-0.13), o ajuste AUMENTA a probabilidade
+ * desses placares baixos.
+ *
+ * @param homeGoals - Gols do mandante (0 ou 1 para ajuste)
+ * @param awayGoals - Gols do visitante (0 ou 1 para ajuste)
+ * @param lambdaHome - λ do mandante
+ * @param lambdaAway - λ do visitante
+ * @returns Fator multiplicativo (>1 para placares ajustados)
+ */
+function dixonColesAdjustment(
+  homeGoals: number,
+  awayGoals: number,
+  lambdaHome: number,
+  lambdaAway: number
+): number {
+  const rho = DIXON_COLES_RHO;
+
+  if (homeGoals === 0 && awayGoals === 0) {
+    // 0-0: ajuste mais significativo
+    return 1 - lambdaHome * lambdaAway * rho;
+  }
+  if (homeGoals === 1 && awayGoals === 0) {
+    // 1-0
+    return 1 - lambdaAway * rho;
+  }
+  if (homeGoals === 0 && awayGoals === 1) {
+    // 0-1
+    return 1 - lambdaHome * rho;
+  }
+  if (homeGoals === 1 && awayGoals === 1) {
+    // 1-1
+    return 1 - rho;
+  }
+
+  // Outros placares: sem ajuste
+  return 1.0;
+}
+
+/**
+ * Calcula P(home=h, away=a) com ajuste Dixon-Coles para gols.
+ *
+ * @param h - Gols do mandante
+ * @param a - Gols do visitante
+ * @param lambdaHome - λ do mandante
+ * @param lambdaAway - λ do visitante
+ * @returns Probabilidade ajustada
+ */
+function scoreProb(
+  h: number,
+  a: number,
+  lambdaHome: number,
+  lambdaAway: number
+): number {
+  // Probabilidade Poisson básica: P(X=k) = e^(-λ) × λ^k / k!
+  const pHome = jstat.poisson.pdf(h, lambdaHome);
+  const pAway = jstat.poisson.pdf(a, lambdaAway);
+
+  // Probabilidade conjunta básica (assumindo independência)
+  const pJoint = pHome * pAway;
+
+  // Aplica ajuste Dixon-Coles para placares baixos
+  const adjustment = dixonColesAdjustment(h, a, lambdaHome, lambdaAway);
+
+  return pJoint * adjustment;
+}
+
+/**
+ * Calcula P(Over n) para GOLS usando Dixon-Coles.
+ *
+ * MELHORIA v1.2: Corrige subestimação de placares baixos.
+ *
+ * Para calcular Over, precisamos de P(total > n) = 1 - P(total ≤ n)
+ * onde P(total ≤ n) = Σ P(home=h, away=a) para todos h+a ≤ n
+ *
+ * @param line - Linha Over (ex: 2.5)
+ * @param lambdaHome - λ do mandante
+ * @param lambdaAway - λ do visitante
+ * @returns Probabilidade de Over
+ */
+function calculateGoalsOverDixonColes(
+  line: number,
+  lambdaHome: number,
+  lambdaAway: number
+): number {
+  const n = Math.floor(line); // Para 2.5, precisamos P(total ≤ 2)
+
+  // Soma todas as probabilidades de placares onde home + away ≤ n
+  let pUnder = 0;
+  for (let h = 0; h <= n; h++) {
+    for (let a = 0; a <= n - h; a++) {
+      pUnder += scoreProb(h, a, lambdaHome, lambdaAway);
+    }
+  }
+
+  // Over = 1 - Under
+  return 1 - pUnder;
 }
 
 /**
@@ -268,6 +396,68 @@ function generateDynamicLines(
 }
 
 /**
+ * Gera linhas dinâmicas para GOLS usando Dixon-Coles.
+ *
+ * MELHORIA v1.2: Usa ajuste Dixon-Coles para placares baixos,
+ * corrigindo a subestimação de 0-0, 1-0, 0-1, 1-1.
+ *
+ * @param lambdaHome - λ do mandante
+ * @param lambdaAway - λ do visitante
+ * @param baseLines - Linhas base
+ * @param maxLines - Número máximo de linhas
+ * @returns Array de linhas Over/Under com ajuste Dixon-Coles
+ */
+function generateDynamicLinesGoals(
+  lambdaHome: number,
+  lambdaAway: number,
+  baseLines: number[],
+  maxLines: number = MAX_LINES
+): OverUnderLine[] {
+  const lines: OverUnderLine[] = [];
+  const increment = baseLines.length > 1 ? baseLines[1] - baseLines[0] : 1;
+  const maxAttempts = baseLines.length * 6;
+
+  let currentIndex = 0;
+
+  while (lines.length < maxLines && currentIndex < maxAttempts) {
+    const baseIdx = currentIndex % baseLines.length;
+    const multiplier = Math.floor(currentIndex / baseLines.length);
+    const line = baseLines[baseIdx] + multiplier * baseLines.length * increment;
+
+    // Usa Dixon-Coles para gols
+    const overProb = calculateGoalsOverDixonColes(line, lambdaHome, lambdaAway);
+    const underProb = 1 - overProb;
+
+    // Corte: se over ≥98% ou under ≥98%, pular linha
+    if (overProb >= PROBABILITY_CUTOFF || underProb >= PROBABILITY_CUTOFF) {
+      currentIndex++;
+      continue;
+    }
+
+    lines.push({
+      line,
+      over: overProb,
+      under: underProb,
+    });
+
+    currentIndex++;
+  }
+
+  // Fallback
+  if (lines.length === 0 && baseLines.length > 0) {
+    const midLine = baseLines[Math.floor(baseLines.length / 2)];
+    const overProb = calculateGoalsOverDixonColes(midLine, lambdaHome, lambdaAway);
+    lines.push({
+      line: midLine,
+      over: overProb,
+      under: 1 - overProb,
+    });
+  }
+
+  return lines;
+}
+
+/**
  * Calcula confiança baseada no CV médio e partidas analisadas
  *
  * @param cvMedio - CV médio dos times
@@ -319,6 +509,9 @@ interface CreateOverUnderParams {
  * - Usa seleção dinâmica de distribuição baseada em λ
  * - Calcula sigma via variância combinada correta
  *
+ * MELHORIA v1.2:
+ * - Usa Dixon-Coles para GOLS (corrige placares baixos)
+ *
  * @param params - Parâmetros para cálculo
  * @returns OverUnderStat completo
  */
@@ -335,7 +528,9 @@ function createOverUnderStat(params: CreateOverUnderParams): OverUnderStat {
 
   const baseLines = BASE_LINES[statKey] || [0.5, 1.5, 2.5, 3.5];
 
-  // Lambda seguro
+  // Lambda seguro (para cada time)
+  const safeLambdaHome = Math.max(0.1, mediaHome);
+  const safeLambdaAway = Math.max(0.1, mediaAway);
   const safeLambda = Math.max(0.1, lambdaTotal);
 
   // MELHORIA v1.1: Seleção dinâmica de distribuição
@@ -355,14 +550,24 @@ function createOverUnderStat(params: CreateOverUnderParams): OverUnderStat {
     });
   }
 
-  // Gera linhas dinâmicas
-  const lines = generateDynamicLines(
-    safeLambda,
-    distribution,
-    sigma,
-    baseLines,
-    MAX_LINES
-  );
+  // MELHORIA v1.2: Para GOLS, usa Dixon-Coles
+  let lines: OverUnderLine[];
+  if (statKey === 'gols') {
+    lines = generateDynamicLinesGoals(
+      safeLambdaHome,
+      safeLambdaAway,
+      baseLines,
+      MAX_LINES
+    );
+  } else {
+    lines = generateDynamicLines(
+      safeLambda,
+      distribution,
+      sigma,
+      baseLines,
+      MAX_LINES
+    );
+  }
 
   // Calcula confiança
   const confidence = calculateConfidence(cvMedio, partidasAnalisadas);
@@ -373,7 +578,7 @@ function createOverUnderStat(params: CreateOverUnderParams): OverUnderStat {
     icon: ICONS[statKey] || 'stats',
     lambda: safeLambda,
     sigma,
-    distribution,
+    distribution: statKey === 'gols' ? 'poisson' : distribution, // Gols sempre usa Poisson base
     lines,
     confidence,
     confidenceLabel,

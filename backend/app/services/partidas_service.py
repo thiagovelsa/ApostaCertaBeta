@@ -8,14 +8,14 @@ Logica de negocio para busca e listagem de partidas.
 import asyncio
 import logging
 from datetime import date, datetime
-from typing import List, Optional, Tuple
+from typing import List, Tuple
 
 from ..config import settings
-
-logger = logging.getLogger(__name__)
 from ..models import PartidaResumo, PartidaListResponse, TimeInfo
 from ..repositories import VStatsRepository
 from .cache_service import CacheService
+
+logger = logging.getLogger(__name__)
 
 
 class PartidasService:
@@ -51,13 +51,17 @@ class PartidasService:
         # Busca lista de competicoes dinamicamente via /calendar
         try:
             competitions = await self.vstats.fetch_calendar()
-            logger.info(f"[CALENDAR] Encontradas {len(competitions)} competicoes no calendario")
+            logger.info(
+                f"[CALENDAR] Encontradas {len(competitions)} competicoes no calendario"
+            )
         except Exception as e:
             logger.error(f"[ERROR] Erro ao buscar calendario: {str(e)}")
             competitions = []
 
         # Busca partidas de todas as competicoes EM PARALELO
-        logger.info(f"[SEARCH] Buscando partidas para {target_date.isoformat()} em {len(competitions)} competicoes...")
+        logger.info(
+            f"[SEARCH] Buscando partidas para {target_date.isoformat()} em {len(competitions)} competicoes..."
+        )
 
         # Cria tasks para buscar todas as competicoes em paralelo
         async def fetch_safe(comp: dict) -> Tuple[str, List[PartidaResumo]]:
@@ -157,7 +161,9 @@ class PartidasService:
 
         return partidas
 
-    def _convert_match(self, match: dict, competition: str, tournament_id: str) -> PartidaResumo:
+    def _convert_match(
+        self, match: dict, competition: str, tournament_id: str
+    ) -> PartidaResumo:
         """Converte dados brutos da VStats para PartidaResumo."""
         # Extrai horario
         local_time = match.get("localTime", "00:00:00")
@@ -182,13 +188,17 @@ class PartidasService:
             estadio=match.get("venue", {}).get("name"),
             mandante=TimeInfo(
                 id=match.get("homeContestantId"),
-                nome=match.get("homeContestantClubName", match.get("homeContestantName", "")),
+                nome=match.get(
+                    "homeContestantClubName", match.get("homeContestantName", "")
+                ),
                 codigo=match.get("homeContestantCode", "---")[:3].upper(),
                 escudo=None,
             ),
             visitante=TimeInfo(
                 id=match.get("awayContestantId"),
-                nome=match.get("awayContestantClubName", match.get("awayContestantName", "")),
+                nome=match.get(
+                    "awayContestantClubName", match.get("awayContestantName", "")
+                ),
                 codigo=match.get("awayContestantCode", "---")[:3].upper(),
                 escudo=None,
             ),

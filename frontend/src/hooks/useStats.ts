@@ -19,11 +19,11 @@ export function useStats(
   awayMando: MandoFilter = null
 ) {
   return useQuery({
-    // Periodo no cache key para invalidação correta
+    // Query key inclui todos os filtros para cache granular por combinação
     queryKey: ['stats', matchId, filtro, periodo, homeMando, awayMando],
     queryFn: () => getMatchStats(matchId!, filtro, periodo, homeMando, awayMando),
-    staleTime: 0, // Sem cache - sempre busca dados frescos
-    gcTime: 0,
+    // Usa defaults do QueryClient: staleTime=5min, gcTime=30min
+    // Permite cache ao trocar filtros (ex: Geral → Últimos 5 → Geral = instantâneo)
     enabled: Boolean(matchId),
   });
 }

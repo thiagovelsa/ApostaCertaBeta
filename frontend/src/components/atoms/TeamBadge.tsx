@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { getTeamLogoPath } from '@/utils/teamLogos';
 
 interface TeamBadgeProps {
@@ -24,7 +25,7 @@ const sizeStyles = {
  * 2. URL externa (`src`)
  * 3. Placeholder padrão
  */
-export function TeamBadge({ src, alt, size = 'md', className = '' }: TeamBadgeProps) {
+export const TeamBadge = memo(function TeamBadge({ src, alt, size = 'md', className = '' }: TeamBadgeProps) {
   const fallbackSrc = '/placeholder-badge.svg';
 
   // Tenta buscar logo local pelo nome do time
@@ -59,4 +60,4 @@ export function TeamBadge({ src, alt, size = 'md', className = '' }: TeamBadgePr
       />
     </div>
   );
-}
+});

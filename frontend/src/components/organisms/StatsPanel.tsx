@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { StatsCard, DisciplineCard, PredictionsCard, OverUnderCard } from '@/components/molecules';
 import { LoadingSpinner, TeamBadge, Icon, Badge } from '@/components/atoms';
 import { calcularPrevisoes } from '@/utils/predictions';
@@ -162,6 +162,42 @@ export function StatsPanel({
 }: StatsPanelProps) {
   const [showEstabilidadeLegend, setShowEstabilidadeLegend] = useState(false);
 
+  // Hooks devem ser chamados ANTES de qualquer return condicional
+  // para manter a ordem consistente entre renderizações
+  const { mandante, visitante, filtro_aplicado, partidas_analisadas } = stats ?? {
+    mandante: null,
+    visitante: null,
+    filtro_aplicado: 'geral',
+    partidas_analisadas: 0,
+  };
+
+  // Calcula previsões para a partida (memoizado para evitar recálculos)
+  const previsoes = useMemo(
+    () => mandante && visitante
+      ? calcularPrevisoes(
+          mandante,
+          visitante,
+          partidas_analisadas,
+          homeMando ?? null,
+          awayMando ?? null
+        )
+      : null,
+    [mandante, visitante, partidas_analisadas, homeMando, awayMando]
+  );
+
+  // Calcula probabilidades Over/Under (memoizado)
+  const overUnderData = useMemo(
+    () => previsoes && mandante && visitante
+      ? calcularOverUnder(
+          previsoes,
+          mandante.estatisticas,
+          visitante.estatisticas,
+          partidas_analisadas
+        )
+      : null,
+    [previsoes, mandante, visitante, partidas_analisadas]
+  );
+
   if (isLoading) {
     return (
       <div className="card flex items-center justify-center py-12">
@@ -179,33 +215,13 @@ export function StatsPanel({
     );
   }
 
-  if (!stats) {
+  if (!stats || !mandante || !visitante || !previsoes || !overUnderData) {
     return (
       <div className="card text-center py-8">
         <p className="text-gray-500">Nenhuma estatística disponível</p>
       </div>
     );
   }
-
-  const { mandante, visitante, filtro_aplicado, partidas_analisadas } = stats;
-
-  // Calcula previsões para a partida
-  // MELHORIA v1.1: Passa contexto de mando para ajuste automático
-  const previsoes = calcularPrevisoes(
-    mandante,
-    visitante,
-    partidas_analisadas,
-    homeMando ?? null,
-    awayMando ?? null
-  );
-
-  // Calcula probabilidades Over/Under
-  const overUnderData = calcularOverUnder(
-    previsoes,
-    mandante.estatisticas,
-    visitante.estatisticas,
-    partidas_analisadas
-  );
 
   // Limite de badges a exibir baseado no filtro
   // Temporada (geral) → 5, Últimos 5 → 5, Últimos 10 → 10

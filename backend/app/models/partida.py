@@ -53,7 +53,9 @@ class PartidaResumo(BaseModel):
     """Resumo de uma partida (usado em listas)."""
 
     id: str = Field(..., description="ID unico da partida")
-    tournament_id: str = Field(..., description="ID da competicao (tournamentCalendarId)")
+    tournament_id: str = Field(
+        ..., description="ID da competicao (tournamentCalendarId)"
+    )
     data: date = Field(..., description="Data da partida")
     horario: time = Field(..., description="Horario da partida")
     competicao: str = Field(..., max_length=100, description="Nome da competicao")

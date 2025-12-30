@@ -1,4 +1,5 @@
-import { useNavigate } from 'react-router-dom';
+import { memo } from 'react';
+import { Link } from 'react-router-dom';
 import { Icon, TeamBadge, type IconName } from '@/components/atoms';
 import type { Oportunidade } from '@/types';
 import { formatarProbabilidade, getScoreColor, getTipoBgColor } from '@/utils/smartSearch';
@@ -24,8 +25,7 @@ const STAT_ICONS: Record<string, IconName> = {
  * Card individual de oportunidade de aposta
  * Exibe times, estatística, linha e probabilidade
  */
-export function OpportunityCard({ oportunidade, rank }: OpportunityCardProps) {
-  const navigate = useNavigate();
+export const OpportunityCard = memo(function OpportunityCard({ oportunidade, rank }: OpportunityCardProps) {
   const {
     matchId,
     mandante,
@@ -45,14 +45,10 @@ export function OpportunityCard({ oportunidade, rank }: OpportunityCardProps) {
   const scoreColor = getScoreColor(score);
   const tipoBg = getTipoBgColor(tipo);
 
-  const handleClick = () => {
-    navigate(`/estatisticas/${matchId}`);
-  };
-
   return (
-    <div
-      onClick={handleClick}
-      className="bg-dark-secondary rounded-xl p-4 border border-dark-tertiary hover:border-primary-500/50 transition-all cursor-pointer">
+    <Link
+      to={`/partida/${matchId}`}
+      className="block bg-dark-secondary rounded-xl p-4 border border-dark-tertiary hover:border-primary-500/50 transition-all cursor-pointer">
       {/* Header: Times + Horário */}
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2 flex-1 min-w-0">
@@ -150,6 +146,6 @@ export function OpportunityCard({ oportunidade, rank }: OpportunityCardProps) {
           />
         </div>
       </div>
-    </div>
+    </Link>
   );
-}
+});

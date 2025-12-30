@@ -1,3 +1,5 @@
+import { memo } from 'react';
+
 type Result = 'W' | 'D' | 'L';
 
 interface RaceDotProps {
@@ -17,7 +19,7 @@ const resultTitles: Record<Result, string> = {
   L: 'Derrota',
 };
 
-export function RaceDot({ result, size = 'sm' }: RaceDotProps) {
+export const RaceDot = memo(function RaceDot({ result, size = 'sm' }: RaceDotProps) {
   const sizeClass = size === 'sm' ? 'h-2 w-2' : 'h-3 w-3';
 
   return (
@@ -26,4 +28,4 @@ export function RaceDot({ result, size = 'sm' }: RaceDotProps) {
       title={resultTitles[result]}
     />
   );
-}
+});

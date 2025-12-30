@@ -5,7 +5,7 @@ Modelos de Estatisticas
 Schemas para estatisticas de times e partidas.
 """
 
-from typing import Dict, List, Literal, Optional
+from typing import List, Literal, Optional
 
 from pydantic import BaseModel, Field, field_validator
 
@@ -74,9 +74,7 @@ class EstatisticasTime(BaseModel):
     escanteios: EstatisticaFeitos = Field(..., description="Escanteios")
     gols: EstatisticaFeitos = Field(..., description="Gols")
     finalizacoes: EstatisticaFeitos = Field(..., description="Finalizacoes totais")
-    finalizacoes_gol: EstatisticaFeitos = Field(
-        ..., description="Finalizacoes no gol"
-    )
+    finalizacoes_gol: EstatisticaFeitos = Field(..., description="Finalizacoes no gol")
     cartoes_amarelos: EstatisticaMetrica = Field(..., description="Cartoes amarelos")
     faltas: EstatisticaMetrica = Field(..., description="Faltas cometidas")
     # cartoes_vermelhos removido - evento muito raro para analise de CV
@@ -114,7 +112,12 @@ class ArbitroInfo(BaseModel):
         None, ge=0, description="Media de faltas por jogo"
     )
 
-    @field_validator("media_cartoes_amarelos", "media_cartoes_temporada", "media_faltas", mode="before")
+    @field_validator(
+        "media_cartoes_amarelos",
+        "media_cartoes_temporada",
+        "media_faltas",
+        mode="before",
+    )
     @classmethod
     def parse_float(cls, v):
         """Converte string para float se necessario."""

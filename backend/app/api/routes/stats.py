@@ -75,7 +75,9 @@ async def get_stats(
     coeficiente de variacao (CV) e classificacao de estabilidade.
     """
     try:
-        return await service.calcular_stats(match_id, filtro, periodo, home_mando, away_mando)
+        return await service.calcular_stats(
+            match_id, filtro, periodo, home_mando, away_mando
+        )
     except ValueError as e:
         error_msg = str(e)
         # Diferencia erro de cache miss de outros erros de validacao

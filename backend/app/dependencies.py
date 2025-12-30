@@ -9,7 +9,6 @@ from functools import lru_cache
 
 from .repositories import VStatsRepository
 from .services import (
-    CacheService,
     PartidasService,
     StatsService,
     CompeticoesService,

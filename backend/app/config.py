@@ -46,7 +46,9 @@ class Settings(BaseSettings):
     api_port: int = 8000
 
     # CORS
-    allowed_origins: str = "http://localhost:3000,http://localhost:5173,http://localhost:5174,http://localhost:5175"
+    allowed_origins: str = (
+        "http://localhost:3000,http://localhost:5173,http://localhost:5174,http://localhost:5175"
+    )
 
     @property
     def cors_origins(self) -> List[str]:

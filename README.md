@@ -380,4 +380,45 @@ Este projeto está licenciado sob MIT License - veja [LICENSE](LICENSE) para det
 
 ---
 
+## 📝 Changelog Recente
+
+### v1.6 (28/12/2025)
+- **feat:** Time-Weighting no backend (Dixon-Coles decay)
+  - Partidas mais recentes têm peso maior no cálculo de médias e CV
+  - Decay exponencial: 30 dias = 82%, 60 dias = 68%, 90 dias = 56%
+- **feat:** Dixon-Coles adjustment para gols no frontend
+  - Corrige subestimação de placares baixos (0-0, 1-0, 0-1, 1-1)
+  - Aumenta precisão das probabilidades Over/Under para gols
+
+### v1.5 (28/12/2025)
+- **feat:** Filtro de estatísticas na Busca Inteligente (Gols, Escanteios, Chutes, etc.)
+- **feat:** Botão direito para abrir partida em nova aba (OpportunityCard usa `<Link>`)
+- **perf:** React.memo em 9 componentes (Icon, Badge, RaceDot, TeamBadge, StatsCard, OverUnderCard, PredictionsCard, DisciplineCard, OpportunityCard)
+- **fix:** Thresholds de Under ajustados de 70-75% para 65%
+
+### v1.4 (28/12/2025)
+- **feat:** Busca Inteligente - análise automática de oportunidades em todas as partidas
+- **feat:** Logos locais de times (636+ mapeamentos em 13 ligas)
+- **refactor:** Formatação de horário simplificada no Smart Search
+
+### v1.3 (28/12/2025)
+- **feat:** Filtro de período nas estatísticas (Temporada, Últimos 5, Últimos 10)
+- **feat:** Melhorias no cálculo de probabilidade
+- **feat:** Dados do árbitro com estatísticas da temporada
+
+### v1.2 (28/12/2025)
+- **perf:** Cache React Query habilitado para estatísticas
+  - Trocar filtros (Geral → Últimos 5 → Geral) agora carrega **instantâneo do cache**
+  - Cache de 5 minutos por combinação de filtros
+  - Funciona para todos os subfiltros (Casa/Fora, 1T/2T)
+
+### v1.1 (28/12/2025)
+- **Performance:** Otimização de reutilização de schedule no backend
+  - Schedule do torneio agora é buscado **1x** ao invés de 2x por requisição
+  - Cache de 1h no schedule beneficia requisições subsequentes
+  - Redução estimada de ~500ms por requisição de estatísticas
+- **Frontend:** `useMemo` para memoização de cálculos em `StatsPanel`
+
+---
+
 **[⬆ Voltar ao topo](#-sistema-de-análise-de-estatísticas-de-futebol)**

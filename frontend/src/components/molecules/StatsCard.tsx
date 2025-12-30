@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { Icon, Badge, type IconName } from '@/components/atoms';
 import type { EstatisticaFeitos } from '@/types';
 import type { EstabilidadeLabel } from '@/types/stats';
@@ -119,7 +120,7 @@ function MetricColumn({
  * Card de estatísticas com layout compacto
  * Mostra Feitos e Sofridos lado a lado com Estabilidade por time
  */
-export function StatsCard({
+export const StatsCard = memo(function StatsCard({
   title,
   icon,
   homeFeitos,
@@ -182,4 +183,4 @@ export function StatsCard({
       </div>
     </div>
   );
-}
+});

@@ -98,11 +98,15 @@ class VStatsRepository:
         raw_list = data if isinstance(data, list) else data.get("tournaments", [])
 
         for comp in raw_list:
-            competitions.append({
-                "id": comp.get("tournamentCalendarId"),
-                "name": comp.get("knownName") or comp.get("translatedName") or comp.get("name"),
-                "country": comp.get("country"),
-            })
+            competitions.append(
+                {
+                    "id": comp.get("tournamentCalendarId"),
+                    "name": comp.get("knownName")
+                    or comp.get("translatedName")
+                    or comp.get("name"),
+                    "country": comp.get("country"),
+                }
+            )
 
         return competitions
 
@@ -260,11 +264,7 @@ class VStatsRepository:
         """
         target_str = target_date.isoformat()
 
-        return [
-            match
-            for match in matches
-            if match.get("localDate") == target_str
-        ]
+        return [match for match in matches if match.get("localDate") == target_str]
 
     def extract_team_stats(
         self,
@@ -289,12 +289,16 @@ class VStatsRepository:
                 "totalScoringAtt": stats.get("totalScoringAtt", 0),
                 "totalShotsConceded": stats.get("totalShotsConceded", 0),
                 "ontargetScoringAtt": stats.get("ontargetScoringAtt", 0),
-                "ontargetScoringAttConceded": stats.get("ontargetScoringAttConceded", 0),
+                "ontargetScoringAttConceded": stats.get(
+                    "ontargetScoringAttConceded", 0
+                ),
                 "totalYellowCard": stats.get("totalYellowCard", 0),
                 "totalRedCard": stats.get("totalRedCard", 0),
                 "fkFoulLost": stats.get("fkFoulLost", 0),
                 "saves": stats.get("saves", 0),
-                "matchesPlayed": seasonstats_data.get("data", {}).get("matchesPlayed", 0),
+                "matchesPlayed": seasonstats_data.get("data", {}).get(
+                    "matchesPlayed", 0
+                ),
             }
 
         stat_list = seasonstats_data.get("stat", [])
@@ -333,7 +337,9 @@ class VStatsRepository:
 
         total_red_cards = get_value(["Red Cards", "Total Red Cards"], 0.0)
         if total_red_cards == 0.0:
-            total_red_cards = sum_values(["Straight Red Cards", "Red Card - 2nd Yellow"])
+            total_red_cards = sum_values(
+                ["Straight Red Cards", "Red Card - 2nd Yellow"]
+            )
 
         matches_played = seasonstats_data.get("data", {}).get("matchesPlayed")
         if not matches_played:

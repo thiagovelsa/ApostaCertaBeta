@@ -5,8 +5,6 @@ Competicoes Service
 Logica de negocio para listagem de competicoes.
 """
 
-from typing import List
-
 from ..models import CompeticaoInfo, CompeticaoListResponse
 from ..utils.constants import ACTIVE_COMPETITIONS
 from .cache_service import CacheService

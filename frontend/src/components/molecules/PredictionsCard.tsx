@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { Icon, Badge } from '@/components/atoms';
 import type { PrevisaoPartida, PrevisaoEstatistica, ConfiancaLabel } from '@/types';
 
@@ -94,7 +95,7 @@ function PredictionCell({ label, icon, previsao }: PredictionCellProps) {
  * Card de previsões da partida - Design Grid 2x3 Compacto
  * Com barra cabo de guerra e nomes dos times apenas no header
  */
-export function PredictionsCard({
+export const PredictionsCard = memo(function PredictionsCard({
   previsoes,
   homeTeamName,
   awayTeamName,
@@ -175,4 +176,4 @@ export function PredictionsCard({
       </div>
     </div>
   );
-}
+});

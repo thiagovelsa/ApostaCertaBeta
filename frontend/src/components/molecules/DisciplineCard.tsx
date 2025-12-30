@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { Icon, Badge } from '@/components/atoms';
 import type { EstatisticaMetrica, ArbitroInfo } from '@/types';
 import type { EstabilidadeLabel } from '@/types/stats';
@@ -135,7 +136,7 @@ function RefereeInfo({ arbitro }: { arbitro: ArbitroInfo }) {
  * Card de disciplina com múltiplas métricas simples
  * Layout full-width com cartões amarelos e faltas
  */
-export function DisciplineCard({
+export const DisciplineCard = memo(function DisciplineCard({
   metrics,
   homeTeamName,
   awayTeamName,
@@ -175,4 +176,4 @@ export function DisciplineCard({
       </div>
     </div>
   );
-}
+});

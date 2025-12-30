@@ -3,6 +3,7 @@
  * Exibe probabilidades estatísticas para mercados de apostas
  */
 
+import { memo } from 'react';
 import { Icon, Badge } from '@/components/atoms';
 import type { OverUnderPartida, OverUnderStat, OverUnderLine as OverUnderLineType, ConfiancaLabel } from '@/types';
 
@@ -95,7 +96,7 @@ function StatSection({ stat }: { stat: OverUnderStat }) {
  * Card principal de Probabilidades Over/Under
  * Posicionado abaixo do DisciplineCard no StatsPanel
  */
-export function OverUnderCard({ overUnder }: OverUnderCardProps) {
+export const OverUnderCard = memo(function OverUnderCard({ overUnder }: OverUnderCardProps) {
   // Calcula confiança média geral
   const allConfidences = [
     overUnder.gols.confidence,
@@ -142,4 +143,4 @@ export function OverUnderCard({ overUnder }: OverUnderCardProps) {
       </div>
     </div>
   );
-}
+});

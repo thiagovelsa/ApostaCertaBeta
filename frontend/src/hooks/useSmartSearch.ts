@@ -8,7 +8,8 @@ import { getPartidasByDate } from '@/services/partidasService';
 import { getMatchStats } from '@/services/statsService';
 import { calcularPrevisoes } from '@/utils/predictions';
 import { calcularOverUnder } from '@/utils/overUnder';
-import { analisarPartida, criarResultado } from '@/utils/smartSearch';
+import { analisarPartida, criarResultado, type AnalysisConfig } from '@/utils/smartSearch';
+import { useSmartSearchSettingsStore } from '@/stores';
 import type {
   SmartSearchResult,
   SmartSearchProgress,
@@ -95,6 +96,10 @@ export function useSmartSearch(): UseSmartSearchReturn {
     error: null,
   });
 
+  // Configurações do store
+  const { showOver, showUnder, globalThresholds, statThresholds } =
+    useSmartSearchSettingsStore();
+
   const reset = useCallback(() => {
     setState({
       isLoading: false,
@@ -106,6 +111,14 @@ export function useSmartSearch(): UseSmartSearchReturn {
   }, []);
 
   const search = useCallback(async (date: string) => {
+    // Monta configuração de análise a partir do store
+    const config: AnalysisConfig = {
+      probabilityCutoff: globalThresholds.probabilityCutoff,
+      minEdge: globalThresholds.minEdge,
+      statThresholds,
+      showOver,
+      showUnder,
+    };
     setState(prev => ({
       ...prev,
       isLoading: true,
@@ -198,7 +211,7 @@ export function useSmartSearch(): UseSmartSearchReturn {
           );
 
           // Analisar e extrair oportunidades
-          const oportunidades = analisarPartida(partida, stats, overUnder);
+          const oportunidades = analisarPartida(partida, stats, overUnder, config);
           todasOportunidades.push(...oportunidades);
         } catch {
           // Ignora erros de cálculo
@@ -227,7 +240,7 @@ export function useSmartSearch(): UseSmartSearchReturn {
         error: error instanceof Error ? error : new Error('Erro desconhecido'),
       }));
     }
-  }, []);
+  }, [showOver, showUnder, globalThresholds, statThresholds]);
 
   return {
     ...state,

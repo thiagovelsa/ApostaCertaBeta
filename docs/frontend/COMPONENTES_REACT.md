@@ -1,9 +1,9 @@
 # Componentes React - Catálogo Atomic Design
 
-**Versão:** 1.4
+**Versão:** 1.6
 **Data:** 28 de dezembro de 2025
 **Pattern:** Atomic Design (Atoms → Molecules → Organisms → Pages)
-**Total de Componentes:** 25 (v1.4)
+**Total de Componentes:** 26 (v1.5 - inclui StatFilter interno)
 
 Catálogo completo de componentes React + TypeScript para implementação do frontend.
 
@@ -759,14 +759,17 @@ Este componente faz parte do sistema de 3 filtros:
 
 ---
 
-### 13. OpportunityCard (v1.4)
+### 13. OpportunityCard (v1.5)
 
-Card de oportunidade de aposta identificada pela Busca Inteligente. Clicável para navegar para a página de estatísticas da partida.
+Card de oportunidade de aposta identificada pela Busca Inteligente. Usa `<Link>` do React Router para navegação semântica, permitindo abrir em nova aba com botão direito.
+
+**Otimização v1.5:** Componente memoizado com `React.memo` para evitar re-renders desnecessários.
 
 ```typescript
 // src/components/molecules/OpportunityCard.tsx
 
-import { useNavigate } from 'react-router-dom';
+import { memo } from 'react';
+import { Link } from 'react-router-dom';
 import { Icon, TeamBadge, type IconName } from '@/components/atoms';
 import type { Oportunidade } from '@/types';
 import { formatarProbabilidade, getScoreColor, getTipoBgColor } from '@/utils/smartSearch';
@@ -786,8 +789,7 @@ const STAT_ICONS: Record<string, IconName> = {
   faltas: 'foul',
 };
 
-export function OpportunityCard({ oportunidade, rank }: OpportunityCardProps) {
-  const navigate = useNavigate();
+export const OpportunityCard = memo(function OpportunityCard({ oportunidade, rank }: OpportunityCardProps) {
   const {
     matchId,
     mandante,
@@ -803,25 +805,22 @@ export function OpportunityCard({ oportunidade, rank }: OpportunityCardProps) {
     score,
   } = oportunidade;
 
-  const handleClick = () => {
-    navigate(`/estatisticas/${matchId}`);
-  };
-
   return (
-    <div
-      onClick={handleClick}
-      className="bg-dark-secondary rounded-xl p-4 border border-dark-tertiary hover:border-primary-500/50 transition-all cursor-pointer"
+    <Link
+      to={`/partida/${matchId}`}
+      className="block bg-dark-secondary rounded-xl p-4 border border-dark-tertiary hover:border-primary-500/50 transition-all cursor-pointer"
     >
       {/* Header: Times + Horário */}
       {/* Body: Estatística + Tipo (over/under) + Linha */}
       {/* Footer: Probabilidade + Confiança + Score bar */}
-    </div>
+    </Link>
   );
-}
+});
 
 // Exemplo de Uso:
 // <OpportunityCard oportunidade={op} rank={1} />
-// Ao clicar, navega para /estatisticas/{matchId}
+// Clique esquerdo: navega para /partida/{matchId}
+// Clique direito: abre menu com opção "Abrir em nova aba"
 ```
 
 **Props:**
@@ -843,8 +842,11 @@ export function OpportunityCard({ oportunidade, rank }: OpportunityCardProps) {
 - **Média:** `text-warning` (amarelo)
 - **Baixa:** `text-danger` (vermelho)
 
-**Navegação:**
-- Clique no card → `navigate(`/estatisticas/${matchId}`)` via React Router
+**Navegação (v1.5):**
+- Usa `<Link to={...}>` ao invés de `<div onClick={...}>`
+- **Clique esquerdo:** Navega para `/partida/{matchId}`
+- **Clique direito → "Abrir em nova aba":** Abre a partida em nova aba
+- **Ctrl+Click / Cmd+Click:** Abre em nova aba (comportamento nativo do browser)
 
 ---
 
@@ -946,6 +948,8 @@ export const MatchCard: React.FC<MatchCardProps> = ({
 ### 15. StatsPanel
 
 Painel de estatísticas comparando mandante e visitante.
+
+**Otimização v1.5:** Usa `useMemo` para memoizar cálculos de `calcularPrevisoes()` e `calcularOverUnder()`, evitando recálculos desnecessários em re-renders.
 
 ```typescript
 // src/components/organisms/StatsPanel.tsx
@@ -1307,14 +1311,17 @@ export function DisciplineCard({
 
 ---
 
-### 20. SmartSearchResults (v1.4)
+### 20. SmartSearchResults (v1.5)
 
-Container de resultados da Busca Inteligente. Exibe progresso durante análise, estado vazio, e grid de OpportunityCards ordenados por score.
+Container de resultados da Busca Inteligente. Exibe progresso durante análise, estado vazio, filtro por estatística, e grid de OpportunityCards ordenados por score.
+
+**Novidade v1.5:** Inclui `StatFilter` para filtrar oportunidades por tipo de estatística (client-side, sem recarregar dados).
 
 ```typescript
 // src/components/organisms/SmartSearchResults.tsx
 
-import { Icon, LoadingSpinner } from '@/components/atoms';
+import { useState, useMemo } from 'react';
+import { Icon, type IconName } from '@/components/atoms';
 import { OpportunityCard } from '@/components/molecules';
 import type { SmartSearchResult, SmartSearchProgress } from '@/types/smartSearch';
 
@@ -1325,22 +1332,51 @@ interface SmartSearchResultsProps {
   onClose?: () => void;
 }
 
-// Sub-componente: Barra de progresso
-function ProgressBar({ progress }: { progress: SmartSearchProgress }) {
+// Opções de estatísticas para filtro
+const STAT_OPTIONS: { key: string; label: string; icon: IconName }[] = [
+  { key: 'gols', label: 'Gols', icon: 'goal' },
+  { key: 'escanteios', label: 'Escanteios', icon: 'corner' },
+  { key: 'finalizacoes', label: 'Chutes', icon: 'shot' },
+  { key: 'finalizacoes_gol', label: 'Chutes ao Gol', icon: 'target' },
+  { key: 'cartoes_amarelos', label: 'Cartões', icon: 'card' },
+  { key: 'faltas', label: 'Faltas', icon: 'foul' },
+];
+
+// Sub-componente: Filtro de estatísticas (toggle chips)
+function StatFilter({
+  ativos,
+  onToggle,
+}: {
+  ativos: Set<string>;
+  onToggle: (key: string) => void;
+}) {
   return (
-    <div className="card text-center py-8">
-      <LoadingSpinner size="lg" className="mx-auto mb-4" />
-      <h3 className="text-lg font-semibold text-white mb-2">
-        Analisando partidas...
-      </h3>
-      <p className="text-gray-400 mb-4">
-        {progress.analisadas} de {progress.total} partidas
-      </p>
-      <div className="w-full h-2 bg-dark-quaternary rounded-full overflow-hidden">
-        <div
-          className="h-full bg-primary-500 transition-all duration-300"
-          style={{ width: `${progress.porcentagem}%` }}
-        />
+    <div className="bg-dark-secondary rounded-xl p-4 border border-dark-tertiary mb-4">
+      <div className="flex items-center gap-2 mb-3">
+        <Icon name="filter" size="sm" className="text-gray-400" />
+        <span className="text-sm text-gray-400">Filtrar por estatística:</span>
+      </div>
+      <div className="flex flex-wrap gap-2">
+        {STAT_OPTIONS.map(({ key, label, icon }) => {
+          const isActive = ativos.has(key);
+          return (
+            <button
+              key={key}
+              onClick={() => onToggle(key)}
+              className={`
+                flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium
+                border transition-all duration-200
+                ${isActive
+                  ? 'bg-primary-500/20 text-primary-400 border-primary-500/50'
+                  : 'bg-dark-tertiary text-gray-500 border-dark-quaternary hover:border-gray-600'
+                }
+              `}
+            >
+              <Icon name={icon} size="sm" />
+              {label}
+            </button>
+          );
+        })}
       </div>
     </div>
   );
@@ -1352,69 +1388,59 @@ export function SmartSearchResults({
   isAnalyzing,
   onClose,
 }: SmartSearchResultsProps) {
+  // Estado dos filtros (todas ativas por padrão)
+  const [filtrosAtivos, setFiltrosAtivos] = useState<Set<string>>(
+    new Set(STAT_OPTIONS.map(s => s.key))
+  );
+
+  // Filtra oportunidades (client-side, sem recarregar)
+  const oportunidadesFiltradas = useMemo(() => {
+    if (!result) return [];
+    return result.oportunidades.filter(op => filtrosAtivos.has(op.estatistica));
+  }, [result, filtrosAtivos]);
+
+  // Toggle de filtro (mínimo 1 ativo)
+  const handleToggle = (key: string) => {
+    setFiltrosAtivos(prev => {
+      const next = new Set(prev);
+      if (next.has(key) && next.size === 1) return prev; // Mínimo 1
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  };
+
   // Estado: Analisando
   if (isAnalyzing && progress) {
     return <ProgressBar progress={progress} />;
-  }
-
-  // Estado: Sem resultados
-  if (result && result.oportunidades.length === 0) {
-    return (
-      <div className="card text-center py-12">
-        <Icon name="search" size="lg" className="text-gray-600 mx-auto mb-4" />
-        <h3 className="text-lg font-semibold text-white mb-2">
-          Nenhuma oportunidade encontrada
-        </h3>
-        <p className="text-gray-400">
-          {result.partidas_analisadas} partidas analisadas
-        </p>
-      </div>
-    );
   }
 
   // Estado: Com resultados
   if (result && result.oportunidades.length > 0) {
     return (
       <div>
-        {/* Header com estatísticas */}
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <span className="text-white font-semibold">
-              {result.total_oportunidades}
-            </span>
-            <span className="text-gray-400 ml-1">oportunidades</span>
-          </div>
-          {onClose && (
-            <button onClick={onClose} className="text-gray-500 hover:text-white">
-              <Icon name="close" size="sm" />
-            </button>
-          )}
-        </div>
+        <ResultHeader result={result} filteredCount={oportunidadesFiltradas.length} onClose={onClose} />
+        <StatFilter ativos={filtrosAtivos} onToggle={handleToggle} />
 
-        {/* Grid de oportunidades ordenadas por score */}
-        <div className="grid gap-4 md:grid-cols-2">
-          {result.oportunidades.map((op, index) => (
-            <OpportunityCard
-              key={`${op.matchId}-${op.estatistica}-${op.tipo}-${op.linha}`}
-              oportunidade={op}
-              rank={index + 1}
-            />
-          ))}
-        </div>
+        {oportunidadesFiltradas.length > 0 ? (
+          <div className="grid gap-4 md:grid-cols-2">
+            {oportunidadesFiltradas.map((op, index) => (
+              <OpportunityCard
+                key={`${op.matchId}-${op.estatistica}-${op.tipo}-${op.linha}`}
+                oportunidade={op}
+                rank={index + 1}
+              />
+            ))}
+          </div>
+        ) : (
+          <EmptyState isFiltered />
+        )}
       </div>
     );
   }
 
   return null;
 }
-
-// Exemplo de Uso:
-// <SmartSearchResults
-//   result={smartSearch.result}
-//   progress={smartSearch.progress}
-//   isAnalyzing={smartSearch.isAnalyzing}
-//   onClose={smartSearch.reset}
-// />
 ```
 
 **Props:**
@@ -1426,7 +1452,16 @@ export function SmartSearchResults({
 **Estados:**
 1. **Analisando:** Progress bar com contador "X de Y partidas"
 2. **Vazio:** Ícone + mensagem "Nenhuma oportunidade encontrada"
-3. **Com resultados:** Header com contagem + Grid de OpportunityCards
+3. **Filtrado sem resultados:** Mensagem sugerindo alterar filtros
+4. **Com resultados:** Header + StatFilter + Grid de OpportunityCards
+
+**StatFilter (v1.5):**
+- 6 chips toggle para cada estatística (Gols, Escanteios, Chutes, etc.)
+- Todos ativos por padrão
+- Clique alterna ativo/inativo
+- Mínimo 1 filtro sempre ativo
+- Filtragem instantânea (client-side, sem recarregar dados)
+- Header mostra "X de Y oportunidades" quando filtrado
 
 **Layout do Grid:**
 - Mobile: 1 coluna (`grid-cols-1`)
@@ -1668,6 +1703,51 @@ export const EstatisticasPage: React.FC = () => {
   );
 };
 ```
+
+---
+
+## Otimizações de Performance (v1.5)
+
+### React.memo
+
+Os seguintes componentes são memoizados com `React.memo` para evitar re-renders desnecessários quando as props não mudam:
+
+**Atoms (4 componentes):**
+- `Icon` - Ícone estático, raramente muda
+- `Badge` - Badge de estabilidade/confiança
+- `RaceDot` - Ponto de resultado (W/D/L)
+- `TeamBadge` - Escudo do time
+
+**Molecules (5 componentes):**
+- `StatsCard` - Card de estatística comparativa
+- `OverUnderCard` - Card de over/under com probabilidades
+- `PredictionsCard` - Card de previsões
+- `DisciplineCard` - Card de disciplina (cartões/faltas)
+- `OpportunityCard` - Card de oportunidade (Busca Inteligente)
+
+**Padrão de implementação:**
+
+```typescript
+import { memo } from 'react';
+
+interface ComponentProps {
+  // ...props
+}
+
+export const Component = memo(function Component(props: ComponentProps) {
+  // Renderização
+  return <div>...</div>;
+});
+```
+
+**Quando usar `memo`:**
+- Componentes que recebem props estáveis (não mudam frequentemente)
+- Componentes renderizados em listas
+- Componentes com renderização custosa
+
+**Quando NÃO usar:**
+- Componentes com estado interno que muda frequentemente
+- Componentes muito simples (overhead do memo pode ser maior que o benefício)
 
 ---
 

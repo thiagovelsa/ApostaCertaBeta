@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { type EstabilidadeLabel } from '@/types/stats';
 
 interface BadgeProps {
@@ -13,7 +14,7 @@ const badgeStyles: Record<EstabilidadeLabel, string> = {
   'N/A': 'bg-gray-500/20 text-gray-400',
 };
 
-export function Badge({ estabilidade, size = 'sm', label }: BadgeProps) {
+export const Badge = memo(function Badge({ estabilidade, size = 'sm', label }: BadgeProps) {
   const sizeClasses = size === 'sm' ? 'px-2 py-0.5 text-xs' : 'px-3 py-1 text-sm';
 
   return (
@@ -23,4 +24,4 @@ export function Badge({ estabilidade, size = 'sm', label }: BadgeProps) {
       {label ? `${label} ${estabilidade}` : estabilidade}
     </span>
   );
-}
+});

@@ -1,7 +1,7 @@
 # Arquitetura Backend - Sistema de Análise de Estatísticas de Futebol
 
-**Versão:** 1.0
-**Data:** 24 de Dezembro de 2025
+**Versão:** 1.2
+**Data:** 28 de Dezembro de 2025
 **Stack:** Python 3.11+ | FastAPI | Pydantic | Redis (opcional)
 
 ---
@@ -807,7 +807,108 @@ async def test_get_stats_endpoint(app_client):
 
 ---
 
-## 9. Checklist de Implementação
+## 9. Otimizações de Performance
+
+### 9.1 Reutilização de Schedule (v1.1)
+
+**Problema:** Ao calcular estatísticas de uma partida, o schedule completo do torneio (~380 partidas) era buscado **2 vezes** - uma para cada time, mesmo ambos estando no mesmo torneio.
+
+**Solução:** Buscar o schedule **uma vez** antes do `asyncio.gather()` e passar como parâmetro:
+
+```python
+# ANTES (2 chamadas API):
+async def calcular_stats(self, match_id, ...):
+    home_stats, away_stats = await asyncio.gather(
+        self._get_team_stats(home_id),  # → fetch_schedule_full() #1
+        self._get_team_stats(away_id),  # → fetch_schedule_full() #2 (DUPLICADA!)
+    )
+
+# DEPOIS (1 chamada API):
+async def calcular_stats(self, match_id, ...):
+    schedule = await self._fetch_tournament_schedule(tournament_id)  # UMA VEZ
+
+    home_stats, away_stats = await asyncio.gather(
+        self._get_team_stats(home_id, schedule=schedule),  # usa cache
+        self._get_team_stats(away_id, schedule=schedule),  # usa cache
+    )
+```
+
+**Implementação:**
+
+| Método | Alteração |
+|--------|-----------|
+| `_fetch_tournament_schedule()` | **NOVO** - Busca schedule com cache de 1h |
+| `calcular_stats()` | Busca schedule antes do `asyncio.gather()` |
+| `_get_team_stats()` | + parâmetro `schedule: Optional[dict]` |
+| `_get_recent_matches_stats()` | + parâmetro `schedule: Optional[dict]` |
+| `_get_recent_matches_with_form()` | Usa schedule se fornecido, senão busca/cacheia |
+
+**Resultado:**
+
+| Métrica | Antes | Depois |
+|---------|-------|--------|
+| Chamadas schedule/request | 2 | 1 |
+| Latência estimada (schedule) | ~1000ms | ~500ms |
+| Cache hit após 1ª requisição | ✓ | ✓ (1h TTL) |
+
+### 9.2 Time-Weighting (Dixon-Coles Decay) (v1.6)
+
+**Conceito:** Partidas mais recentes devem ter mais peso no cálculo de médias e CV, pois refletem melhor a forma atual do time.
+
+**Implementação:** Decay exponencial padrão Dixon-Coles:
+
+```python
+# Fórmula: weight = e^(-decay × days_ago)
+# Com decay = 0.0065:
+
+TIME_DECAY_FACTOR = 0.0065
+
+def _calculate_time_weight(self, match_date_str: str) -> float:
+    """
+    Pesos por idade da partida:
+    - Hoje: 100%
+    - 30 dias: 82%
+    - 60 dias: 68%
+    - 90 dias: 56%
+    - 180 dias: 31%
+    """
+    match_date = datetime.strptime(match_date_str, "%Y-%m-%d").date()
+    days_ago = (date.today() - match_date).days
+    return math.exp(-TIME_DECAY_FACTOR * max(days_ago, 0))
+```
+
+**Média e CV Ponderados:**
+
+```python
+def _weighted_mean(self, values: List[float], weights: List[float]) -> float:
+    """Média ponderada: Σ(v × w) / Σ(w)"""
+    return sum(v * w for v, w in zip(values, weights)) / sum(weights)
+
+def _weighted_cv(self, values: List[float], weights: List[float], wmean: float) -> float:
+    """CV ponderado: √(Σ(w × (v - wmean)²) / Σ(w)) / wmean"""
+    variance = sum(w * (v - wmean) ** 2 for v, w in zip(values, weights)) / sum(weights)
+    return math.sqrt(variance) / wmean
+```
+
+**Fluxo:**
+
+1. `_get_recent_matches_with_form()` retorna `match_dates` junto com `match_ids`
+2. `_get_recent_matches_stats()` calcula pesos para cada partida
+3. `_calculate_metrics_from_matches()` usa médias/CV ponderados
+
+**Impacto:**
+
+| Aspecto | Antes | Depois |
+|---------|-------|--------|
+| Peso das partidas | Igual para todas | Mais recentes = mais peso |
+| Forma recente | Não considerada | Valorizada |
+| Times em fase ruim | Média "diluída" | Reflete situação atual |
+
+**Referência:** Dixon & Coles (1997) - "Modelling Association Football Scores and Inefficiencies in the Football Betting Market"
+
+---
+
+## 10. Checklist de Implementação
 
 - [ ] Criar estrutura de pastas conforme seção 2
 - [ ] Implementar models (app/models/)
