@@ -599,7 +599,9 @@ class StatsService:
 
         async def fetch_one(match_id: str) -> Optional[dict]:
             try:
-                stats = await self.vstats.fetch_game_played_stats(match_id)
+                # Usa /get-match-stats conforme documentação (PROJETO_SISTEMA_ANALISE.md)
+                # Estrutura: liveData.lineUp[].stat[]
+                stats = await self.vstats.fetch_match_stats(match_id)
                 return self._extract_team_match_stats(stats, team_id, periodo)
             except Exception as e:
                 logger.debug(f"Erro ao buscar stats da partida {match_id}: {e}")

@@ -213,6 +213,20 @@ export function SmartSearchSettings({ isOpen, onToggle }: SmartSearchSettingsPro
                       min={0.50}
                       max={0.90}
                     />
+                    <div className="flex items-center justify-between gap-4">
+                      <label className="text-sm text-gray-400 min-w-[100px]">Linha Mín.</label>
+                      <div className="flex items-center gap-2 flex-1">
+                        <input
+                          type="number"
+                          min={0}
+                          max={50}
+                          step={0.5}
+                          value={thresholds.lineMin}
+                          onChange={(e) => setStatThreshold(stat, 'lineMin', parseFloat(e.target.value) || 0)}
+                          className="w-20 px-2 py-1 text-sm text-white bg-dark-quaternary border border-dark-tertiary rounded-lg text-right appearance-none"
+                        />
+                      </div>
+                    </div>
                   </div>
                 ))}
               </div>

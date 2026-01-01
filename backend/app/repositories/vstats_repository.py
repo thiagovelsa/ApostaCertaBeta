@@ -108,7 +108,38 @@ class VStatsRepository:
                 }
             )
 
+        # Log detalhado para debug
+        logger.info(f"[CALENDAR] Normalizadas {len(competitions)} competicoes da API")
+        for comp in competitions[:5]:  # Log primeiras 5
+            logger.debug(f"  - {comp['id'][:12]}... | {comp['name']} ({comp.get('country', 'N/A')})")
+
         return competitions
+
+    async def fetch_schedule_day(self, tournament_id: str, target_date: str) -> Dict:
+        """
+        Busca partidas de uma data especifica.
+
+        Este e o endpoint CORRETO para buscar partidas por data.
+        Conforme documentacao: /schedule/day?tmcl={id}&date={YYYY-MM-DD}
+
+        Args:
+            tournament_id: ID da competicao
+            target_date: Data no formato YYYY-MM-DD
+
+        Returns:
+            Dados com partidas da data:
+            {
+                "matches": [
+                    {
+                        "id": "...",
+                        "localDate": "YYYY-MM-DD",
+                        ...
+                    }
+                ]
+            }
+        """
+        params = {"tmcl": tournament_id, "date": target_date}
+        return await self._get("/stats/tournament/v1/schedule/day", params)
 
     async def fetch_schedule_month(self, tournament_id: str) -> Dict:
         """
@@ -135,6 +166,22 @@ class VStatsRepository:
         # Nota: parametro é Tmcl (T maiusculo) para schedule/month!
         params = {"Tmcl": tournament_id}
         return await self._get("/stats/tournament/v1/schedule/month", params)
+
+    async def fetch_schedule_week(self, tournament_id: str) -> Dict:
+        """
+        Busca calendario de partidas da SEMANA ATUAL.
+
+        Retorna apenas ~20-30 partidas (muito mais eficiente que /schedule).
+        Ideal para buscar partidas do dia atual ou próximos dias.
+
+        Args:
+            tournament_id: ID da competicao
+
+        Returns:
+            Dados do calendario: {"matches": [...]}
+        """
+        params = {"tmcl": tournament_id}
+        return await self._get("/stats/tournament/v1/schedule/week", params)
 
     async def fetch_schedule_full(self, tournament_id: str) -> Dict:
         """

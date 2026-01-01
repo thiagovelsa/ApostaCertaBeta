@@ -9,6 +9,7 @@ import asyncio
 import logging
 from datetime import date, datetime
 from typing import List, Tuple
+from zoneinfo import ZoneInfo
 
 from ..config import settings
 from ..models import PartidaResumo, PartidaListResponse, TimeInfo
@@ -48,42 +49,59 @@ class PartidasService:
         if cached:
             return PartidaListResponse(**cached)
 
-        # Busca lista de competicoes dinamicamente via /calendar
-        try:
-            competitions = await self.vstats.fetch_calendar()
-            logger.info(
-                f"[CALENDAR] Encontradas {len(competitions)} competicoes no calendario"
-            )
-        except Exception as e:
-            logger.error(f"[ERROR] Erro ao buscar calendario: {str(e)}")
-            competitions = []
+        # Busca lista de competicoes com cache de 24h
+        calendar_cache_key = self.cache.build_key("calendar", "all")
+        competitions = await self.cache.get(calendar_cache_key)
+        
+        if competitions:
+            logger.info(f"[CALENDAR] Cache HIT - {len(competitions)} competicoes")
+        else:
+            # Busca dinamicamente via /calendar
+            try:
+                competitions = await self.vstats.fetch_calendar()
+                logger.info(
+                    f"[CALENDAR] API - Encontradas {len(competitions)} competicoes"
+                )
+                # Cacheia por 24 horas
+                await self.cache.set(calendar_cache_key, competitions, ttl=86400)
+            except Exception as e:
+                logger.warning(f"[CALENDAR] Erro na API: {str(e)}")
+                # Fallback para competicoes conhecidas
+                from ..known_competitions import get_fallback_competitions
+                competitions = get_fallback_competitions()
+                logger.info(
+                    f"[CALENDAR] FALLBACK - Usando {len(competitions)} competicoes conhecidas"
+                )
 
-        # Busca partidas de todas as competicoes EM PARALELO
+        # Busca partidas de todas as competicoes EM PARALELO (com limite de concorrência)
         logger.info(
             f"[SEARCH] Buscando partidas para {target_date.isoformat()} em {len(competitions)} competicoes..."
         )
 
-        # Cria tasks para buscar todas as competicoes em paralelo
+        # Limita concorrência para não sobrecarregar a API VStats
+        semaphore = asyncio.Semaphore(10)
+
         async def fetch_safe(comp: dict) -> Tuple[str, List[PartidaResumo]]:
             """Wrapper seguro que retorna lista vazia em caso de erro."""
-            tournament_id = comp.get("id")
-            comp_name = comp.get("name", "Desconhecida")
+            async with semaphore:
+                tournament_id = comp.get("id")
+                comp_name = comp.get("name", "Desconhecida")
 
-            if not tournament_id:
-                return comp_name, []
+                if not tournament_id:
+                    return comp_name, []
 
-            try:
-                matches = await self._fetch_competition_matches(
-                    tournament_id,
-                    target_date,
-                    comp_name,
-                )
-                return comp_name, matches
-            except Exception as e:
-                logger.debug(f"  [WARN] {comp_name}: {str(e)[:50]}")
-                return comp_name, []
+                try:
+                    matches = await self._fetch_competition_matches(
+                        tournament_id,
+                        target_date,
+                        comp_name,
+                    )
+                    return comp_name, matches
+                except Exception as e:
+                    logger.debug(f"  [WARN] {comp_name}: {str(e)[:50]}")
+                    return comp_name, []
 
-        # Executa todas as buscas em paralelo
+        # Executa todas as buscas em paralelo (max 10 simultâneas)
         results = await asyncio.gather(*[fetch_safe(comp) for comp in competitions])
 
         # Consolida resultados
@@ -137,47 +155,84 @@ class PartidasService:
         target_date: date,
         competition_name: str,
     ) -> List[PartidaResumo]:
-        """Busca partidas de uma competicao especifica."""
-        # Busca calendario do mes
-        # Nota: parametros month/year sao IGNORADOS pela API VStats
-        schedule_data = await self.vstats.fetch_schedule_month(tournament_id)
-
-        # Estrutura da resposta: {"matches": [...]}
-        # Cada match tem campo "localDate" no formato "YYYY-MM-DD"
-        all_matches = schedule_data.get("matches", [])
+        """
+        Busca partidas de uma competicao especifica.
+        
+        Estratégia otimizada:
+        1. Tenta /schedule/week primeiro (~20 partidas, muito rápido)
+        2. Se data não estiver na semana, usa /schedule completo (cache 1h)
+        """
         target_str = target_date.isoformat()
-
-        # Filtra partidas pela data alvo
+        
+        # Tenta cache primeiro (pode ser de week ou full)
+        schedule_cache_key = self.cache.build_key("schedule_week", tournament_id)
+        schedule_data = await self.cache.get(schedule_cache_key)
+        
+        if schedule_data:
+            # Cache hit - verifica se a data está nos dados
+            all_matches = schedule_data.get("matches", [])
+            filtered = [m for m in all_matches if m.get("localDate") == target_str]
+            if filtered:
+                return self._convert_matches(filtered, competition_name, tournament_id)
+        
+        # Tenta /schedule/week primeiro (muito mais rápido)
+        try:
+            week_data = await self.vstats.fetch_schedule_week(tournament_id)
+            all_matches = week_data.get("matches", [])
+            # Cache week por 1h
+            await self.cache.set(schedule_cache_key, week_data, ttl=3600)
+            
+            filtered = [m for m in all_matches if m.get("localDate") == target_str]
+            if filtered:
+                return self._convert_matches(filtered, competition_name, tournament_id)
+        except Exception:
+            pass  # Fallback para schedule completo
+        
+        # Se não encontrou na semana, usa schedule completo (cache separado)
+        full_cache_key = self.cache.build_key("schedule_full", tournament_id)
+        full_data = await self.cache.get(full_cache_key)
+        
+        if not full_data:
+            full_data = await self.vstats.fetch_schedule_full(tournament_id)
+            await self.cache.set(full_cache_key, full_data, ttl=3600)
+        
+        all_matches = full_data.get("matches", [])
         filtered = [m for m in all_matches if m.get("localDate") == target_str]
+        return self._convert_matches(filtered, competition_name, tournament_id)
 
-        # Converte para modelos
+    def _convert_matches(
+        self, matches: List[dict], competition_name: str, tournament_id: str
+    ) -> List[PartidaResumo]:
+        """Converte lista de partidas para modelos."""
         partidas = []
-        for match in filtered:
+        for match in matches:
             try:
                 partida = self._convert_match(match, competition_name, tournament_id)
                 partidas.append(partida)
             except Exception:
                 continue
-
         return partidas
 
     def _convert_match(
         self, match: dict, competition: str, tournament_id: str
     ) -> PartidaResumo:
         """Converte dados brutos da VStats para PartidaResumo."""
-        # Extrai horario
-        local_time = match.get("localTime", "00:00:00")
-        if isinstance(local_time, str):
-            time_obj = datetime.strptime(local_time[:8], "%H:%M:%S").time()
-        else:
-            time_obj = local_time
+        # Extrai data e horario brutos
+        local_time_str = match.get("localTime", "00:00:00")
+        local_date_str = match.get("localDate", "2000-01-01")
+        
+        try:
+            # Converte para datetime ingênuo (assumido como local da competição)
+            dt_nave = datetime.strptime(f"{local_date_str} {local_time_str[:8]}", "%Y-%m-%d %H:%M:%S")
+        except Exception:
+            # Fallback seguro
+            dt_nave = datetime.combine(date.today(), datetime.min.time())
 
-        # Extrai data
-        local_date = match.get("localDate")
-        if isinstance(local_date, str):
-            date_obj = datetime.strptime(local_date, "%Y-%m-%d").date()
-        else:
-            date_obj = local_date
+        # Converte para o fuso horário do Brasil
+        dt_brazil = self._apply_timezone_conversion(dt_nave, competition)
+        
+        date_obj = dt_brazil.date()
+        time_obj = dt_brazil.time()
 
         return PartidaResumo(
             id=match.get("id"),
@@ -203,6 +258,43 @@ class PartidasService:
                 escudo=None,
             ),
         )
+
+    def _apply_timezone_conversion(self, dt: datetime, competition: str) -> datetime:
+        """Converte um datetime do fuso local da competição para o fuso brasileiro."""
+        # Mapeamento de regiões para fusos horários
+        # Default: Europe/London (Premier League, Championship, cups)
+        tz_map = {
+            "Premier League": "Europe/London",
+            "Championship": "Europe/London",
+            "League Cup": "Europe/London",
+            "FA Cup": "Europe/London",
+            "La Liga": "Europe/Madrid",
+            "Serie A": "Europe/Rome",
+            "Bundesliga": "Europe/Berlin",
+            "Ligue 1": "Europe/Paris",
+            "Eredivisie": "Europe/Amsterdam",
+            "Primeira Liga": "Europe/Lisbon",
+            "Brasileirão": "America/Sao_Paulo",
+            "Copa do Brasil": "America/Sao_Paulo",
+            "Libertadores": "America/Asuncion", # Fallback para CONMEBOL
+            "Sudamericana": "America/Asuncion",
+        }
+
+        # Tenta encontrar o fuso pelo nome da competição
+        source_tz_name = "Europe/London"  # Default seguro para maioria das ligas monitoradas
+        for key, tz in tz_map.items():
+            if key.lower() in competition.lower():
+                source_tz_name = tz
+                break
+        
+        try:
+            # Atribui o fuso de origem
+            dt_source = dt.replace(tzinfo=ZoneInfo(source_tz_name))
+            # Converte para o fuso alvo (Brasil)
+            return dt_source.astimezone(ZoneInfo(settings.target_timezone))
+        except Exception as e:
+            logger.warning(f"Erro na conversão de timezone ({competition}): {str(e)}")
+            return dt
 
     def _format_competition_name(self, name: str) -> str:
         """Formata nome da competicao para exibicao."""

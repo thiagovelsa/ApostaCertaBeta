@@ -54,6 +54,11 @@ function analisarEstatistica(
 
   // Analisa cada linha
   for (const line of stat.lines) {
+    // Pula linhas abaixo do mínimo configurado
+    if (line.line < thresholds.lineMin) {
+      continue;
+    }
+
     // Pula linhas muito óbvias
     if (line.over >= config.probabilityCutoff || line.under >= config.probabilityCutoff) {
       continue;
@@ -187,7 +192,14 @@ export function ranquearOportunidades(
   limite: number = MAX_OPPORTUNITIES
 ): Oportunidade[] {
   return oportunidades
-    .sort((a, b) => b.score - a.score)
+    .sort((a, b) => {
+      // Primeiro: ordena por score (descrescente)
+      if (b.score !== a.score) return b.score - a.score;
+      // Segundo: desempate por probabilidade (descrescente)
+      if (b.probabilidade !== a.probabilidade) return b.probabilidade - a.probabilidade;
+      // Terceiro: desempate por confiança (descrescente)
+      return b.confianca - a.confianca;
+    })
     .slice(0, limite);
 }
 

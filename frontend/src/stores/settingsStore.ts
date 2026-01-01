@@ -12,14 +12,15 @@ import type { StatThresholds } from '@/types/smartSearch';
  *
  * - overMin/underMin: 55% = mostra mais oportunidades
  * - confiancaMin: 65% = aceita confiança "Média-Alta"
+ * - lineMin: Linha mínima para cada estatística
  */
 export const DEFAULT_STAT_THRESHOLDS: Record<string, StatThresholds> = {
-  gols: { overMin: 0.55, underMin: 0.55, confiancaMin: 0.65 },
-  escanteios: { overMin: 0.55, underMin: 0.55, confiancaMin: 0.65 },
-  finalizacoes: { overMin: 0.55, underMin: 0.55, confiancaMin: 0.65 },
-  finalizacoes_gol: { overMin: 0.55, underMin: 0.55, confiancaMin: 0.65 },
-  cartoes_amarelos: { overMin: 0.55, underMin: 0.55, confiancaMin: 0.65 },
-  faltas: { overMin: 0.55, underMin: 0.55, confiancaMin: 0.65 },
+  gols: { overMin: 0.55, underMin: 0.55, confiancaMin: 0.65, lineMin: 1.5 },
+  escanteios: { overMin: 0.55, underMin: 0.55, confiancaMin: 0.65, lineMin: 7.5 },
+  finalizacoes: { overMin: 0.55, underMin: 0.55, confiancaMin: 0.65, lineMin: 20.5 },
+  finalizacoes_gol: { overMin: 0.55, underMin: 0.55, confiancaMin: 0.65, lineMin: 4.5 },
+  cartoes_amarelos: { overMin: 0.55, underMin: 0.55, confiancaMin: 0.65, lineMin: 2.5 },
+  faltas: { overMin: 0.55, underMin: 0.55, confiancaMin: 0.65, lineMin: 18.5 },
 };
 
 /**
@@ -100,7 +101,7 @@ export const useSmartSearchSettingsStore = create<SmartSearchSettingsState>()(
     }),
     {
       name: 'smart-search-settings',
-      version: 1,
+      version: 2, // Incrementado para forçar refresh com novos defaults
     }
   )
 );

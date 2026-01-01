@@ -6,6 +6,29 @@
 - `frontend/src/`: React + TS UI (`components/atoms|molecules|organisms|layout`, `pages`, `hooks`, `services`, `stores`); build output in `frontend/dist/`.
 - `docs/`, `openapi.yaml`, `data/samples/`, `scripts/` for specs, API contract, sample JSON, and validation utilities.
 
+## Key Backend Endpoints
+
+### VStats API (External)
+- **Base:** `https://vstats-back-bbdfdf0bfd16.herokuapp.com/api`
+- `/stats/tournament/v1/calendar` → Dynamic competition IDs
+- `/stats/tournament/v1/schedule?tmcl={id}` → Full season matches
+- `/stats/matchstats/v1/get-match-stats?Fx={id}` → Match statistics
+- `/stats/seasonstats/v1/team?ctst={id}&tmcl={id}` → Season aggregates
+- `/stats/referees/v1/get-by-prsn?Prsn={id}` → Referee stats
+
+### Internal API (FastAPI)
+- `GET /api/partidas?data={YYYY-MM-DD}` → Matches for date
+- `GET /api/partida/{id}/stats?filtro={geral|5|10}` → Match stats
+- `GET /api/competicoes` → All competitions
+- `GET /api/time/{id}/escudo` → Team badge
+
+## Important Paths
+- Backend services: `backend/app/services/`
+- Repositories (API clients): `backend/app/repositories/`
+- Known competitions fallback: `backend/app/known_competitions.py`
+- Frontend API service: `frontend/src/services/api.ts`
+- Frontend timeout: `frontend/.env` (`VITE_API_TIMEOUT`)
+
 ## Build, Test, and Development Commands
 - Backend (run from `backend`): `python -m venv .venv`, `pip install -r requirements.txt -r requirements-dev.txt`, `uvicorn app.main:app --reload --port 8000`.
 - Frontend (run from `frontend`): `npm install`, `npm run dev`, `npm run build`, `npm run preview`, `npm run lint`.

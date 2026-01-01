@@ -207,7 +207,7 @@ export function SmartSearchResults({
   // Configurações do store
   const { showOver, showUnder, statThresholds } = useSmartSearchSettingsStore();
 
-  // Filtra oportunidades baseado nos filtros ativos + showOver/showUnder
+  // Filtra oportunidades baseado nos filtros ativos + showOver/showUnder + lineMin
   const oportunidadesFiltradas = useMemo(() => {
     if (!result) return [];
     return result.oportunidades.filter(op => {
@@ -215,9 +215,13 @@ export function SmartSearchResults({
       if (op.tipo === 'over' && !showOver) return false;
       if (op.tipo === 'under' && !showUnder) return false;
       // Filtra por estatística
-      return filtrosAtivos.has(op.estatistica);
+      if (!filtrosAtivos.has(op.estatistica)) return false;
+      // Filtra por linha mínima (reativo às configurações)
+      const threshold = statThresholds[op.estatistica];
+      if (threshold && op.linha < threshold.lineMin) return false;
+      return true;
     });
-  }, [result, filtrosAtivos, showOver, showUnder]);
+  }, [result, filtrosAtivos, showOver, showUnder, statThresholds]);
 
   // Handler para toggle de filtro
   const handleToggle = (key: string) => {

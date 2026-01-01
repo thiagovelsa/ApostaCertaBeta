@@ -23,7 +23,7 @@ class Settings(BaseSettings):
 
     # VStats API
     vstats_api_url: str = "https://vstats-back-bbdfdf0bfd16.herokuapp.com/api"
-    vstats_api_timeout: int = 10
+    vstats_api_timeout: int = 30
 
     # TheSportsDB API
     thesportsdb_api_key: str = "3"
@@ -33,10 +33,13 @@ class Settings(BaseSettings):
     # Cache Configuration
     redis_url: str = "redis://localhost:6379/0"
     cache_enabled: bool = True
-    cache_version: int = 7  # Incrementado para calcular recent_form corretamente
+    cache_version: int = 15  # Adiciona conversão de timezone para Brasil
     cache_ttl_schedule: int = 3600  # 1 hora
     cache_ttl_seasonstats: int = 21600  # 6 horas
     cache_ttl_badges: int = 604800  # 7 dias
+
+    # Timezone
+    target_timezone: str = "America/Sao_Paulo"
 
     # Application
     env: str = "development"

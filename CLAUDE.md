@@ -130,30 +130,29 @@ docker-compose down
 
 **Key Endpoints Used:**
 
-| Endpoint | Purpose | Key Parameters |
-|----------|---------|-----------------|
-| `schedule/day` | Get matches for specific date | `tmcl` (tournament ID), `date` (YYYY-MM-DD) |
-| `schedule/month` | Get month's matches | `tmcl` |
-| `seasonstats` | Team season aggregate statistics | `tmcl`, `ctst` (team ID) |
-| `get-match-stats` | Detailed single-match statistics | `Fx` (match ID) |
-| `match-preview` | Pre-match analysis & H2H | `Fx` |
+| Endpoint | Purpose | Structure |
+|----------|---------|-----------|
+| `/schedule` | **Full season schedule** | `{matches: [...]}` |
+| `/get-match-stats` | Match stats (preferred) | `liveData.lineUp[].stat[]` |
+| `/get-game-played-stats` | Alternative (deprecated) | `stats{}` arrays |
+| `/calendar` | Dynamic competition IDs | Array of tournaments |
 
 **Important Limitations:**
 
-- `schedule/day` with `date` parameter returns empty results; use `schedule/month` and filter client-side
-- `seasonstats` doesn't include `lostCorners` (conceded corners); get from `get-match-stats` per match
-- No month/year filtering parameters work; API always returns current period data
+- `schedule/day?date=` → Often returns empty, use `/schedule` + client filter
+- `schedule/month` → Only returns current month, ignores parameters
+- `/get-game-played-stats` → May return empty `stats{}`, prefer `/get-match-stats`
+- Tournament IDs change each season → Use `/calendar` dynamically
 - All stats endpoints work without authentication
 
 **Authentication Note:** Credentials found in codebase (client_id, client_secret) are for premium features. Basic statistics endpoints don't require auth.
 
 ### Data Flow
 
-1. **Match Schedule** → Retrieved via `schedule/month` or `schedule/week`, filtered by date
-2. **Team Stats** → Aggregated via `seasonstats` endpoint for season-long metrics
-3. **Team Logos** → Local files preferred, TheSportsDB API as fallback
-4. **Match Details** → Individual match stats via `get-match-stats` for detailed comparison
-5. **Stability Metrics** → Coefficient of Variation (CV) calculated from match history
+1. **Competitions** → `/calendar` (cached 24h) + fallback to known IDs
+2. **Match Schedule** → `/schedule` (full season) + client-side date filter
+3. **Team Stats** → `/get-match-stats` per match → aggregate with CV
+4. **Referee** → `/get-match-stats` → official ID → `/referees/get-by-prsn`
 
 ### Team Logos System
 

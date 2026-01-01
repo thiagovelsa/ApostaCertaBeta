@@ -32,7 +32,7 @@ async def get_stats(
     match_id: str = Path(
         ...,
         description="ID unico da partida",
-        example="f4vscquffy37afgv0arwcbztg",
+        examples=["f4vscquffy37afgv0arwcbztg"],
     ),
     filtro: Literal["geral", "5", "10"] = Query(
         default="geral",

@@ -29,7 +29,7 @@ async def listar_partidas(
     data: date = Query(
         ...,
         description="Data no formato YYYY-MM-DD",
-        example="2025-12-27",
+        examples=["2025-12-27"],
     ),
     service: PartidasService = Depends(get_partidas_service),
 ) -> PartidaListResponse:

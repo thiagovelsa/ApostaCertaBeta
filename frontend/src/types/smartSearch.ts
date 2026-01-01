@@ -83,6 +83,7 @@ export interface StatThresholds {
   overMin: number;
   underMin: number;
   confiancaMin: number;
+  lineMin: number; // Linha mínima para considerar (ex: 20.5 para Chutes)
 }
 
 /**
@@ -90,12 +91,12 @@ export interface StatThresholds {
  * Use DEFAULT_STAT_THRESHOLDS do settingsStore para valores atualizáveis
  */
 export const DEFAULT_STAT_THRESHOLDS: Record<string, StatThresholds> = {
-  gols: { overMin: 0.60, underMin: 0.65, confiancaMin: 0.70 },
-  escanteios: { overMin: 0.65, underMin: 0.65, confiancaMin: 0.70 },
-  finalizacoes: { overMin: 0.65, underMin: 0.65, confiancaMin: 0.70 },
-  finalizacoes_gol: { overMin: 0.65, underMin: 0.65, confiancaMin: 0.70 },
-  cartoes_amarelos: { overMin: 0.60, underMin: 0.65, confiancaMin: 0.70 },
-  faltas: { overMin: 0.65, underMin: 0.65, confiancaMin: 0.70 },
+  gols: { overMin: 0.60, underMin: 0.65, confiancaMin: 0.70, lineMin: 1.5 },
+  escanteios: { overMin: 0.65, underMin: 0.65, confiancaMin: 0.70, lineMin: 7.5 },
+  finalizacoes: { overMin: 0.65, underMin: 0.65, confiancaMin: 0.70, lineMin: 20.5 },
+  finalizacoes_gol: { overMin: 0.65, underMin: 0.65, confiancaMin: 0.70, lineMin: 4.5 },
+  cartoes_amarelos: { overMin: 0.60, underMin: 0.65, confiancaMin: 0.70, lineMin: 2.5 },
+  faltas: { overMin: 0.65, underMin: 0.65, confiancaMin: 0.70, lineMin: 18.5 },
 };
 
 /**

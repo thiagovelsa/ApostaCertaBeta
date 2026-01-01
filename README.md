@@ -153,8 +153,15 @@ API Backend (FastAPI)
 
 ## 📊 Endpoints da API
 
-### Partidas
-- `GET /api/partidas?data=2025-12-27` - Lista partidas por data
+### Endpoints VStats Utilizados
+
+| Endpoint | Uso |
+|----------|-----|
+| `/stats/tournament/v1/calendar` | Lista dinâmica de competições (32+) |
+| `/stats/tournament/v1/schedule` | **Partidas da temporada completa** (preferido) |
+| `/stats/matchstats/v1/get-match-stats` | **Stats por partida** (`liveData.lineUp[].stat[]`) |
+| `/stats/seasonstats/v1/team` | Agregados da temporada |
+| `/stats/referees/v1/get-by-prsn` | Estatísticas do árbitro |
 
 ### Estatísticas
 - `GET /api/partida/{matchId}/stats?filtro=5` - Estatísticas detalhadas (geral/5/10)
@@ -268,6 +275,10 @@ docker-compose down
 
 | Problema | Solução |
 |----------|---------|
+| Stats timeout | Frontend `.env` com `VITE_API_TIMEOUT=60000` |
+| `/schedule/day?date=` vazio | Usar `/schedule` e filtrar client-side |
+| `/schedule/month` só retorna mês atual | Usar `/schedule` (temporada completa) |
+| IDs de competição mudam | Usar `/calendar` dinâmico |
 | VStats API timeout | Verificar credenciais e URL em `.env` |
 | Redis connection error | `docker run -d -p 6379:6379 redis` |
 | CORS error no frontend | Adicionar origem em `ALLOWED_ORIGINS` no `.env` |
@@ -381,6 +392,13 @@ Este projeto está licenciado sob MIT License - veja [LICENSE](LICENSE) para det
 ---
 
 ## 📝 Changelog Recente
+
+### v1.7 (31/12/2025)
+- **fix:** Endpoint de stats corrigido - usa `/get-match-stats` com `liveData.lineUp[].stat[]`
+- **fix:** Frontend timeout aumentado de 10s para 60s
+- **feat:** Cache de 24h para calendário de competições
+- **feat:** Fallback com IDs conhecidos caso API `/calendar` falhe
+- **fix:** Uso de `/schedule` (temporada completa) para busca de partidas
 
 ### v1.6 (28/12/2025)
 - **feat:** Time-Weighting no backend (Dixon-Coles decay)
