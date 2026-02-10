@@ -1,8 +1,8 @@
 # Responsividade e Acessibilidade - Sistema de Análise de Estatísticas de Futebol
 
-**Versão:** 1.0
-**Data:** 24 de dezembro de 2025
-**Padrões:** WCAG 2.1 AA, Mobile-First, PWA
+**Versão:** 1.1
+**Data:** 07 de fevereiro de 2026
+**Padrões:** WCAG 2.1 AA, Mobile-First
 
 Guia completo para garantir que o sistema funciona em todos os dispositivos (mobile, tablet, desktop) e é acessível para todos os usuários, incluindo aqueles com deficiências.
 
@@ -255,6 +255,16 @@ export function Container({ children, maxWidth = 'xl' }: ContainerProps) {
 ---
 
 ## 2. Acessibilidade (WCAG 2.1 AA)
+
+### 2.0 Padrões Implementados no Projeto
+
+Padrões aplicados no frontend atual:
+
+- **Focus visível apenas no teclado:** usar `focus-visible` (classe utilitária `.focus-ring` em `frontend/src/index.css`).
+- **Skip link:** link “Pular para conteúdo” no layout (`PageLayout`) apontando para `#main`.
+- **Erros anunciáveis:** containers de erro com `role="alert"` e/ou `aria-live="polite"` (ex.: `HomePage`).
+- **Touch targets:** botões com alvo mínimo no mobile (ex.: `min-h-[44px]` em `Button`).
+- **Reduced motion:** respeita `prefers-reduced-motion` para animações CSS/Tailwind e scroll suave.
 
 ### 2.1 Semantic HTML
 
@@ -579,8 +589,8 @@ button {
 ### 2.9 Skip Links
 
 ```typescript
-// src/components/layout/Header.tsx
-export function Header() {
+// Exemplo (adapte para `src/components/layout/PageLayout.tsx` ou para a page atual)
+export function LayoutWithSkipLink() {
   return (
     <>
       {/* Skip to main content link (hidden, focusável apenas por teclado) */}
@@ -607,218 +617,13 @@ export function Header() {
 
 ## 3. PWA (Progressive Web App)
 
-### 3.1 manifest.json
+No estado atual do frontend, **PWA não está configurado** (não existe `manifest.json` nem service worker em `frontend/public/`).
 
-```json
-{
-  "name": "Palpite Mestre - Análise de Estatísticas de Futebol",
-  "short_name": "Palpite Mestre",
-  "description": "Sistema web para análise detalhada de estatísticas de futebol",
-  "start_url": "/",
-  "scope": "/",
-  "display": "standalone",
-  "theme_color": "#84cc16",
-  "background_color": "#0a0a0a",
-  "orientation": "portrait-primary",
-  "icons": [
-    {
-      "src": "/icons/icon-192x192.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "/icons/icon-512x512.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "/icons/icon-192x192-maskable.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "maskable"
-    }
-  ],
-  "screenshots": [
-    {
-      "src": "/screenshots/screenshot1.png",
-      "sizes": "540x720",
-      "type": "image/png",
-      "form_factor": "narrow"
-    },
-    {
-      "src": "/screenshots/screenshot2.png",
-      "sizes": "1280x720",
-      "type": "image/png",
-      "form_factor": "wide"
-    }
-  ],
-  "categories": ["sports"],
-  "shortcuts": [
-    {
-      "name": "Análise de Partidas",
-      "short_name": "Partidas",
-      "description": "Abra a página de análise de partidas",
-      "url": "/",
-      "icons": [{ "src": "/icons/shortcut-partidas.png", "sizes": "96x96" }]
-    }
-  ]
-}
-```
-
-**index.html - Link manifest:**
-```html
-<link rel="manifest" href="/manifest.json" />
-<meta name="theme-color" content="#84cc16" />
-<meta name="apple-mobile-web-app-capable" content="yes" />
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-<meta name="apple-mobile-web-app-title" content="Palpite Mestre" />
-```
-
-### 3.2 Service Worker
-
-```typescript
-// public/sw.js
-const CACHE_NAME = 'palpitremestre-v1';
-const ASSETS_TO_CACHE = [
-  '/',
-  '/index.html',
-  '/manifest.json',
-];
-
-// Install - Cache essentials
-self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      console.log('Caching essential assets');
-      return cache.addAll(ASSETS_TO_CACHE);
-    })
-  );
-  self.skipWaiting();
-});
-
-// Activate - Clean old caches
-self.addEventListener('activate', (event) => {
-  event.waitUntil(
-    caches.keys().then((cacheNames) => {
-      return Promise.all(
-        cacheNames.map((cacheName) => {
-          if (cacheName !== CACHE_NAME) {
-            console.log('Deleting old cache:', cacheName);
-            return caches.delete(cacheName);
-          }
-        })
-      );
-    })
-  );
-  self.clients.claim();
-});
-
-// Fetch - Network first, fall back to cache
-self.addEventListener('fetch', (event) => {
-  // Skip non-GET requests
-  if (event.request.method !== 'GET') return;
-
-  event.respondWith(
-    fetch(event.request)
-      .then((response) => {
-        // Cache successful responses
-        if (response.status === 200) {
-          const clonedResponse = response.clone();
-          caches.open(CACHE_NAME).then((cache) => {
-            cache.put(event.request, clonedResponse);
-          });
-        }
-        return response;
-      })
-      .catch(() => {
-        // Fall back to cache on network error
-        return caches.match(event.request);
-      })
-  );
-});
-```
-
-**Registrar Service Worker (src/main.tsx):**
-```typescript
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/sw.js').then(
-    (registration) => {
-      console.log('Service Worker registered:', registration);
-    },
-    (error) => {
-      console.log('Service Worker registration failed:', error);
-    }
-  );
-}
-```
-
-### 3.3 App Install Prompt
-
-```typescript
-// src/hooks/useInstallPrompt.ts
-import { useState, useEffect } from 'react';
-
-interface BeforeInstallPromptEvent extends Event {
-  prompt: () => Promise<void>;
-  userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
-}
-
-export function useInstallPrompt() {
-  const [prompt, setPrompt] = useState<BeforeInstallPromptEvent | null>(null);
-  const [isInstalled, setIsInstalled] = useState(false);
-
-  useEffect(() => {
-    const handler = (e: Event) => {
-      e.preventDefault();
-      setPrompt(e as BeforeInstallPromptEvent);
-    };
-
-    window.addEventListener('beforeinstallprompt', handler);
-
-    // Check if app is already installed
-    if ((window.navigator as any).standalone === true) {
-      setIsInstalled(true);
-    }
-
-    return () => {
-      window.removeEventListener('beforeinstallprompt', handler);
-    };
-  }, []);
-
-  const handleInstall = async () => {
-    if (!prompt) return;
-
-    prompt.prompt();
-    const { outcome } = await prompt.userChoice;
-
-    if (outcome === 'accepted') {
-      setIsInstalled(true);
-    }
-    setPrompt(null);
-  };
-
-  return { canInstall: !!prompt && !isInstalled, handleInstall };
-}
-
-// Usar em Header
-function Header() {
-  const { canInstall, handleInstall } = useInstallPrompt();
-
-  return (
-    <header>
-      {canInstall && (
-        <button onClick={handleInstall}>
-          📱 Instalar App
-        </button>
-      )}
-    </header>
-  );
-}
-```
-
----
+Se você quiser habilitar PWA no futuro, as etapas típicas são:
+1. Adicionar `frontend/public/manifest.json` e ícones.
+2. Configurar service worker (manual ou via plugin de build).
+3. Referenciar o `manifest.json` no `frontend/index.html`.
+4. Rodar Lighthouse para validar critérios de instalabilidade.
 
 ## 4. Testing Checklist
 
@@ -835,7 +640,6 @@ npm run preview  # Servidor local
 # - Accessibility: >90
 # - Best Practices: >90
 # - SEO: >90
-# - PWA: Instalable
 ```
 
 **Lighthouse Metrics:**
@@ -939,11 +743,8 @@ Verificar:
 # ✅ Safari - 2% users
 # ✅ Mobile browsers (iOS Safari, Chrome Mobile)
 
-# React 18 suporta:
-# - Chrome 51+
-# - Firefox 54+
-# - Safari 10+
-# - Edge 15+
+# React (versão atual do projeto) suporta os navegadores modernos.
+# Se precisar de compatibilidade legada, defina targets via `browserslist`.
 ```
 
 ### 4.7 Automated Testing
@@ -1052,8 +853,7 @@ Para aprofundar na responsividade e acessibilidade:
 4. Rodar Lighthouse audit após implementação
 5. Testar keyboard navigation sem mouse
 6. Testar com screen reader (NVDA ou VoiceOver)
-7. Implementar Service Worker para PWA
-8. Adicionar manifest.json para instalação
+7. (Opcional) considerar PWA quando/ se fizer sentido para o produto
 
 ---
 
@@ -1066,4 +866,4 @@ Para aprofundar na responsividade e acessibilidade:
 - 🔄 Backend (Em desenvolvimento)
 - 🔄 Frontend (Pronto para implementação)
 
-**Última atualização:** 24 de dezembro de 2025
+**Última atualização:** 07 de fevereiro de 2026

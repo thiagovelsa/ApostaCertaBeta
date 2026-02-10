@@ -18,6 +18,13 @@ export function PageLayout({
 }: PageLayoutProps) {
   return (
     <div className="min-h-screen bg-dark-primary">
+      <a
+        href="#main"
+        className="sr-only focus:not-sr-only focus-ring focus:fixed focus:top-3 focus:left-3 focus:z-[60] bg-dark-secondary text-white px-3 py-2 rounded-lg border border-dark-tertiary"
+      >
+        Pular para conteúdo
+      </a>
+
       {/* Header */}
       <header className="sticky top-0 z-50 bg-dark-primary/80 backdrop-blur-lg border-b border-dark-tertiary">
         <Container>
@@ -26,7 +33,8 @@ export function PageLayout({
               {showBackButton && (
                 <Link
                   to={backTo}
-                  className="p-2 rounded-lg text-gray-400 hover:text-white hover:bg-dark-tertiary transition-colors"
+                  className="focus-ring p-2.5 rounded-lg text-gray-400 hover:text-white hover:bg-dark-tertiary transition-colors"
+                  aria-label="Voltar"
                 >
                   <Icon name="arrow-left" size="md" />
                 </Link>
@@ -45,7 +53,8 @@ export function PageLayout({
             <div className="flex items-center gap-2">
               <Link
                 to="/"
-                className="p-2 rounded-lg text-gray-400 hover:text-white hover:bg-dark-tertiary transition-colors"
+                className="focus-ring p-2.5 rounded-lg text-gray-400 hover:text-white hover:bg-dark-tertiary transition-colors"
+                aria-label="Início"
               >
                 <Icon name="home" size="md" />
               </Link>
@@ -55,14 +64,14 @@ export function PageLayout({
       </header>
 
       {/* Main Content */}
-      <main className="py-6">
+      <main id="main" className="py-6">
         {children}
       </main>
 
       {/* Footer */}
       <footer className="border-t border-dark-tertiary py-6 mt-8">
         <Container>
-          <div className="text-center text-gray-600 text-sm">
+          <div className="text-center text-gray-400 text-sm">
             <p>Palpite Mestre - Sistema de Análise de Estatísticas de Futebol</p>
           </div>
         </Container>

@@ -17,8 +17,9 @@ interface FilterState {
 export const useFilterStore = create<FilterState>((set) => ({
   filtro: 'geral',
   periodo: 'integral',
-  homeMando: null,
-  awayMando: null,
+  // Default pre-jogo: mandante em casa / visitante fora (alinha com o backend).
+  homeMando: 'casa',
+  awayMando: 'fora',
   setFiltro: (filtro) => set({ filtro }),
   setPeriodo: (periodo) => set({ periodo }),
   setHomeMando: (mando) => set({ homeMando: mando }),

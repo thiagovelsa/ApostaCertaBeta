@@ -438,7 +438,7 @@ class TestEstatisticaMetrica:
         (0.30, "Moderado"),
         (0.45, "Instável"),
         (0.60, "Muito Instável"),    # Limite superior
-        (0.00, "Muito Estável"),     # Edge case: CV = 0
+        (0.00, "Muito Estável"),     # Constante com média != 0 (média 0 é tratado como N/A no cálculo)
         (1.50, "Muito Instável"),    # Edge case: CV > 1
     ])
     def test_classificacao_cv(self, cv, esperado):
@@ -597,7 +597,7 @@ Para aplicar essa estratégia de testes no seu projeto, consulte:
 - **[ARQUITETURA_BACKEND.md](ARQUITETURA_BACKEND.md)** - A arquitetura em camadas que cada teste deve cobrir
 - **[API_SPECIFICATION.md](API_SPECIFICATION.md)** - Endpoints que precisam de integration tests
 - **[LOCAL_SETUP.md](LOCAL_SETUP.md)** - Como configurar pytest, Redis mock e outras dependências
-- **[CONTRIBUTING.md](../CONTRIBUTING.md)** - Checklist de testes antes de fazer PR
+- **[AGENTS.md](../AGENTS.md)** - Diretrizes do repositório (workflow e padrões)
 
 **Próximos Passos Recomendados:**
 1. Leia [tests/README.md](../tests/README.md) para ver exemplos práticos de testes

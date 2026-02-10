@@ -10,13 +10,13 @@ interface TeamCardProps {
 export function TeamCard({ team, isHome = false, recentForm }: TeamCardProps) {
   return (
     <div className={`flex items-center gap-3 ${isHome ? '' : 'flex-row-reverse'}`}>
-      <TeamBadge src={team.escudo ?? undefined} alt={team.nome} size="lg" />
+      <TeamBadge src={team.escudo ?? undefined} alt={team.nome} size="xl" />
       <div className={`flex flex-col ${isHome ? 'items-start' : 'items-end'}`}>
         <span className="font-semibold text-white truncate max-w-[140px]">
           {team.nome}
         </span>
         {team.codigo && (
-          <span className="text-xs text-gray-500 uppercase tracking-wider">
+          <span className="text-xs text-gray-400 uppercase tracking-wider">
             {team.codigo}
           </span>
         )}

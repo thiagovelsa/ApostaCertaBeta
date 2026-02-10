@@ -32,6 +32,30 @@ class VStatsRepository:
     def __init__(self):
         self.base_url = settings.vstats_api_url
         self.timeout = settings.vstats_api_timeout
+        # Cliente compartilhado para connection pooling (lazy initialization)
+        self._client: Optional[httpx.AsyncClient] = None
+
+    async def _get_client(self) -> httpx.AsyncClient:
+        """Retorna cliente HTTP compartilhado (lazy init com connection pooling)."""
+        if self._client is None or self._client.is_closed:
+            # Configura limits para requests paralelos (20 conexões simultâneas)
+            limits = httpx.Limits(
+                max_connections=20,
+                max_keepalive_connections=10,
+                keepalive_expiry=30.0,
+            )
+            self._client = httpx.AsyncClient(
+                timeout=self.timeout,
+                limits=limits,
+                http2=True,  # HTTP/2 para multiplexação de requests
+            )
+        return self._client
+
+    async def close(self) -> None:
+        """Fecha o cliente HTTP (chamar ao encerrar aplicação)."""
+        if self._client and not self._client.is_closed:
+            await self._client.aclose()
+            self._client = None
 
     async def _get(self, endpoint: str, params: Dict[str, Any] = None) -> Dict:
         """
@@ -52,26 +76,26 @@ class VStatsRepository:
         # Log da requisicao
         logger.info(f"[VSTATS] GET {endpoint} | params={params}")
 
-        async with httpx.AsyncClient(timeout=self.timeout) as client:
-            try:
-                response = await client.get(url, params=params)
-                response.raise_for_status()
+        client = await self._get_client()
+        try:
+            response = await client.get(url, params=params)
+            response.raise_for_status()
 
-                data = response.json()
-                logger.info(f"[VSTATS OK] {response.status_code}")
-                return data
-            except httpx.TimeoutException:
-                logger.error(f"[VSTATS TIMEOUT] {endpoint}")
-                raise VStatsAPIError("Timeout ao conectar com VStats API")
-            except httpx.HTTPStatusError as e:
-                logger.error(f"[VSTATS HTTP] {e.response.status_code} em {endpoint}")
-                raise VStatsAPIError(
-                    f"Erro HTTP {e.response.status_code}: {e.response.text}",
-                    status_code=e.response.status_code,
-                )
-            except httpx.RequestError as e:
-                logger.error(f"[VSTATS ERROR] Erro de conexao em {endpoint}: {str(e)}")
-                raise VStatsAPIError(f"Erro de conexao: {str(e)}")
+            data = response.json()
+            logger.info(f"[VSTATS OK] {response.status_code}")
+            return data
+        except httpx.TimeoutException:
+            logger.error(f"[VSTATS TIMEOUT] {endpoint}")
+            raise VStatsAPIError("Timeout ao conectar com VStats API")
+        except httpx.HTTPStatusError as e:
+            logger.error(f"[VSTATS HTTP] {e.response.status_code} em {endpoint}")
+            raise VStatsAPIError(
+                f"Erro HTTP {e.response.status_code}: {e.response.text}",
+                status_code=e.response.status_code,
+            )
+        except httpx.RequestError as e:
+            logger.error(f"[VSTATS ERROR] Erro de conexao em {endpoint}: {str(e)}")
+            raise VStatsAPIError(f"Erro de conexao: {str(e)}")
 
     async def fetch_calendar(self) -> List[Dict]:
         """
@@ -275,8 +299,27 @@ class VStatsRepository:
         Returns:
             Dados do preview
         """
+        # Validado em runtime (Fase 0 - 2026-02-07): este endpoint retorna 200 para partidas futuras.
+        # O endpoint alternativo /stats/matchstats/v1/match-preview retornou 404.
         params = {"Fx": match_id}
-        return await self._get("/stats/matchstats/v1/match-preview", params)
+        return await self._get("/stats/matchpreview/v1/get-match-preview", params)
+
+    async def fetch_standings(self, tournament_id: str, detailed: bool = False) -> Dict:
+        """
+        Busca classificacao (standings) da competicao.
+
+        Args:
+            tournament_id: ID da competicao (tournamentCalendarId)
+            detailed: Se True, tenta incluir campos extras (quando suportado)
+
+        Returns:
+            JSON com standings (formatos variam por competicao: total, totalCup, etc.)
+        """
+        params = {
+            "tmcl": tournament_id,
+            "detailed": "true" if detailed else "false",
+        }
+        return await self._get("/stats/standings/v1/standings", params)
 
     async def fetch_referee_stats(self, referee_id: str) -> Dict:
         """

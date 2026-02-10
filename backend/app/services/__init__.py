@@ -9,6 +9,8 @@ from .cache_service import CacheService, get_cache_service
 from .partidas_service import PartidasService
 from .stats_service import StatsService
 from .competicoes_service import CompeticoesService
+from .analysis_service import AnalysisService
+from .escudos_service import EscudosService
 
 __all__ = [
     "CacheService",
@@ -16,4 +18,6 @@ __all__ = [
     "PartidasService",
     "StatsService",
     "CompeticoesService",
+    "AnalysisService",
+    "EscudosService",
 ]

@@ -14,6 +14,7 @@ from fastapi.responses import JSONResponse
 
 from .config import settings
 from .api.routes import api_router
+from .dependencies import get_vstats_repository
 from .exceptions import AppException
 
 # Configura logging
@@ -34,8 +35,10 @@ async def lifespan(app: FastAPI):
 
     yield
 
-    # Shutdown
+    # Shutdown - fecha conexões HTTP
     print("[STOP] Encerrando API")
+    vstats_repo = get_vstats_repository()
+    await vstats_repo.close()
 
 
 # Cria aplicacao FastAPI

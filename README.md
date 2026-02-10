@@ -13,11 +13,12 @@ Sistema web completo para análise detalhada de estatísticas de futebol, integr
 
 - ✅ **Visualização de Partidas** - Liste todas as partidas agendadas para uma data específica
 - ✅ **Análise Comparativa** - Compare estatísticas do time mandante vs visitante
-- ✅ **Filtros Flexíveis** - Análise por período (temporada completa, últimas 5 ou 10 partidas)
+- ✅ **Filtros Flexíveis** - Análise por período (até 50 jogos, últimas até 5 ou 10 partidas)
 - ✅ **Métricas de Estabilidade** - Coeficiente de Variação (CV) para avaliar consistência
 - ✅ **Sequência de Resultados** - Race badges (V/E/D) mostrando forma recente dos times
 - ✅ **Previsões Inteligentes** - Análise preditiva baseada em médias e tendências
-- ✅ **Busca Inteligente** - Análise automática de todas as partidas identificando oportunidades
+- ✅ **Análise Automática** - Análise automática de todas as partidas destacando o que considerar e o que evitar
+- ✅ **Exportar JSON (IA)** - Baixe um `.json` completo da partida (recorte atual + 10 corridos + 5 casa/fora), com opção de debug (amostra usada)
 - ✅ **Dados do Árbitro** - Estatísticas de cartões por árbitro na competição
 - ✅ **API RESTful Completa** - Endpoints bem documentados com Swagger/OpenAPI
 - ✅ **Caching Inteligente** - Redis para performance (TTLs otimizados)
@@ -31,33 +32,40 @@ Sistema web completo para análise detalhada de estatísticas de futebol, integr
 ### Pré-requisitos
 
 - **Python 3.11+**
-- **Node.js 18+** (para frontend)
-- **Docker** (opcional, recomendado)
+- **Node.js 20.19+ ou 22.12+** (Vite 7; para frontend)
 - **Redis** (opcional se usar cache)
 
-### 1. Clonar Repositório
+### 1. Obter o Projeto
+
+Opções:
+- Baixar como `.zip` (GitHub/GitLab) e extrair
+- Clonar com Git (opcional)
 
 ```bash
-git clone https://github.com/thiagovelsa/ApostaCertaBeta.git
-cd ApostaCertaBeta
+# Exemplo (opcional)
+git clone <url-do-repositorio>
+cd ApostaMestre
 ```
 
 ### 2. Configurar Backend
 
 ```bash
-# Criar ambiente virtual
-python -m venv venv
+# (Recomendado) criar venv dentro de /backend
+cd backend
+python -m venv .venv
 
 # Ativar venv
-source venv/bin/activate  # Linux/Mac
+source .venv/bin/activate  # Linux/Mac
 # ou
-venv\Scripts\activate      # Windows
+.venv\Scripts\activate      # Windows
 
 # Instalar dependências
 pip install -r requirements.txt
+pip install -r requirements-dev.txt
 
-# Copiar arquivo de configuração
-cp .env.example .env
+# A API lê ".env" do diretório atual.
+# Rodando de /backend, crie backend/.env a partir do template da raiz:
+cp ../.env.example .env
 
 # Rodar servidor de desenvolvimento
 uvicorn app.main:app --reload --port 8000
@@ -76,19 +84,12 @@ npm install
 
 # Rodar desenvolvimento
 npm run dev
+
+# (Opcional) Limpar build local
+npm run clean
 ```
 
 Frontend em: **http://localhost:5173** ou **http://localhost:3000**
-
-### 4. Com Docker (Recomendado)
-
-```bash
-# Build e run
-docker-compose up -d
-
-# Verificar logs
-docker-compose logs -f backend
-```
 
 ---
 
@@ -104,7 +105,6 @@ docker-compose logs -f backend
 | **[API_SPECIFICATION.md](docs/API_SPECIFICATION.md)** | Endpoints, request/response, exemplos |
 | **[LOCAL_SETUP.md](docs/LOCAL_SETUP.md)** | Setup local passo-a-passo, troubleshooting |
 | **[TESTING_STRATEGY.md](docs/TESTING_STRATEGY.md)** | Estratégia de testes, fixtures, mocks |
-| **[CONTRIBUTING.md](CONTRIBUTING.md)** | Guia de contribuição (workflow, padrões) |
 
 ### Frontend (React + TypeScript)
 | Documento | Descrição |
@@ -118,8 +118,7 @@ docker-compose logs -f backend
 ### Sistema e APIs Externas
 | Documento | Descrição |
 |-----------|-----------|
-| **[DOCUMENTACAO_VSTATS_COMPLETA.md](DOCUMENTACAO_VSTATS_COMPLETA.md)** | Referência completa da API VStats (fornecedor) |
-| **[PROJETO_SISTEMA_ANALISE.md](PROJETO_SISTEMA_ANALISE.md)** | Requisitos, design, fluxos, cálculos |
+| **[docs/DOCUMENTACAO_VSTATS_COMPLETA.md](docs/DOCUMENTACAO_VSTATS_COMPLETA.md)** | Referência completa da API VStats (fornecedor) |
 
 ---
 
@@ -142,12 +141,11 @@ API Backend (FastAPI)
 
 | Layer | Technology |
 |-------|------------|
-| **Frontend** | React 18 + TypeScript 5 + Vite 5 + TailwindCSS + Zustand + React Query |
+| **Frontend** | React 18 + TypeScript 5 + Vite 7 + TailwindCSS + Zustand + React Query |
 | **Backend** | Python 3.11+ + FastAPI + Pydantic |
 | **Cache** | Redis |
 | **APIs Externas** | VStats + TheSportsDB |
-| **Tests** | Pytest (backend) + Vitest/React Testing Library (frontend) |
-| **Container** | Docker + Docker Compose |
+| **Tests** | Pytest (backend) |
 
 ---
 
@@ -164,7 +162,17 @@ API Backend (FastAPI)
 | `/stats/referees/v1/get-by-prsn` | Estatísticas do árbitro |
 
 ### Estatísticas
-- `GET /api/partida/{matchId}/stats?filtro=5` - Estatísticas detalhadas (geral/5/10)
+- `GET /api/partida/{matchId}/stats?filtro=geral|5|10&periodo=integral|1T|2T&home_mando=casa|fora&away_mando=casa|fora`
+- `GET /api/partida/{matchId}/analysis?filtro=geral|5|10&periodo=integral|1T|2T&home_mando=casa|fora&away_mando=casa|fora&debug=0|1`
+
+Notas rápidas:
+- `filtro=5|10` busca as últimas N partidas **de cada time** (mandante e visitante). O payload inclui `partidas_analisadas_mandante`/`partidas_analisadas_visitante` e um `partidas_analisadas` (n efetivo = menor lado) para previsões.
+- `filtro=geral` usa **até 50** partidas disputadas (com placar) de cada time.
+- Se o time não tiver a quantidade do filtro (5/10/50), o backend calcula com o que houver (mais próximo do filtro).
+- `periodo=1T|2T` recorta stats do 1º/2º tempo quando disponível; caso contrário faz fallback para `integral` e registra `periodo_fallback_integral` em `contexto.ajustes_aplicados`.
+- **Fallback `seasonstats` (agregado):** se não houver partidas individuais suficientes para o recorte (ou a VStats não retornar dados por partida), o backend usa agregados de temporada e registra `seasonstats_fallback` em `contexto.ajustes_aplicados`. Nesse caso, as contagens de amostra podem refletir a temporada (e podem ser > 5/10).
+- `home_mando`/`away_mando` segmentam a amostra por casa/fora. Quando qualquer um estiver ativo, o ajuste automático de mando do modelo de previsão é desativado (a amostra já está segmentada).
+- `debug=1` (apenas em `/analysis`) inclui `debug_amostra` com IDs/datas/pesos das partidas usadas no cálculo. Observação: `debug=1` evita cache para não inflar o payload.
 
 ### Competições
 - `GET /api/competicoes` - Lista todas as competições
@@ -178,32 +186,9 @@ API Backend (FastAPI)
 
 ## ⚙️ Configuração
 
-Copie `.env.example` para `.env` e preencha:
+O template completo fica em `.env.example`.
 
-```bash
-# VStats API
-VSTATS_API_URL=https://vstats-back-bbdfdf0bfd16.herokuapp.com/api
-VSTATS_CLIENT_ID=seu_client_id
-VSTATS_CLIENT_SECRET=seu_client_secret
-
-# Cache
-REDIS_URL=redis://localhost:6379/0
-CACHE_TTL_SCHEDULE=3600        # 1h
-CACHE_TTL_SEASONSTATS=21600    # 6h
-CACHE_TTL_BADGES=604800        # 7 dias
-
-# Application
-LOG_LEVEL=INFO
-ENV=development
-API_HOST=0.0.0.0
-API_PORT=8000
-
-# Frontend
-FRONTEND_URL=http://localhost:3000
-
-# CORS
-ALLOWED_ORIGINS=http://localhost:3000,http://localhost:5173
-```
+Observação importante: o backend lê `.env` do diretório em que você está rodando o `uvicorn` (rodando de `backend/`, use `backend/.env`).
 
 ---
 
@@ -232,21 +217,7 @@ pytest -v -s
 
 ## 🐳 Docker
 
-```bash
-# Build
-docker build -t palpitremestre-backend .
-
-# Run
-docker run -p 8000:8000 \
-  -e VSTATS_API_URL=... \
-  -e REDIS_URL=redis://host.docker.internal:6379 \
-  palpitremestre-backend
-
-# Compose (completo)
-docker-compose up -d
-docker-compose logs -f backend
-docker-compose down
-```
+No estado atual do repositório, não há `Dockerfile`/`docker-compose.yml` prontos para uso.
 
 ---
 
@@ -314,13 +285,13 @@ python scripts/utilitarios/compare_detailed.py
 4. Push para a branch (`git push origin feature/seu-nome`)
 5. Abra um Pull Request
 
-Veja [CONTRIBUTING.md](CONTRIBUTING.md) para diretrizes detalhadas.
+Diretrizes do repositório: veja `AGENTS.md` e `CLAUDE.md`.
 
 ---
 
 ## 📞 Suporte
 
-- **Issues:** [GitHub Issues](https://github.com/thiagovelsa/ApostaCertaBeta/issues)
+- **Issues:** use o tracker do repositório
 - **Email:** contato@palpitremestre.com
 - **Discord:** [Link do Server]
 
@@ -362,16 +333,12 @@ Este projeto está licenciado sob MIT License - veja [LICENSE](LICENSE) para det
 - **[tests/README.md](tests/README.md)** → Guia prático de testes com exemplos
   - Referencia: [TESTING_STRATEGY.md](docs/TESTING_STRATEGY.md), [MODELOS_DE_DADOS.md](docs/MODELOS_DE_DADOS.md)
 
-### Setup e Contribuição
+### Setup
 - **[LOCAL_SETUP.md](docs/LOCAL_SETUP.md)** → Configuração ambiente completa + troubleshooting
   - Referencia: [ARQUITETURA_BACKEND.md](docs/ARQUITETURA_BACKEND.md), [TESTING_STRATEGY.md](docs/TESTING_STRATEGY.md)
 
-- **[CONTRIBUTING.md](CONTRIBUTING.md)** → Guia de contribuição (workflow, padrões de código)
-  - Referencia: Todos os docs acima
-
 ### APIs Externas e Sistema
-- **[DOCUMENTACAO_VSTATS_COMPLETA.md](DOCUMENTACAO_VSTATS_COMPLETA.md)** → Referência da API VStats (fornecedor)
-- **[PROJETO_SISTEMA_ANALISE.md](PROJETO_SISTEMA_ANALISE.md)** → Requisitos e design do sistema
+- **[docs/DOCUMENTACAO_VSTATS_COMPLETA.md](docs/DOCUMENTACAO_VSTATS_COMPLETA.md)** → Referência da API VStats (fornecedor)
 
 **💡 Engenharia de Contexto:** Todos os 9 documentos técnicos são interconectados. Comece em qualquer lugar e navegue através das referências "Ver Também" para entender melhor o contexto.
 
@@ -387,7 +354,7 @@ Este projeto está licenciado sob MIT License - veja [LICENSE](LICENSE) para det
 - ✅ **Frontend** (Funcional - React + TypeScript + TailwindCSS)
 - 🔄 Deploy em produção (Próximo)
 
-**Última atualização:** 28 de dezembro de 2025
+**Última atualização:** 07 de fevereiro de 2026
 
 ---
 
@@ -420,7 +387,7 @@ Este projeto está licenciado sob MIT License - veja [LICENSE](LICENSE) para det
 - **refactor:** Formatação de horário simplificada no Smart Search
 
 ### v1.3 (28/12/2025)
-- **feat:** Filtro de período nas estatísticas (Temporada, Últimos 5, Últimos 10)
+- **feat:** Filtro de período nas estatísticas (Até 50, Últimos 5, Últimos 10)
 - **feat:** Melhorias no cálculo de probabilidade
 - **feat:** Dados do árbitro com estatísticas da temporada
 

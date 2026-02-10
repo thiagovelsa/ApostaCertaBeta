@@ -10,6 +10,7 @@ from typing import List, Literal, Optional
 from pydantic import BaseModel, Field, field_validator
 
 from .partida import PartidaResumo
+from .contexto import ContextoPartida, H2HInfo
 
 
 class EstatisticaMetrica(BaseModel):
@@ -129,6 +130,51 @@ class ArbitroInfo(BaseModel):
             return 0.0
 
 
+DebugSampleSource = Literal["matches", "seasonstats_fallback"]
+
+
+class DebugAmostraTime(BaseModel):
+    """Metadados do recorte usado para calcular stats de um time (debug=1)."""
+
+    source: DebugSampleSource = Field(
+        ..., description="Origem da amostra: partidas individuais ou fallback seasonstats"
+    )
+    limit: int = Field(
+        ..., ge=0, description="Limite solicitado (5/10/50), antes de dedupe/falhas"
+    )
+    periodo: Literal["integral", "1T", "2T"] = Field(
+        ..., description="Periodo solicitado para extração"
+    )
+    mando: Optional[Literal["casa", "fora"]] = Field(
+        default=None,
+        description="Subfiltro de mando aplicado ao time (casa/fora) ou None",
+    )
+    n_used: int = Field(
+        ..., ge=0, description="Tamanho efetivo da amostra usada no cálculo"
+    )
+    match_ids: List[str] = Field(
+        default_factory=list, description="IDs das partidas efetivamente usadas"
+    )
+    match_dates: List[Optional[str]] = Field(
+        default_factory=list,
+        description="Datas (YYYY-MM-DD) alinhadas com match_ids (pode conter None)",
+    )
+    weights: List[float] = Field(
+        default_factory=list, description="Pesos temporais alinhados com match_ids"
+    )
+    reason: Optional[str] = Field(
+        default=None,
+        description="Motivo do fallback/ajuste (opcional; útil para auditoria)",
+    )
+
+
+class DebugAmostra(BaseModel):
+    """Amostra usada por lado para o cálculo das estatísticas (debug=1)."""
+
+    mandante: DebugAmostraTime
+    visitante: DebugAmostraTime
+
+
 class StatsResponse(BaseModel):
     """Response para GET /api/partida/{matchId}/stats."""
 
@@ -139,6 +185,18 @@ class StatsResponse(BaseModel):
     partidas_analisadas: int = Field(
         ..., ge=1, description="Numero de partidas usadas no calculo"
     )
+    # Contagem real por lado (especialmente relevante quando há subfiltro de mando).
+    # Mantemos opcionais para retrocompatibilidade em testes/consumidores antigos.
+    partidas_analisadas_mandante: Optional[int] = Field(
+        default=None,
+        ge=0,
+        description="Numero de partidas usadas para o mandante (pode diferir por subfiltros)",
+    )
+    partidas_analisadas_visitante: Optional[int] = Field(
+        default=None,
+        ge=0,
+        description="Numero de partidas usadas para o visitante (pode diferir por subfiltros)",
+    )
     mandante: TimeComEstatisticas = Field(
         ..., description="Estatisticas do time mandante"
     )
@@ -148,6 +206,12 @@ class StatsResponse(BaseModel):
     arbitro: Optional[ArbitroInfo] = Field(
         None, description="Informacoes do arbitro da partida"
     )
+    # Contexto pre-jogo (standings, descanso, H2H etc.).
+    contexto: Optional[ContextoPartida] = None
+    # H2H em todas competicoes (usado pelo AnalysisService para ajuste leve).
+    h2h_all_comps: Optional[H2HInfo] = None
+    # Transparência (quando debug=1): quais partidas entraram no cálculo por lado.
+    debug_amostra: Optional[DebugAmostra] = None
 
     model_config = {
         "json_schema_extra": {

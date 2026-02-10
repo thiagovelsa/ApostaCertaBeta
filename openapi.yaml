@@ -5,7 +5,7 @@ info:
     API para análise detalhada de estatísticas de futebol com integração
     aos dados da VStats API. Fornece comparativas de desempenho home/away
     e métricas de estabilidade (Coeficiente de Variação).
-  version: 1.0.0
+  version: 1.2.0
   contact:
     name: Suporte
     email: contato@palpitremestre.com
@@ -82,7 +82,16 @@ paths:
         - name: filtro
           in: query
           required: false
-          description: Período de análise
+          description: |
+            Período de análise (quantidade máxima de jogos disputados por time).
+
+            - geral: até 50 jogos
+            - 5: até 5 jogos
+            - 10: até 10 jogos
+
+            Observação: apenas partidas com data válida e placar disponível entram na amostra. Se houver menos jogos do que o limite, o cálculo usa os jogos disponíveis.
+
+            Fallback: se não houver partidas individuais suficientes (ou a VStats falhar ao retornar stats por partida), o backend usa agregados da temporada (seasonstats) e registra `seasonstats_fallback` em `contexto.ajustes_aplicados`. Nesse modo, as contagens de amostra podem refletir a temporada (e podem ser > 5/10).
           schema:
             type: string
             enum:
@@ -90,6 +99,42 @@ paths:
               - "5"
               - "10"
             default: geral
+        - name: periodo
+          in: query
+          required: false
+          description: |
+            Tempo do jogo para análise.
+
+            Observação: se o provedor não fornecer estatísticas por tempo (1T/2T) para uma partida, o backend faz fallback para o total do jogo (integral) e registra o ajuste em `contexto.ajustes_aplicados` (ex.: `periodo_fallback_integral`).
+
+            Observação: se o backend estiver em fallback de seasonstats (`seasonstats_fallback`), o recorte por período pode não ser aplicável (a base vira agregado).
+          schema:
+            type: string
+            enum:
+              - integral
+              - 1T
+              - 2T
+            default: integral
+        - name: home_mando
+          in: query
+          required: false
+          description: Subfiltro de mando para o mandante (segmenta a amostra por casa/fora)
+          schema:
+            type: string
+            enum:
+              - casa
+              - fora
+            nullable: true
+        - name: away_mando
+          in: query
+          required: false
+          description: Subfiltro de mando para o visitante (segmenta a amostra por casa/fora)
+          schema:
+            type: string
+            enum:
+              - casa
+              - fora
+            nullable: true
       responses:
         '200':
           description: Estatísticas calculadas com sucesso
@@ -116,6 +161,113 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 
+  /api/partida/{matchId}/analysis:
+    get:
+      summary: Analise consolidada (stats + previsoes + over/under)
+      description: |
+        Retorna as estatisticas agregadas (StatsResponse) junto do modelo de previsao
+        (Min/Exata/Max) e das probabilidades Over/Under para mercados de aposta.
+      operationId: get_analysis
+      tags:
+        - Estatísticas
+      parameters:
+        - name: matchId
+          in: path
+          required: true
+          description: ID único da partida
+          schema:
+            type: string
+            example: f4vscquffy37afgv0arwcbztg
+        - name: filtro
+          in: query
+          required: false
+          description: |
+            Período de análise (quantidade máxima de jogos disputados por time).
+
+            - geral: até 50 jogos
+            - 5: até 5 jogos
+            - 10: até 10 jogos
+
+            Observação: apenas partidas com data válida e placar disponível entram na amostra. Se houver menos jogos do que o limite, o cálculo usa os jogos disponíveis.
+
+            Fallback: se não houver partidas individuais suficientes (ou a VStats falhar ao retornar stats por partida), o backend usa agregados da temporada (seasonstats) e registra `seasonstats_fallback` em `contexto.ajustes_aplicados`. Nesse modo, as contagens de amostra podem refletir a temporada (e podem ser > 5/10).
+          schema:
+            type: string
+            enum:
+              - geral
+              - "5"
+              - "10"
+            default: geral
+        - name: periodo
+          in: query
+          required: false
+          description: |
+            Tempo do jogo para análise.
+
+            Observação: se o provedor não fornecer estatísticas por tempo (1T/2T) para uma partida, o backend faz fallback para o total do jogo (integral) e registra o ajuste em `contexto.ajustes_aplicados` (ex.: `periodo_fallback_integral`).
+
+            Observação: se o backend estiver em fallback de seasonstats (`seasonstats_fallback`), o recorte por período pode não ser aplicável (a base vira agregado).
+          schema:
+            type: string
+            enum:
+              - integral
+              - 1T
+              - 2T
+            default: integral
+        - name: home_mando
+          in: query
+          required: false
+          description: Subfiltro de mando para o mandante (segmenta a amostra por casa/fora)
+          schema:
+            type: string
+            enum:
+              - casa
+              - fora
+            nullable: true
+        - name: away_mando
+          in: query
+          required: false
+          description: Subfiltro de mando para o visitante (segmenta a amostra por casa/fora)
+          schema:
+            type: string
+            enum:
+              - casa
+              - fora
+            nullable: true
+        - name: debug
+          in: query
+          required: false
+          description: |
+            Quando `1` (ou `true`), inclui `debug_amostra` na resposta com IDs/datas/pesos das partidas usadas no cálculo do recorte (útil para auditoria e envio para IA).
+          schema:
+            type: boolean
+            default: false
+      responses:
+        '200':
+          description: Analise calculada com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatsAnalysisResponse'
+        '400':
+          description: Parâmetros inválidos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Partida não encontrada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Erro ao calcular analise
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
   /api/competicoes:
     get:
       summary: Lista de competições disponíveis
@@ -129,9 +281,7 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/CompeticaoInfo'
+                $ref: '#/components/schemas/CompeticaoListResponse'
         '500':
           description: Erro ao buscar competições
           content:
@@ -268,6 +418,7 @@ components:
         - media
         - cv
         - classificacao
+        - estabilidade
       properties:
         media:
           type: number
@@ -287,7 +438,13 @@ components:
             - Moderado
             - Instável
             - Muito Instável
+            - N/A
           example: Moderado
+        estabilidade:
+          type: integer
+          minimum: 0
+          maximum: 100
+          example: 68
 
     EstatisticaFeitos:
       type: object
@@ -307,7 +464,8 @@ components:
         - gols
         - finalizacoes
         - finalizacoes_gol
-        - cartoes
+        - cartoes_amarelos
+        - faltas
       properties:
         escanteios:
           $ref: '#/components/schemas/EstatisticaFeitos'
@@ -317,13 +475,55 @@ components:
           $ref: '#/components/schemas/EstatisticaFeitos'
         finalizacoes_gol:
           $ref: '#/components/schemas/EstatisticaFeitos'
-        cartoes:
-          type: object
-          properties:
-            amarelos:
-              $ref: '#/components/schemas/EstatisticaMetrica'
-            vermelhos:
-              $ref: '#/components/schemas/EstatisticaMetrica'
+        cartoes_amarelos:
+          $ref: '#/components/schemas/EstatisticaMetrica'
+        faltas:
+          $ref: '#/components/schemas/EstatisticaMetrica'
+
+    TimeComEstatisticas:
+      type: object
+      required: [id, nome, estatisticas, recent_form]
+      properties:
+        id:
+          type: string
+        nome:
+          type: string
+        escudo:
+          type: string
+          nullable: true
+        estatisticas:
+          $ref: '#/components/schemas/EstatisticasTime'
+        recent_form:
+          type: array
+          description: Sequência de resultados recentes (W=win, D=draw, L=loss)
+          items:
+            type: string
+            enum: [W, D, L]
+
+    ArbitroInfo:
+      type: object
+      required: [id, nome, partidas, partidas_temporada, media_cartoes_amarelos, media_cartoes_temporada]
+      properties:
+        id:
+          type: string
+        nome:
+          type: string
+        partidas:
+          type: integer
+          minimum: 0
+        partidas_temporada:
+          type: integer
+          minimum: 0
+        media_cartoes_amarelos:
+          type: number
+          minimum: 0
+        media_cartoes_temporada:
+          type: number
+          minimum: 0
+        media_faltas:
+          type: number
+          minimum: 0
+          nullable: true
 
     StatsResponse:
       type: object
@@ -347,28 +547,366 @@ components:
           type: integer
           minimum: 1
           example: 5
+        partidas_analisadas_mandante:
+          type: integer
+          minimum: 0
+          nullable: true
+          description: Numero de partidas usadas para o mandante (pode diferir por subfiltros). Quando `seasonstats_fallback` estiver ativo, pode refletir a temporada (agregado) e ser > 5/10.
+        partidas_analisadas_visitante:
+          type: integer
+          minimum: 0
+          nullable: true
+          description: Numero de partidas usadas para o visitante (pode diferir por subfiltros). Quando `seasonstats_fallback` estiver ativo, pode refletir a temporada (agregado) e ser > 5/10.
         mandante:
-          type: object
-          properties:
-            id:
-              type: string
-            nome:
-              type: string
-            escudo:
-              type: string
-            estatisticas:
-              $ref: '#/components/schemas/EstatisticasTime'
+          $ref: '#/components/schemas/TimeComEstatisticas'
         visitante:
-          type: object
+          $ref: '#/components/schemas/TimeComEstatisticas'
+        arbitro:
+          $ref: '#/components/schemas/ArbitroInfo'
+          nullable: true
+        contexto:
+          $ref: '#/components/schemas/ContextoPartida'
+          nullable: true
+        h2h_all_comps:
+          $ref: '#/components/schemas/H2HInfo'
+          nullable: true
+        debug_amostra:
+          $ref: '#/components/schemas/DebugAmostra'
+          nullable: true
+
+    DebugAmostraTime:
+      type: object
+      required:
+        - source
+        - limit
+        - periodo
+        - mando
+        - n_used
+        - match_ids
+        - match_dates
+        - weights
+      properties:
+        source:
+          type: string
+          enum: [matches, seasonstats_fallback]
+        limit:
+          type: integer
+          minimum: 0
+          description: Limite solicitado (5/10/50), antes de dedupe/falhas
+        periodo:
+          type: string
+          enum: [integral, 1T, 2T]
+        mando:
+          type: string
+          enum: [casa, fora]
+          nullable: true
+        n_used:
+          type: integer
+          minimum: 0
+          description: Tamanho efetivo da amostra usada no cálculo
+        match_ids:
+          type: array
+          items:
+            type: string
+        match_dates:
+          type: array
+          items:
+            type: string
+            nullable: true
+        weights:
+          type: array
+          items:
+            type: number
+        reason:
+          type: string
+          nullable: true
+          description: Motivo do fallback/ajuste (opcional)
+
+    DebugAmostra:
+      type: object
+      required: [mandante, visitante]
+      properties:
+        mandante:
+          $ref: '#/components/schemas/DebugAmostraTime'
+        visitante:
+          $ref: '#/components/schemas/DebugAmostraTime'
+
+    ContextoTime:
+      type: object
+      properties:
+        dias_descanso:
+          type: integer
+          minimum: 0
+          nullable: true
+        jogos_7d:
+          type: integer
+          minimum: 0
+          nullable: true
+        jogos_14d:
+          type: integer
+          minimum: 0
+          nullable: true
+        posicao:
+          type: integer
+          minimum: 1
+          nullable: true
+
+    ClassificacaoTimeInfo:
+      type: object
+      required: [posicao]
+      properties:
+        posicao:
+          type: integer
+          minimum: 1
+        pontos:
+          type: integer
+          minimum: 0
+        jogos:
+          type: integer
+          minimum: 0
+        saldo_gols:
+          type: integer
+          nullable: true
+
+    H2HInfo:
+      type: object
+      required: [total_matches, avg_goals_per_match]
+      properties:
+        total_matches:
+          type: integer
+          minimum: 0
+        avg_goals_per_match:
+          type: number
+          minimum: 0
+        home_wins:
+          type: integer
+          minimum: 0
+        away_wins:
+          type: integer
+          minimum: 0
+        draws:
+          type: integer
+          minimum: 0
+
+    ContextoPartida:
+      type: object
+      required: [mandante, visitante]
+      properties:
+        mandante:
+          $ref: '#/components/schemas/ContextoTime'
+        visitante:
+          $ref: '#/components/schemas/ContextoTime'
+        classificacao_mandante:
+          $ref: '#/components/schemas/ClassificacaoTimeInfo'
+        classificacao_visitante:
+          $ref: '#/components/schemas/ClassificacaoTimeInfo'
+        h2h_all_comps:
+          $ref: '#/components/schemas/H2HInfo'
+        fase:
+          type: string
+          nullable: true
+        ajustes_aplicados:
+          type: array
+          description: |
+            Lista de ajustes/fallbacks aplicados pelo backend para manter a resposta consistente.
+
+            Valores conhecidos:
+            - `periodo_fallback_integral`: recorte 1T/2T indisponível em parte da amostra; usamos integral.
+            - `seasonstats_fallback`: sem partidas individuais suficientes; usamos agregado de temporada (seasonstats).
+          items:
+            type: string
+          example: ["periodo_fallback_integral"]
+
+    PrevisaoValor:
+      type: object
+      required:
+        - valor
+        - confianca
+        - confiancaLabel
+      properties:
+        valor:
+          type: number
+          example: 1.7
+        confianca:
+          type: number
+          minimum: 0
+          maximum: 1
+          example: 0.72
+        confiancaLabel:
+          type: string
+          enum: [Baixa, "Média", Alta]
+          example: Alta
+
+    PrevisaoEstatistica:
+      type: object
+      required: [home, away, total]
+      properties:
+        home:
+          $ref: '#/components/schemas/PrevisaoValor'
+        away:
+          $ref: '#/components/schemas/PrevisaoValor'
+        total:
+          $ref: '#/components/schemas/PrevisaoValor'
+
+    PrevisaoPartida:
+      type: object
+      required:
+        - gols
+        - escanteios
+        - finalizacoes
+        - finalizacoes_gol
+        - cartoes_amarelos
+        - faltas
+      properties:
+        gols:
+          $ref: '#/components/schemas/PrevisaoEstatistica'
+        escanteios:
+          $ref: '#/components/schemas/PrevisaoEstatistica'
+        finalizacoes:
+          $ref: '#/components/schemas/PrevisaoEstatistica'
+        finalizacoes_gol:
+          $ref: '#/components/schemas/PrevisaoEstatistica'
+        cartoes_amarelos:
+          $ref: '#/components/schemas/PrevisaoEstatistica'
+        faltas:
+          $ref: '#/components/schemas/PrevisaoEstatistica'
+
+    OverUnderLine:
+      type: object
+      required: [line, over, under]
+      properties:
+        line:
+          type: number
+          example: 2.5
+        over:
+          type: number
+          minimum: 0
+          maximum: 1
+          example: 0.61
+        under:
+          type: number
+          minimum: 0
+          maximum: 1
+          example: 0.39
+        ci_lower:
+          type: number
+          minimum: 0
+          maximum: 1
+          nullable: true
+          example: 0.55
+        ci_upper:
+          type: number
+          minimum: 0
+          maximum: 1
+          nullable: true
+          example: 0.67
+        uncertainty:
+          type: number
+          minimum: 0
+          maximum: 1
+          nullable: true
+          example: 0.12
+
+    OverUnderStat:
+      type: object
+      required:
+        - label
+        - icon
+        - lambda
+        - lambdaHome
+        - lambdaAway
+        - predMin
+        - predMax
+        - intervalLevel
+        - sigma
+        - distribution
+        - lines
+        - confidence
+        - confidenceLabel
+      properties:
+        label:
+          type: string
+          example: Gols
+        icon:
+          type: string
+          example: goal
+        lambda:
+          type: number
+          example: 3.4
+        lambdaHome:
+          type: number
+          example: 1.4
+        lambdaAway:
+          type: number
+          example: 2.0
+        predMin:
+          type: number
+          description: Previsao minima (Under) para o total
+          example: 2.7
+        predMax:
+          type: number
+          description: Previsao maxima (Over) para o total
+          example: 4.1
+        intervalLevel:
+          type: number
+          minimum: 0
+          maximum: 1
+          example: 0.9
+        sigma:
+          type: number
+          nullable: true
+          example: null
+        distribution:
+          type: string
+          enum: [poisson, normal, negbin]
+          example: poisson
+        lines:
+          type: array
+          items:
+            $ref: '#/components/schemas/OverUnderLine'
+        confidence:
+          type: number
+          minimum: 0
+          maximum: 1
+          example: 0.63
+        confidenceLabel:
+          type: string
+          enum: [Baixa, "Média", Alta]
+          example: "Média"
+
+    OverUnderPartida:
+      type: object
+      required:
+        - gols
+        - escanteios
+        - finalizacoes
+        - finalizacoes_gol
+        - cartoes_amarelos
+        - faltas
+      properties:
+        gols:
+          $ref: '#/components/schemas/OverUnderStat'
+        escanteios:
+          $ref: '#/components/schemas/OverUnderStat'
+        finalizacoes:
+          $ref: '#/components/schemas/OverUnderStat'
+        finalizacoes_gol:
+          $ref: '#/components/schemas/OverUnderStat'
+        cartoes_amarelos:
+          $ref: '#/components/schemas/OverUnderStat'
+        faltas:
+          $ref: '#/components/schemas/OverUnderStat'
+
+    StatsAnalysisResponse:
+      allOf:
+        - $ref: '#/components/schemas/StatsResponse'
+        - type: object
+          required: [previsoes, over_under]
           properties:
-            id:
-              type: string
-            nome:
-              type: string
-            escudo:
-              type: string
-            estatisticas:
-              $ref: '#/components/schemas/EstatisticasTime'
+            previsoes:
+              $ref: '#/components/schemas/PrevisaoPartida'
+            over_under:
+              $ref: '#/components/schemas/OverUnderPartida'
 
     CompeticaoInfo:
       type: object
@@ -391,18 +929,43 @@ components:
           type: string
           example: Liga
 
+    CompeticaoListResponse:
+      type: object
+      required:
+        - total
+        - competicoes
+      properties:
+        total:
+          type: integer
+          minimum: 0
+          example: 2
+        competicoes:
+          type: array
+          items:
+            $ref: '#/components/schemas/CompeticaoInfo'
+
     EscudoResponse:
       type: object
+      required:
+        - team_id
+        - team_name
+        - escudo_url
+        - fonte
       properties:
-        escudo:
+        team_id:
+          type: string
+          example: 4dsgumo7d4zupm2ugsvm4zm4d
+        team_name:
+          type: string
+          example: Arsenal
+        escudo_url:
           type: string
           format: uri
           nullable: true
           example: https://r2.thesportsdb.com/images/media/team/badge/uyhbfe1612467038.png
-        nome_time:
+        fonte:
           type: string
-          nullable: true
-          example: Arsenal
+          example: TheSportsDB
 
     ErrorResponse:
       type: object
@@ -412,7 +975,7 @@ components:
         detail:
           type: string
           description: Descrição do erro
-          example: Data inválida: 2025-13-01 (formato deve ser YYYY-MM-DD)
+          example: "Data inválida: 2025-13-01 (formato deve ser YYYY-MM-DD)"
 
   securitySchemes:
     BearerAuth:

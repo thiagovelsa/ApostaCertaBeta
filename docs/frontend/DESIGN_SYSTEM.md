@@ -1,7 +1,7 @@
 # Design System - Sistema de Análise de Estatísticas de Futebol
 
-**Versão:** 1.0
-**Data:** 24 de dezembro de 2025
+**Versão:** 1.1
+**Data:** 07 de fevereiro de 2026
 **Status:** ✅ Completo
 
 Sistema completo de design tokens e componentes visuais para a implementação do frontend em React + TypeScript.
@@ -122,11 +122,13 @@ text-inverse:       #0a0a0a   // Para backgrounds claros (não usar em dark mode
 ```typescript
 // Font Stack (Fallbacks Inclusos)
 font-display:  'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif
-font-body:     'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif
+font-body:     'Outfit', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif
 font-mono:     'Space Mono', 'Courier New', monospace
 
 // Google Fonts imports:
-// @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap');
+// Import real do projeto (index.html):
+// https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap
+// Observação: 'Inter' está como fallback no Tailwind, mas não é carregada por padrão.
 ```
 
 #### Tamanhos de Fonte (Escala Modular - Razão 1.125)
@@ -976,7 +978,7 @@ Para entender melhor este documento e o contexto do projeto, consulte:
 - **Cor primária Lime #84cc16** foi escolhida pela excelente legibilidade (~8.5:1 contrast WCAG AAA ✅)
 - **Staggered animations** são críticas para UX quando carregar partidas (100-200ms delays recomendados)
 - **Todos os componentes devem suportar dark mode** (já que é padrão)
-- **Tipografia Outfit/Inter/Space Mono** já inclusos nas imports do Tailwind
+- **Tipografia Outfit/Space Mono** já está carregada no `frontend/index.html` (Inter é fallback opcional)
 - **Material Icons Outlined** - usar `@mui/icons-material` ou import CDN
 
 ---

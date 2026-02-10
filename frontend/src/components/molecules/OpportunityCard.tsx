@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Icon, TeamBadge, type IconName } from '@/components/atoms';
 import type { Oportunidade } from '@/types';
 import { formatarProbabilidade, getScoreColor, getTipoBgColor } from '@/utils/smartSearch';
+import { calcAdjustedChance, formatPercent } from '@/utils/chance';
 
 interface OpportunityCardProps {
   oportunidade: Oportunidade;
@@ -38,17 +39,20 @@ export const OpportunityCard = memo(function OpportunityCard({ oportunidade, ran
     linha,
     probabilidade,
     confiancaLabel,
+    confianca,
+    uncertainty,
     score,
   } = oportunidade;
 
   const icon = STAT_ICONS[estatistica] || 'stats';
   const scoreColor = getScoreColor(score);
   const tipoBg = getTipoBgColor(tipo);
+  const chanceAdj = calcAdjustedChance(probabilidade, confianca, uncertainty ?? 0);
 
   return (
     <Link
       to={`/partida/${matchId}`}
-      className="block bg-dark-secondary rounded-xl p-4 border border-dark-tertiary hover:border-primary-500/50 transition-all cursor-pointer">
+      className="focus-ring block bg-dark-secondary rounded-xl p-4 border border-dark-tertiary hover:border-primary-500/50 transition-all cursor-pointer">
       {/* Header: Times + Horário */}
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2 flex-1 min-w-0">
@@ -69,7 +73,7 @@ export const OpportunityCard = memo(function OpportunityCard({ oportunidade, ran
             <span className="text-xs text-gray-400 truncate max-w-[80px]" title={mandante.nome}>
               {mandante.nome}
             </span>
-            <span className="text-gray-600 text-xs">vs</span>
+            <span className="text-gray-400 text-xs">vs</span>
             <span className="text-xs text-gray-400 truncate max-w-[80px]" title={visitante.nome}>
               {visitante.nome}
             </span>
@@ -82,13 +86,13 @@ export const OpportunityCard = memo(function OpportunityCard({ oportunidade, ran
         </div>
 
         {/* Horário */}
-        <div className="text-xs text-gray-500 flex-shrink-0">
+        <div className="text-xs text-gray-400 flex-shrink-0">
           {horario}
         </div>
       </div>
 
       {/* Competição */}
-      <div className="text-xs text-gray-500 mb-3 truncate" title={competicao}>
+      <div className="text-xs text-gray-400 mb-3 truncate" title={competicao}>
         {competicao}
       </div>
 
@@ -107,34 +111,43 @@ export const OpportunityCard = memo(function OpportunityCard({ oportunidade, ran
           </span>
         </div>
 
-        {/* Probabilidade + Confiança */}
-        <div className="flex items-center gap-3">
-          <div className="text-right">
-            <div className="text-lg font-bold text-white">
-              {formatarProbabilidade(probabilidade)}
-            </div>
-            <div className="text-xs text-gray-500">
-              Prob.
-            </div>
+      {/* Probabilidade + Confiança */}
+      <div className="flex items-center gap-3">
+        <div className="text-right">
+          <div className="text-lg font-bold text-white">
+            {formatPercent(chanceAdj)}
           </div>
-
-          <div className="w-px h-8 bg-dark-tertiary" />
-
-          <div className="text-right">
-            <div className={`text-sm font-medium ${confiancaLabel === 'Alta' ? 'text-success' : confiancaLabel === 'Média' ? 'text-warning' : 'text-danger'}`}>
-              {confiancaLabel}
-            </div>
-            <div className="text-xs text-gray-500">
-              Conf.
-            </div>
+          <div
+            className="text-xs text-gray-400"
+            title="p_ajustada = 0,5 + (p_modelo - 0,5) × confiança × (1 - incerteza)."
+          >
+            Probabilidade ajustada
+          </div>
+          <div className="text-[11px] text-gray-400 tabular-nums">
+            Modelo (bruta): {formatarProbabilidade(probabilidade)}
+          </div>
+          <div className="text-[11px] text-gray-400">
+            Ajuste aplica confiança do modelo e incerteza da linha (quando disponível).
           </div>
         </div>
+
+        <div className="w-px h-8 bg-dark-tertiary" />
+
+        <div className="text-right">
+          <div className={`text-sm font-medium ${confiancaLabel === 'Alta' ? 'text-success' : confiancaLabel === 'Média' ? 'text-warning' : 'text-danger'}`}>
+            {confiancaLabel}
+          </div>
+          <div className="text-xs text-gray-400">
+            Confiança
+          </div>
+        </div>
+      </div>
       </div>
 
       {/* Score bar */}
       <div className="mt-3">
         <div className="flex items-center justify-between text-xs mb-1">
-          <span className="text-gray-500">Score</span>
+          <span className="text-gray-400">Força do sinal</span>
           <span className={`font-medium ${scoreColor}`}>
             {Math.round(score * 100)}
           </span>

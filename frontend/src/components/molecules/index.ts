@@ -8,5 +8,7 @@ export { PeriodoToggle } from './PeriodoToggle';
 export { RaceRow } from './RaceRow';
 export { PredictionsCard } from './PredictionsCard';
 export { OverUnderCard } from './OverUnderCard';
+export { JumpToSectionChips } from './JumpToSectionChips';
+export { QuickInsightsCard } from './QuickInsightsCard';
 export { OpportunityCard } from './OpportunityCard';
 export { SmartSearchSettings } from './SmartSearchSettings';

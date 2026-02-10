@@ -56,7 +56,7 @@ function StatFilter({
                 border transition-all duration-200
                 ${isActive
                   ? 'bg-primary-500/20 text-primary-400 border-primary-500/50'
-                  : 'bg-dark-tertiary text-gray-500 border-dark-quaternary hover:border-gray-600'
+                  : 'bg-dark-tertiary text-gray-400 border-dark-quaternary hover:border-gray-600'
                 }
               `}
             >
@@ -75,13 +75,13 @@ function StatFilter({
  */
 function ProgressBar({ progress }: { progress: SmartSearchProgress }) {
   return (
-    <div className="bg-dark-secondary rounded-xl p-6 border border-dark-tertiary">
+    <div className="bg-dark-secondary rounded-xl p-4 lg:p-6 border border-dark-tertiary">
       <div className="flex items-center gap-3 mb-4">
-        <div className="animate-spin">
+        <div className="animate-spin motion-reduce:animate-none">
           <Icon name="refresh" size="md" className="text-primary-400" />
         </div>
         <div>
-          <h3 className="text-white font-medium">Analisando partidas...</h3>
+          <h3 className="text-white font-medium">Analisando partidas da data selecionada…</h3>
           <p className="text-sm text-gray-400">
             {progress.analisadas} de {progress.total} partidas
           </p>
@@ -95,7 +95,7 @@ function ProgressBar({ progress }: { progress: SmartSearchProgress }) {
         />
       </div>
 
-      <div className="text-center text-sm text-gray-500 mt-2">
+      <div className="text-center text-sm text-gray-400 mt-2">
         {progress.porcentagem}%
       </div>
     </div>
@@ -108,14 +108,14 @@ function ProgressBar({ progress }: { progress: SmartSearchProgress }) {
 function EmptyState({ isFiltered }: { isFiltered?: boolean }) {
   return (
     <div className="bg-dark-secondary rounded-xl p-8 border border-dark-tertiary text-center">
-      <Icon name="search" size="lg" className="text-gray-600 mx-auto mb-4" />
+      <Icon name="search" size="lg" className="text-gray-400 mx-auto mb-4" />
       <h3 className="text-white font-medium mb-2">
         {isFiltered ? 'Nenhuma oportunidade com os filtros selecionados' : 'Nenhuma oportunidade encontrada'}
       </h3>
       <p className="text-sm text-gray-400 max-w-md mx-auto">
         {isFiltered
           ? 'Tente selecionar outras estatísticas no filtro acima.'
-          : 'Não foram encontradas oportunidades que atendam aos critérios de confiança alta e probabilidade favorável para as partidas do dia.'
+          : 'Não encontramos oportunidades que atendam aos critérios atuais para as partidas do dia.'
         }
       </p>
     </div>
@@ -145,7 +145,7 @@ function ResultHeader({
           </div>
           <div>
             <h3 className="text-white font-semibold">
-              Busca Inteligente
+              Análise Automática
             </h3>
             <p className="text-sm text-gray-400">
               {isFiltered ? (
@@ -164,13 +164,13 @@ function ResultHeader({
               <div className="text-xl font-bold text-white">
                 {result.partidas_analisadas}
               </div>
-              <div className="text-xs text-gray-500">Analisadas</div>
+              <div className="text-xs text-gray-400">Analisadas</div>
             </div>
             <div>
               <div className="text-xl font-bold text-success">
                 {isFiltered ? filteredCount : result.total_oportunidades}
               </div>
-              <div className="text-xs text-gray-500">
+              <div className="text-xs text-gray-400">
                 {isFiltered ? 'Filtradas' : 'Encontradas'}
               </div>
             </div>
@@ -192,7 +192,7 @@ function ResultHeader({
 }
 
 /**
- * Container de resultados da Busca Inteligente
+ * Container de resultados da Análise Automática
  */
 export function SmartSearchResults({
   result,
@@ -299,11 +299,11 @@ export function SmartSearchResults({
       )}
 
       {/* Nota sobre critérios */}
-      <div className="text-xs text-gray-500 text-center mt-4">
+      <div className="text-xs text-gray-400 text-center mt-4">
         {isFiltered || !showOver || !showUnder ? (
-          <>Exibindo {oportunidadesFiltradas.length} de {result.total_oportunidades} oportunidades (filtrado).</>
+          <>Exibindo {oportunidadesFiltradas.length} de {result.total_oportunidades} oportunidades (pelos critérios atuais).</>
         ) : (
-          <>Exibindo top {result.oportunidades.length} de {result.total_oportunidades} oportunidades.</>
+          <>Exibindo {result.oportunidades.length} de {result.total_oportunidades} oportunidades (pelos critérios atuais).</>
         )}
         {' '}Critérios: Confiança {'\u2265'}{Math.round(statThresholds.gols.confiancaMin * 100)}%
         {showOver && <> + Prob. Over {'\u2265'}{Math.round(statThresholds.gols.overMin * 100)}%</>}

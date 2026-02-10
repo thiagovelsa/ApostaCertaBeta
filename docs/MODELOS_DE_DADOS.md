@@ -1,7 +1,7 @@
 # Modelos de Dados - Pydantic Schemas
 
-**Versão:** 1.4
-**Data:** 28 de Dezembro de 2025
+**Versão:** 1.6
+**Data:** 07 de fevereiro de 2026
 **Framework:** Pydantic v2.x (com FastAPI)
 
 ---
@@ -16,7 +16,9 @@ Este documento define todos os modelos Pydantic (schemas/DTOs) usados na API. Py
 app/models/
 ├── __init__.py              # Importa todos os modelos
 ├── partida.py               # TimeInfo, PartidaResumo, PartidaListResponse
-├── estatisticas.py          # EstatisticaMetrica, EstatisticasTime, StatsResponse
+├── estatisticas.py          # EstatisticaMetrica, EstatisticasTime, StatsResponse (+ contexto/H2H)
+├── contexto.py              # ContextoPartida, ContextoTime, H2HInfo, ClassificacaoTimeInfo
+├── analysis.py              # DTOs de previsões e over/under (payload do /analysis)
 ├── competicao.py            # CompeticaoInfo
 ├── escudo.py                # EscudoResponse
 └── vstats.py                # Modelos da API VStats (mapeamento externo)
@@ -192,82 +194,47 @@ class PartidaListResponse(BaseModel):
 
 ```python
 # app/models/estatisticas.py
-from pydantic import BaseModel, Field, field_validator
 from typing import Literal
+from pydantic import BaseModel, Field, field_validator
 
 class EstatisticaMetrica(BaseModel):
-    """Métrica de estatística com média, CV e classificação."""
+    """Métrica com média, CV, classificação calibrada e estabilidade (0-100)."""
 
-    media: float = Field(
-        ...,
-        ge=0,
-        description="Valor médio (ex: 5.88 gols por partida)"
-    )
-    cv: float = Field(
-        ...,
-        ge=0,
-        description="Coeficiente de Variação (0.0 a infinito)"
-    )
+    media: float = Field(..., ge=0, description="Valor médio")
+    cv: float = Field(..., ge=0, description="Coeficiente de Variação (CV)")
     classificacao: Literal[
         "Muito Estável",
         "Estável",
         "Moderado",
         "Instável",
-        "Muito Instável"
-    ] = Field(
-        ...,
-        description="Classificação automática baseada no CV"
+        "Muito Instável",
+        "N/A",
+    ] = Field(..., description="Classificação baseada no CV calibrado")
+    estabilidade: int = Field(
+        default=50,
+        ge=0,
+        le=100,
+        description="Estabilidade em porcentagem (0-100%, onde 100% = muito estável).",
     )
 
-    @field_validator('media')
+    @field_validator("media", "cv")
     @classmethod
-    def validar_media(cls, v):
-        """Media não pode ser negativa."""
-        if v < 0:
-            raise ValueError('Média não pode ser negativa')
+    def arredondar(cls, v: float) -> float:
         return round(v, 2)
 
-    @field_validator('cv')
-    @classmethod
-    def validar_cv(cls, v):
-        """CV não pode ser negativo."""
-        if v < 0:
-            raise ValueError('CV não pode ser negativo')
-        return round(v, 2)
-
-    @field_validator('classificacao', mode='before')
-    @classmethod
-    def calcular_classificacao(cls, v, info):
-        """Calcula classificação automaticamente baseado no CV."""
-        # Se classificação foi fornecida explicitamente, usa
-        if v is not None:
-            return v
-
-        # Caso contrário, calcula baseado no CV
-        cv = info.data.get('cv')
-        if cv is None:
-            return "Moderado"  # Default
-
-        if cv < 0.15:
-            return "Muito Estável"
-        elif cv < 0.30:
-            return "Estável"
-        elif cv < 0.50:
-            return "Moderado"
-        elif cv < 0.75:
-            return "Instável"
-        else:
-            return "Muito Instável"
-
-    class Config:
-        json_schema_extra = {
+    model_config = {
+        "json_schema_extra": {
             "example": {
                 "media": 5.88,
                 "cv": 0.32,
-                "classificacao": "Moderado"
+                "classificacao": "Estável",
+                "estabilidade": 68,
             }
         }
+    }
 ```
+
+**Nota:** a classificação/estabilidade são calculadas no `StatsService` (não são inferidas no schema).
 
 ### 3.2 EstatisticaFeitos
 
@@ -304,8 +271,6 @@ class EstatisticaFeitos(BaseModel):
 ### 3.3 EstatisticasTime
 
 ```python
-from typing import Dict
-
 class EstatisticasTime(BaseModel):
     """Todas as estatísticas de um time para uma partida."""
 
@@ -325,45 +290,33 @@ class EstatisticasTime(BaseModel):
         ...,
         description="Finalizações ao gol (shots on target) feitas e sofridas"
     )
-    cartoes: Dict[str, EstatisticaMetrica] = Field(
-        ...,
-        description="Cartões (amarelos, vermelhos)"
-    )
+    cartoes_amarelos: EstatisticaMetrica = Field(..., description="Cartões amarelos")
+    faltas: EstatisticaMetrica = Field(..., description="Faltas cometidas")
 
-    @field_validator('cartoes')
-    @classmethod
-    def validar_cartoes(cls, v):
-        """Valida que cartoes contém apenas 'amarelos' e 'vermelhos'."""
-        permitidos = {'amarelos', 'vermelhos'}
-        if not all(key in permitidos for key in v.keys()):
-            raise ValueError(f"Cartões deve conter apenas {permitidos}")
-        return v
-
-    class Config:
-        json_schema_extra = {
+    model_config = {
+        "json_schema_extra": {
             "example": {
                 "escanteios": {
-                    "feitos": {"media": 5.88, "cv": 0.32, "classificacao": "Moderado"},
-                    "sofridos": {"media": 3.50, "cv": 0.28, "classificacao": "Estável"}
+                    "feitos": {"media": 5.88, "cv": 0.32, "classificacao": "Moderado", "estabilidade": 58},
+                    "sofridos": {"media": 3.50, "cv": 0.28, "classificacao": "Estável", "estabilidade": 63}
                 },
                 "gols": {
-                    "feitos": {"media": 1.82, "cv": 0.41, "classificacao": "Moderado"},
-                    "sofridos": {"media": 0.59, "cv": 0.65, "classificacao": "Instável"}
+                    "feitos": {"media": 1.82, "cv": 0.41, "classificacao": "Moderado", "estabilidade": 49},
+                    "sofridos": {"media": 0.59, "cv": 0.65, "classificacao": "Instável", "estabilidade": 40}
                 },
                 "finalizacoes": {
-                    "feitas": {"media": 10.82, "cv": 0.25, "classificacao": "Estável"},
-                    "sofridas": {"media": 8.20, "cv": 0.35, "classificacao": "Moderado"}
+                    "feitos": {"media": 10.82, "cv": 0.25, "classificacao": "Estável", "estabilidade": 54},
+                    "sofridos": {"media": 8.20, "cv": 0.35, "classificacao": "Moderado", "estabilidade": 36}
                 },
                 "finalizacoes_gol": {
-                    "feitas": {"media": 4.50, "cv": 0.30, "classificacao": "Moderado"},
-                    "sofridas": {"media": 2.80, "cv": 0.40, "classificacao": "Moderado"}
+                    "feitos": {"media": 4.50, "cv": 0.30, "classificacao": "Moderado", "estabilidade": 62},
+                    "sofridos": {"media": 2.80, "cv": 0.40, "classificacao": "Moderado", "estabilidade": 50}
                 },
-                "cartoes": {
-                    "amarelos": {"media": 1.29, "cv": 0.55, "classificacao": "Instável"},
-                    "vermelhos": {"media": 0.12, "cv": 0.85, "classificacao": "Muito Instável"}
-                }
+                "cartoes_amarelos": {"media": 1.29, "cv": 0.55, "classificacao": "Instável", "estabilidade": 47},
+                "faltas": {"media": 12.4, "cv": 0.40, "classificacao": "Moderado", "estabilidade": 27}
             }
         }
+    }
 ```
 
 ### 3.4 TimeComEstatisticas
@@ -375,29 +328,30 @@ class TimeComEstatisticas(BaseModel):
     id: str = Field(..., description="ID único do time")
     nome: str = Field(..., description="Nome do time")
     escudo: Optional[str] = Field(None, description="URL do escudo")
-    estatisticas: EstatisticasAgregadas = Field(..., description="Estatísticas agregadas")
+    estatisticas: EstatisticasTime = Field(..., description="Estatísticas agregadas do time")
     recent_form: List[Literal["W", "D", "L"]] = Field(
-        default=[],
-        description="Sequência de resultados recentes (W=Win, D=Draw, L=Loss)"
+        default_factory=list,
+        description="Sequência de resultados recentes (W=Win, D=Draw, L=Loss)",
     )
 
-    class Config:
-        json_schema_extra = {
+    model_config = {
+        "json_schema_extra": {
             "example": {
                 "id": "4dsgumo7d4zupm2ugsvm4zm4d",
                 "nome": "Arsenal",
                 "escudo": "https://...",
-                "estatisticas": { ... },
+                "estatisticas": { },
                 "recent_form": ["W", "D", "W", "L", "W"]
             }
         }
+    }
 ```
 
 **Campo `recent_form`:**
 - Array de resultados recentes do time (mais recente primeiro)
 - Valores: `"W"` (Vitória), `"D"` (Empate), `"L"` (Derrota)
 - Calculado a partir de `goals` vs `goalsConceded` de cada partida
-- Limitado pelo filtro: Temporada/Últimos 5 → 5 resultados, Últimos 10 → 10 resultados
+- Limitado pelo filtro: `geral` (até 50), `5` (até 5), `10` (até 10). Se não houver N jogos, usa as partidas disponíveis.
 
 ---
 
@@ -407,41 +361,23 @@ class TimeComEstatisticas(BaseModel):
 class StatsResponse(BaseModel):
     """Response para GET /api/partida/{matchId}/stats."""
 
-    filtro_aplicado: Literal["geral", "5", "10"] = Field(
-        ...,
-        description="Qual período foi analisado"
-    )
-    partidas_analisadas: int = Field(
-        ...,
-        ge=1,
-        description="Número de partidas usadas para calcular as médias"
-    )
-    mandante: TimeComEstatisticas = Field(
-        ...,
-        description="Estatísticas do time mandante"
-    )
-    visitante: TimeComEstatisticas = Field(
-        ...,
-        description="Estatísticas do time visitante"
-    )
-    arbitro: Optional[ArbitroInfo] = Field(
-        None,
-        description="Informações do árbitro e estatísticas de cartões"
-    )
+    partida: PartidaResumo = Field(..., description="Metadados da partida")
+    filtro_aplicado: Literal["geral", "5", "10"] = Field(..., description="Período analisado")
+    partidas_analisadas: int = Field(..., ge=1, description="N efetivo usado nas previsões (menor lado)")
 
-    @field_validator('mandante', 'visitante', mode='before')
-    @classmethod
-    def montar_dict_time(cls, v):
-        """Monta dict com id, nome, escudo e estatisticas."""
-        if isinstance(v, dict):
-            # Se já é dict, retorna como está
-            return {
-                'id': v.get('id'),
-                'nome': v.get('nome'),
-                'escudo': v.get('escudo'),
-                'estatisticas': v.get('estatisticas')
-            }
-        return v
+    # Contagem real por lado (especialmente relevante com subfiltro de mando).
+    partidas_analisadas_mandante: Optional[int] = Field(default=None, ge=0)
+    partidas_analisadas_visitante: Optional[int] = Field(default=None, ge=0)
+
+    mandante: TimeComEstatisticas = Field(..., description="Estatísticas do mandante")
+    visitante: TimeComEstatisticas = Field(..., description="Estatísticas do visitante")
+
+    arbitro: Optional[ArbitroInfo] = Field(None, description="Informações do árbitro (best-effort)")
+    contexto: Optional[ContextoPartida] = Field(None, description="Contexto pré-jogo (standings, descanso, H2H, etc.)")
+    h2h_all_comps: Optional[H2HInfo] = Field(None, description="H2H em todas competições (ajuste leve do modelo)")
+
+    # Apenas quando debug=1 (no endpoint /analysis):
+    debug_amostra: Optional[DebugAmostra] = Field(default=None, description="IDs/datas/pesos usados no recorte por lado")
 
     class Config:
         json_schema_extra = {
@@ -476,6 +412,31 @@ class StatsResponse(BaseModel):
                 }
             }
         }
+```
+
+**Campo `debug_amostra` (quando `debug=1` em `/analysis`):**
+- Exibe a amostra efetiva usada no cálculo por lado (mandante/visitante)
+- Inclui `match_ids`, `match_dates` e `weights` (time-weighting)
+- Quando o backend cai em fallback de temporada, `source="seasonstats_fallback"` e os arrays podem estar vazios (não há partidas individuais)
+
+#### Estrutura (resumo)
+
+```python
+class DebugAmostraTime(BaseModel):
+    source: Literal["matches", "seasonstats_fallback"]
+    limit: int
+    periodo: Literal["integral", "1T", "2T"]
+    mando: Optional[Literal["casa", "fora"]]
+    n_used: int
+    match_ids: List[str]
+    match_dates: List[Optional[str]]  # YYYY-MM-DD
+    weights: List[float]
+    reason: Optional[str] = None
+
+
+class DebugAmostra(BaseModel):
+    mandante: DebugAmostraTime
+    visitante: DebugAmostraTime
 ```
 
 ---
@@ -743,7 +704,7 @@ async def get_stats(
     Busca estatísticas detalhadas de uma partida.
 
     - **matchId**: ID único da partida
-    - **filtro**: "geral" (toda temporada), "5" (últimas 5 partidas), "10" (últimas 10 partidas)
+    - **filtro**: "geral" (até 50 jogos disputados), "5" (últimas até 5), "10" (últimas até 10)
     - **periodo**: "integral" (jogo completo), "1T" (1º tempo), "2T" (2º tempo)
     - **home_mando**: "casa" ou "fora" para filtrar jogos do mandante (opcional)
     - **away_mando**: "casa" ou "fora" para filtrar jogos do visitante (opcional)

@@ -8,10 +8,10 @@ interface BadgeProps {
 }
 
 const badgeStyles: Record<EstabilidadeLabel, string> = {
-  'Alta': 'bg-success/20 text-success',
-  'Média': 'bg-warning/20 text-warning',
-  'Baixa': 'bg-danger/20 text-danger',
-  'N/A': 'bg-gray-500/20 text-gray-400',
+  'Alta': 'bg-success/15 text-success border border-success/30',
+  'Média': 'bg-warning/15 text-warning border border-warning/30',
+  'Baixa': 'bg-danger/15 text-danger border border-danger/30',
+  'N/A': 'bg-gray-500/15 text-gray-400 border border-gray-500/30',
 };
 
 export const Badge = memo(function Badge({ estabilidade, size = 'sm', label }: BadgeProps) {

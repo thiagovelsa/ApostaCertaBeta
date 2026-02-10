@@ -11,13 +11,14 @@ interface UsePartidasOptions {
  * enabled: controla se a busca deve ser executada (padrão: false)
  */
 export function usePartidas(date: string, options: UsePartidasOptions = {}) {
-  const { enabled = false } = options;
+  const { enabled = true } = options;
 
   return useQuery({
     queryKey: ['partidas', date],
     queryFn: () => getPartidasByDate(date),
-    staleTime: 0, // Sem cache - sempre busca dados frescos
-    gcTime: 0,
+    // Cache curto para evitar "piscadas" ao navegar datas rapidamente.
+    staleTime: 1000 * 60 * 1, // 1 min
+    gcTime: 1000 * 60 * 30, // 30 min
     enabled: Boolean(date) && enabled,
   });
 }

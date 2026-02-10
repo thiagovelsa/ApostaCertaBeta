@@ -114,15 +114,80 @@ export interface ArbitroInfo {
 }
 
 /**
+ * Contexto pré-jogo (derivado de schedule/standings/match preview)
+ */
+export interface H2HInfo {
+  total_matches: number;
+  avg_goals_per_match: number;
+  home_wins?: number;
+  away_wins?: number;
+  draws?: number;
+}
+
+export interface ClassificacaoTimeInfo {
+  posicao: number;
+  pontos: number;
+  jogos: number;
+  saldo_gols?: number | null;
+}
+
+export interface ContextoTime {
+  dias_descanso?: number | null;
+  jogos_7d?: number | null;
+  jogos_14d?: number | null;
+  posicao?: number | null;
+}
+
+export interface ContextoPartida {
+  mandante: ContextoTime;
+  visitante: ContextoTime;
+  classificacao_mandante?: ClassificacaoTimeInfo | null;
+  classificacao_visitante?: ClassificacaoTimeInfo | null;
+  h2h_all_comps?: H2HInfo | null;
+  fase?: string | null;
+  ajustes_aplicados?: string[];
+}
+
+// ============================================================
+// DEBUG / TRANSPARENCIA (debug=1)
+// ============================================================
+
+export type DebugSampleSource = 'matches' | 'seasonstats_fallback';
+
+export interface DebugAmostraTime {
+  source: DebugSampleSource;
+  limit: number;
+  periodo: PeriodoFilter;
+  mando: MandoFilter;
+  n_used: number;
+  match_ids: string[];
+  match_dates: Array<string | null>;
+  weights: number[];
+  reason?: string | null;
+}
+
+export interface DebugAmostra {
+  mandante: DebugAmostraTime;
+  visitante: DebugAmostraTime;
+}
+
+/**
  * Resposta completa de estatísticas (alinhado com backend StatsResponse)
  */
 export interface StatsResponse {
   partida: import('./partida').PartidaResumo;
   filtro_aplicado: FiltroEstatisticas;
   partidas_analisadas: number;
+  partidas_analisadas_mandante?: number | null;
+  partidas_analisadas_visitante?: number | null;
   mandante: TimeComEstatisticas;
   visitante: TimeComEstatisticas;
   arbitro?: ArbitroInfo | null;
+  contexto?: ContextoPartida | null;
+  h2h_all_comps?: H2HInfo | null;
+  debug_amostra?: DebugAmostra | null;
+  previsoes?: PrevisaoPartida;
+  over_under?: OverUnderPartida;
 }
 
 /**
@@ -141,8 +206,8 @@ export interface CompeticaoInfo {
 export interface EscudoResponse {
   team_id: string;
   team_name: string;
-  badge_url: string;
-  source: string;
+  escudo_url: string | null;
+  fonte: string;
 }
 
 // ============================================================
@@ -196,7 +261,7 @@ import type { IconName } from '@/components/atoms';
 /**
  * Tipo de distribuição estatística
  */
-export type DistributionType = 'poisson' | 'normal';
+export type DistributionType = 'poisson' | 'normal' | 'negbin';
 
 /**
  * Linha individual de probabilidade Over/Under
@@ -205,6 +270,9 @@ export interface OverUnderLine {
   line: number;   // Ex: 2.5
   over: number;   // Probabilidade 0-1
   under: number;  // Probabilidade 0-1
+  ci_lower?: number | null;
+  ci_upper?: number | null;
+  uncertainty?: number | null;
 }
 
 /**
@@ -214,6 +282,12 @@ export interface OverUnderStat {
   label: string;
   icon: IconName;
   lambda: number;           // Valor esperado (média)
+  lambdaHome?: number;
+  lambdaAway?: number;
+  // Intervalo de previsao para contagem total (mu), usado para Min/Max na UI.
+  predMin: number;
+  predMax: number;
+  intervalLevel: number;    // ex: 0.9
   sigma: number | null;     // Desvio padrão (null para Poisson)
   distribution: DistributionType;
   lines: OverUnderLine[];   // 3-4 linhas dinâmicas

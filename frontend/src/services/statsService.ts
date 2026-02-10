@@ -1,11 +1,19 @@
 import { api } from './api';
-import type { StatsResponse, FiltroEstatisticas, MandoFilter, PeriodoFilter, CompeticaoInfo, EscudoResponse } from '@/types';
+import type {
+  StatsResponse,
+  FiltroEstatisticas,
+  MandoFilter,
+  PeriodoFilter,
+  CompeticaoInfo,
+  EscudoResponse,
+} from '@/types';
 
 function buildStatsParams(
   filtro: FiltroEstatisticas,
   periodo: PeriodoFilter,
   homeMando: MandoFilter,
-  awayMando: MandoFilter
+  awayMando: MandoFilter,
+  debug: boolean
 ): Record<string, string> {
   const params: Record<string, string> = { filtro };
 
@@ -21,6 +29,10 @@ function buildStatsParams(
     params.away_mando = awayMando;
   }
 
+  if (debug) {
+    params.debug = '1';
+  }
+
   return params;
 }
 
@@ -28,7 +40,7 @@ async function fetchMatchStats(
   matchId: string,
   params: Record<string, string>
 ): Promise<StatsResponse> {
-  const response = await api.get<StatsResponse>(`/api/partida/${matchId}/stats`, {
+  const response = await api.get<StatsResponse>(`/api/partida/${matchId}/analysis`, {
     params,
   });
   return response.data;
@@ -48,34 +60,25 @@ export async function getMatchStats(
   filtro: FiltroEstatisticas = 'geral',
   periodo: PeriodoFilter = 'integral',
   homeMando: MandoFilter = null,
-  awayMando: MandoFilter = null
+  awayMando: MandoFilter = null,
+  debug: boolean = false
 ): Promise<StatsResponse> {
-  const noSubfilters = !homeMando && !awayMando;
-  const sameSubfilter = homeMando && awayMando && homeMando === awayMando;
-
-  if (noSubfilters || sameSubfilter) {
-    return fetchMatchStats(matchId, buildStatsParams(filtro, periodo, homeMando, awayMando));
-  }
-
-  // Fetch each side separately so one subfilter does not affect the other.
-  const [homeResponse, awayResponse] = await Promise.all([
-    fetchMatchStats(matchId, buildStatsParams(filtro, periodo, homeMando, null)),
-    fetchMatchStats(matchId, buildStatsParams(filtro, periodo, null, awayMando)),
-  ]);
-
-  return {
-    ...homeResponse,
-    visitante: awayResponse.visitante,
-    arbitro: homeResponse.arbitro ?? awayResponse.arbitro ?? null,
-  };
+  // Always fetch once; backend handles "split fetch" when only one side has mando filter.
+  // Doing it here can contaminate results due to backend's implicit default mando (pre-jogo).
+  return fetchMatchStats(
+    matchId,
+    buildStatsParams(filtro, periodo, homeMando, awayMando, debug)
+  );
 }
 
 /**
  * Lista todas as competições disponíveis
  */
 export async function getCompeticoes(): Promise<CompeticaoInfo[]> {
-  const response = await api.get<CompeticaoInfo[]>('/api/competicoes');
-  return response.data;
+  const response = await api.get<{ total: number; competicoes: CompeticaoInfo[] }>(
+    '/api/competicoes'
+  );
+  return response.data.competicoes;
 }
 
 /**

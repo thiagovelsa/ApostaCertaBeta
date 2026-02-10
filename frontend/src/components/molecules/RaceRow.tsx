@@ -13,7 +13,7 @@ export function RaceRow({ results, maxItems = 5, label, reverse = false }: RaceR
   return (
     <div className={`flex items-center gap-2 ${reverse ? 'flex-row-reverse' : ''}`}>
       {label && (
-        <span className="text-xs text-gray-500 uppercase tracking-wider">{label}</span>
+        <span className="text-xs text-gray-400 uppercase tracking-wider">{label}</span>
       )}
       <div className={`flex gap-1 ${reverse ? 'flex-row-reverse' : ''}`}>
         {displayResults.map((result, index) => (

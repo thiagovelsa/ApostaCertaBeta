@@ -33,10 +33,13 @@ class Settings(BaseSettings):
     # Cache Configuration
     redis_url: str = "redis://localhost:6379/0"
     cache_enabled: bool = True
-    cache_version: int = 15  # Adiciona conversão de timezone para Brasil
+    cache_version: int = 17  # Fix: stop double timezone conversion (schedule already in America/Sao_Paulo)
     cache_ttl_schedule: int = 3600  # 1 hora
     cache_ttl_seasonstats: int = 21600  # 6 horas
     cache_ttl_badges: int = 604800  # 7 dias
+    cache_ttl_standings: int = 900  # 15 min
+    cache_ttl_matchpreview: int = 86400  # 24 horas
+    cache_ttl_matchstats_raw: int = 86400  # 24 horas (partidas passadas são imutáveis)
 
     # Timezone
     target_timezone: str = "America/Sao_Paulo"

@@ -1,7 +1,7 @@
 # Integração API - Services e React Query Hooks
 
-**Versão:** 1.6
-**Data:** 28 de dezembro de 2025
+**Versão:** 1.7
+**Data:** 07 de fevereiro de 2026
 **Framework:** React Query 5 (TanStack Query)
 **HTTP Client:** Axios 1.6+
 
@@ -32,9 +32,6 @@ npm install @tanstack/react-query
 
 # HTTP Client
 npm install axios
-
-# DevTools (opcional, para debugging)
-npm install @tanstack/react-query-devtools
 ```
 
 ### 2. QueryClient Setup
@@ -64,7 +61,6 @@ export const queryClient = new QueryClient({
 // src/main.tsx
 
 import { QueryClientProvider } from '@tanstack/react-query';
-import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { queryClient } from '@/lib/queryClient';
 import App from './App';
 
@@ -72,7 +68,6 @@ export default function AppWrapper() {
   return (
     <QueryClientProvider client={queryClient}>
       <App />
-      <ReactQueryDevtools initialIsOpen={false} />
     </QueryClientProvider>
   );
 }
@@ -82,8 +77,9 @@ export default function AppWrapper() {
 
 ```env
 # .env.local
-VITE_API_URL=http://localhost:8000
-VITE_API_TIMEOUT=10000
+# Deixe vazio para usar o proxy do Vite (recomendado em dev)
+VITE_API_URL=
+VITE_API_TIMEOUT=120000
 ```
 
 ---
@@ -95,37 +91,34 @@ VITE_API_TIMEOUT=10000
 ```typescript
 // src/services/api.ts
 
-import axios, { AxiosInstance, AxiosError } from 'axios';
+import axios from 'axios';
 
-// Custom error type
-export interface ApiError extends AxiosError {
-  message: string;
-  status: number;
-}
+// Em dev, usar URL relativa (''), aproveitando proxy do Vite.
+const API_URL = import.meta.env.VITE_API_URL || '';
+const API_TIMEOUT = Number(import.meta.env.VITE_API_TIMEOUT) || 30000;
 
-// Create axios instance
-const api: AxiosInstance = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8000',
-  timeout: parseInt(import.meta.env.VITE_API_TIMEOUT || '10000'),
+export const api = axios.create({
+  baseURL: API_URL,
+  timeout: API_TIMEOUT,
   headers: {
     'Content-Type': 'application/json',
   },
 });
 
-// Response interceptor para error handling
 api.interceptors.response.use(
   (response) => response,
-  (error: AxiosError) => {
-    console.error('API Error:', {
-      status: error.response?.status,
-      data: error.response?.data,
-      message: error.message,
-    });
+  (error) => {
+    if (error.response) {
+      const message = error.response.data?.detail || error.response.statusText;
+      console.error(`API Error [${error.response.status}]:`, message);
+    } else if (error.request) {
+      console.error('Network Error: No response received');
+    } else {
+      console.error('Request Error:', error.message);
+    }
     return Promise.reject(error);
   }
 );
-
-export default api;
 ```
 
 ### 1. PartidosService
@@ -192,83 +185,110 @@ Busca estatísticas detalhadas de uma partida.
 ```typescript
 // src/services/statsService.ts
 
-import api from './api';
-import { StatsResponse, MandoFilter, PeriodoFilter } from '@/types';
+import { api } from './api';
+import type {
+  StatsResponse,
+  FiltroEstatisticas,
+  MandoFilter,
+  PeriodoFilter,
+} from '@/types';
 
-type FilterType = 'geral' | '5' | '10';
+function buildStatsParams(
+  filtro: FiltroEstatisticas,
+  periodo: PeriodoFilter,
+  homeMando: MandoFilter,
+  awayMando: MandoFilter,
+  debug: boolean
+): Record<string, string> {
+  const params: Record<string, string> = { filtro };
 
-export const statsService = {
-  /**
-   * Busca estatísticas de uma partida
-   * GET /api/partida/{matchId}/stats?filtro=geral|5|10&periodo=integral|1T|2T&home_mando=casa|fora&away_mando=casa|fora
-   *
-   * @param matchId - ID da partida
-   * @param filtro - Filtro principal (geral, últimas 5, últimas 10)
-   * @param periodo - Sub-filtro de período do jogo (integral, 1T, 2T)
-   * @param homeMando - Sub-filtro Casa/Fora para o mandante (opcional)
-   * @param awayMando - Sub-filtro Casa/Fora para o visitante (opcional)
-   */
-  async getMatchStats(
-    matchId: string,
-    filtro: FilterType = 'geral',
-    periodo: PeriodoFilter = 'integral',
-    homeMando: MandoFilter = null,
-    awayMando: MandoFilter = null
-  ): Promise<StatsResponse> {
-    try {
-      const params: Record<string, string> = { filtro };
+  // Só envia periodo se não for o default (integral)
+  if (periodo !== 'integral') params.periodo = periodo;
+  if (homeMando) params.home_mando = homeMando;
+  if (awayMando) params.away_mando = awayMando;
+  if (debug) params.debug = '1';
 
-      // Adiciona periodo apenas se não for o default
-      if (periodo !== 'integral') params.periodo = periodo;
+  return params;
+}
 
-      // Adiciona parâmetros de mando apenas se definidos
-      if (homeMando) params.home_mando = homeMando;
-      if (awayMando) params.away_mando = awayMando;
-
-      const response = await api.get(`/api/partida/${matchId}/stats`, {
-        params,
-      });
-      return response.data;
-    } catch (error) {
-      console.error(`Error fetching stats for match ${matchId}:`, error);
-      throw error;
-    }
-  },
-
-  /**
-   * Utility: Calcula classificação CV
-   */
-  getCVClassification(cv: number): string {
-    if (cv < 0.15) return 'Muito Estável';
-    if (cv < 0.30) return 'Estável';
-    if (cv < 0.45) return 'Moderado';
-    if (cv < 0.60) return 'Instável';
-    return 'Muito Instável';
-  },
-
-  /**
-   * Utility: Formata números com 2 casas decimais
-   */
-  formatNumber(value: number): string {
-    return value.toFixed(2);
-  },
-};
+export async function getMatchStats(
+  matchId: string,
+  filtro: FiltroEstatisticas = 'geral',
+  periodo: PeriodoFilter = 'integral',
+  homeMando: MandoFilter = null,
+  awayMando: MandoFilter = null,
+  debug: boolean = false
+): Promise<StatsResponse> {
+  // Sempre 1 chamada; o backend lida com "split" quando necessário.
+  const response = await api.get<StatsResponse>(`/api/partida/${matchId}/analysis`, {
+    params: buildStatsParams(filtro, periodo, homeMando, awayMando, debug),
+  });
+  return response.data;
+}
 ```
 
 **Endpoint Mapping:**
-- Backend: `GET /api/partida/{matchId}/stats?filtro=geral|5|10&periodo=integral|1T|2T&home_mando=casa|fora&away_mando=casa|fora`
-- Response: `StatsResponse`
-- Cache TTL: 6 horas (match backend `CACHE_TTL_SEASONSTATS=21600`)
+- Backend: `GET /api/partida/{matchId}/analysis?filtro=geral|5|10&periodo=integral|1T|2T&home_mando=casa|fora&away_mando=casa|fora&debug=0|1`
+- Response: `StatsResponse` (inclui `previsoes` e `over_under`)
+- Cache TTL: 6 horas (match backend `CACHE_TTL_SEASONSTATS=21600`). Observação: `debug=1` evita cache (payload maior).
 
 **Parâmetros:**
-- `filtro` - Filtro principal de quantidade de partidas: `geral` (temporada), `5` (últimas 5), `10` (últimas 10)
+- `filtro` - Quantidade máxima de jogos disputados por time: `geral` (até 50), `5` (até 5), `10` (até 10)
 - `periodo` - Sub-filtro de tempo do jogo: `integral` (jogo completo), `1T` (1º tempo), `2T` (2º tempo)
 - `home_mando` - Filtra partidas do mandante: `casa` (apenas jogos em casa) ou `fora` (apenas fora)
 - `away_mando` - Filtra partidas do visitante: `casa` ou `fora`
+- `debug` - Quando `1`, inclui `debug_amostra` com IDs/datas/pesos usados no cálculo (útil para auditoria/envio para IA)
+
+**Nota (UX pré-jogo):** a UI começa com `home_mando=casa` e `away_mando=fora` por padrão.
+- Nesse modo (amostra segmentada por casa/fora), o ajuste automático de mando do modelo de previsão fica desativado por design.
 - Todos os sub-filtros são opcionais e independentes
 - Combinável: "Últimos 5" + "1T" + "Casa" = Stats do 1º tempo dos últimos 5 jogos em casa
+- Se não houver a quantidade do filtro (ex.: time tem 7 jogos quando o filtro é 10), o backend calcula com o que houver e o payload expõe a amostra real via `partidas_analisadas_*` e `partidas_analisadas` (n efetivo).
+- Se `periodo=1T|2T` não estiver disponível no provedor para alguma partida, o backend faz fallback para `integral` e registra `periodo_fallback_integral` em `contexto.ajustes_aplicados`.
+- Se não houver partidas individuais suficientes (ou a VStats falhar ao retornar stats por partida), o backend usa agregados da temporada (`seasonstats`) e registra `seasonstats_fallback` em `contexto.ajustes_aplicados`. Nesse caso, a UI deve tratar a base como **“Temporada (agregado)”** (e não como “Últimos 5/10”), pois as contagens podem refletir `matchesPlayed` da temporada.
 
 ---
+
+### 2.1 MatchExportService (Exportar JSON)
+
+O frontend permite exportar um `.json` completo da partida (para auditoria e envio para IA) diretamente na página `/partida/:matchId` (**EstatisticasPage**).
+
+**Arquivos:**
+- `frontend/src/pages/EstatisticasPage.tsx` (botão **Exportar JSON**)
+- `frontend/src/services/matchExportService.ts` (`buildMatchExportBundle`)
+- `frontend/src/utils/downloadJson.ts` (download do arquivo)
+
+**Comportamento:**
+- Ao clicar em **Exportar JSON**, o frontend faz **3 chamadas** ao endpoint `GET /api/partida/{matchId}/analysis` com `debug=1`:
+  - `selected`: recorte atual da tela (filtro/período/mando atuais)
+  - `last10_corridos`: `filtro=10&periodo=integral&home_mando=null&away_mando=null`
+  - `last5_casa_fora`: `filtro=5&periodo=integral&home_mando=casa&away_mando=fora`
+- Se um recorte falhar, o export **ainda acontece**, preenchendo `analysis=null` e `error="..."` no contexto que falhou.
+
+**Formato do bundle exportado (resumo):**
+
+```json
+{
+  "app": "ApostaMestre",
+  "export_version": "1",
+  "generated_at": "2026-02-10T17:25:02.154Z",
+  "match_id": "3wie337w",
+  "contexts": [
+    {
+      "key": "selected",
+      "params": {
+        "filtro": "10",
+        "periodo": "integral",
+        "home_mando": null,
+        "away_mando": null,
+        "debug": 1
+      },
+      "analysis": { "previsoes": {}, "over_under": {}, "debug_amostra": {} },
+      "error": null
+    }
+  ]
+}
+```
 
 ### 3. CompeticoesService
 
@@ -288,7 +308,7 @@ export const competicoesService = {
   async getAll(): Promise<CompeticaoInfo[]> {
     try {
       const response = await api.get('/api/competicoes');
-      return response.data;
+      return response.data.competicoes;
     } catch (error) {
       console.error('Error fetching competicoes:', error);
       throw error;
@@ -328,7 +348,7 @@ Busca escudos/logos de times.
 import api from './api';
 
 interface GetBadgeResponse {
-  escudo: string;  // URL da imagem
+  escudo_url: string | null;
 }
 
 export const escudosService = {
@@ -346,7 +366,7 @@ export const escudosService = {
         `/api/time/${teamId}/escudo`,
         { params }
       );
-      return response.data.escudo;
+      return response.data.escudo_url || `https://via.placeholder.com/48?text=${fallbackName || 'TEAM'}`;
     } catch (error) {
       console.error(`Error fetching badge for team ${teamId}:`, error);
       // Return placeholder image on error
@@ -370,7 +390,7 @@ export const escudosService = {
 
 **Endpoint Mapping:**
 - Backend: `GET /api/time/{teamId}/escudo?nome=Team%20Name`
-- Response: `{ escudo: "https://..." }`
+- Response: `{ escudo_url: "https://..." | null }`
 - Cache TTL: 7 dias (match backend `CACHE_TTL_BADGES=604800`)
 
 ---
@@ -773,7 +793,7 @@ export interface PartidaListResponse {
  * FILTER TYPES
  */
 
-// Tipo para filtro principal (temporada/últimos 5/últimos 10)
+// Tipo para filtro principal (até 50/últimos até 5/últimos até 10)
 export type FiltroEstatisticas = 'geral' | '5' | '10';
 
 // Tipo para sub-filtro de período do jogo (1T/2T/Integral)
@@ -795,12 +815,14 @@ export type CVClassificacao =
   | 'Estável'
   | 'Moderado'
   | 'Instável'
-  | 'Muito Instável';
+  | 'Muito Instável'
+  | 'N/A';
 
 export interface EstatisticaMetrica {
   media: number;
-  cv: number;                     // Coeficiente de Variação (0.0-1.0)
+  cv: number;                     // Coeficiente de Variação (0.0+)
   classificacao: CVClassificacao; // Classificação baseada no CV
+  estabilidade: number;           // 0-100% (100 = muito estável)
 }
 
 export interface EstatisticaFeitos {
@@ -814,8 +836,7 @@ export interface EstatisticasAgregadas {
   finalizacoes: EstatisticaFeitos;
   finalizacoes_gol: EstatisticaFeitos;
   cartoes_amarelos: EstatisticaMetrica;
-  cartoes_vermelhos: EstatisticaMetrica;
-  faltas: EstatisticaFeitos;
+  faltas: EstatisticaMetrica;
 }
 
 export interface TimeComEstatisticas {
@@ -837,11 +858,42 @@ export interface ArbitroInfo {
 }
 
 export interface StatsResponse {
+  partida: PartidaResumo;
   filtro_aplicado: 'geral' | '5' | '10';
   partidas_analisadas: number;
+  partidas_analisadas_mandante?: number | null;
+  partidas_analisadas_visitante?: number | null;
   mandante: TimeComEstatisticas;
   visitante: TimeComEstatisticas;
-  arbitro?: ArbitroInfo;
+  arbitro?: ArbitroInfo | null;
+  contexto?: ContextoPartida | null;
+  h2h_all_comps?: H2HInfo | null;
+
+  // Apenas quando debug=1:
+  debug_amostra?: DebugAmostra | null;
+
+  // Campos extras presentes no /analysis:
+  previsoes?: PrevisaoPartida;
+  over_under?: OverUnderPartida;
+}
+
+export type DebugSampleSource = 'matches' | 'seasonstats_fallback';
+
+export interface DebugAmostraTime {
+  source: DebugSampleSource;
+  limit: number;
+  periodo: PeriodoFilter;
+  mando: MandoFilter;
+  n_used: number;
+  match_ids: string[];
+  match_dates: Array<string | null>;
+  weights: number[];
+  reason?: string | null;
+}
+
+export interface DebugAmostra {
+  mandante: DebugAmostraTime;
+  visitante: DebugAmostraTime;
 }
 
 /**

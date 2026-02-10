@@ -573,10 +573,22 @@ function createOverUnderStat(params: CreateOverUnderParams): OverUnderStat {
   const confidence = calculateConfidence(cvMedio, partidasAnalisadas);
   const confidenceLabel = getConfiancaLabel(confidence);
 
+  // Intervalo de previsao (P5-P95 ~ 90%): mu ± 1.645 * SE
+  const z = 1.6448536269514722;
+  const n = Math.max(partidasAnalisadas, 3);
+  const se = (cvMedio * safeLambda) / Math.sqrt(n);
+  const predMin = Math.max(0, safeLambda - z * se);
+  const predMax = Math.max(0, safeLambda + z * se);
+
   return {
     label: LABELS[statKey] || statKey,
     icon: ICONS[statKey] || 'stats',
     lambda: safeLambda,
+    lambdaHome: safeLambdaHome,
+    lambdaAway: safeLambdaAway,
+    predMin,
+    predMax,
+    intervalLevel: 0.9,
     sigma,
     distribution: statKey === 'gols' ? 'poisson' : distribution, // Gols sempre usa Poisson base
     lines,

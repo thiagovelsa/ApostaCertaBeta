@@ -1,7 +1,7 @@
 # Especificação da API Própria
 
-**Versão:** 1.0
-**Data:** 24 de Dezembro de 2025
+**Versão:** 1.1
+**Data:** 07 de fevereiro de 2026
 **Base URL:** `http://localhost:8000/api` (desenvolvimento)
 **OpenAPI:** `/docs` (Swagger UI) e `/redoc` (ReDoc)
 
@@ -17,7 +17,6 @@ API RESTful para análise de estatísticas de futebol. Integra dados da **VStats
 - ✅ Respostas em JSON
 - ✅ Validação automática de inputs
 - ✅ CORS habilitado para frontend
-- ✅ Rate limiting (100 req/min por IP)
 - ✅ Caching de respostas (veja TTLs)
 
 ### 1.2 Autenticação
@@ -149,7 +148,10 @@ Obtém estatísticas detalhadas de uma partida específica com filtros de perío
 | Nome | Tipo | Localização | Obrigatório | Descrição | Valores |
 |------|------|-------------|-------------|-----------|---------|
 | `matchId` | string | path | ✅ Sim | ID da partida | ex: `f4vscquffy37afgv0arwcbztg` |
-| `filtro` | string | query | ❌ Não (default: geral) | Período de análise | `geral`, `5`, `10` |
+| `filtro` | string | query | ❌ Não (default: geral) | Quantidade máxima de jogos disputados por time | `geral` (até 50), `5` (até 5), `10` (até 10) |
+| `periodo` | string | query | ❌ Não (default: integral) | Recorte do jogo | `integral`, `1T`, `2T` |
+| `home_mando` | string | query | ❌ Não | Subfiltro de mando do mandante | `casa`, `fora` |
+| `away_mando` | string | query | ❌ Não | Subfiltro de mando do visitante | `casa`, `fora` |
 
 **Exemplos:**
 
@@ -157,6 +159,8 @@ Obtém estatísticas detalhadas de uma partida específica com filtros de perío
 GET /api/partida/f4vscquffy37afgv0arwcbztg/stats
 GET /api/partida/f4vscquffy37afgv0arwcbztg/stats?filtro=5
 GET /api/partida/f4vscquffy37afgv0arwcbztg/stats?filtro=10
+GET /api/partida/f4vscquffy37afgv0arwcbztg/stats?filtro=10&periodo=1T
+GET /api/partida/f4vscquffy37afgv0arwcbztg/stats?filtro=5&periodo=integral&home_mando=casa&away_mando=fora
 ```
 
 #### Response
@@ -186,6 +190,8 @@ GET /api/partida/f4vscquffy37afgv0arwcbztg/stats?filtro=10
   },
   "filtro_aplicado": "5",
   "partidas_analisadas": 5,
+  "partidas_analisadas_mandante": 5,
+  "partidas_analisadas_visitante": 5,
   "mandante": {
     "id": "4dsgumo7d4zupm2ugsvm4zm4d",
     "nome": "Arsenal",
@@ -200,17 +206,15 @@ GET /api/partida/f4vscquffy37afgv0arwcbztg/stats?filtro=10
         "sofridos": {"media": 0.59, "cv": 0.65, "classificacao": "Instável"}
       },
       "finalizacoes": {
-        "feitas": {"media": 10.82, "cv": 0.25, "classificacao": "Estável"},
-        "sofridas": {"media": 8.20, "cv": 0.35, "classificacao": "Moderado"}
+        "feitos": {"media": 10.82, "cv": 0.25, "classificacao": "Estável"},
+        "sofridos": {"media": 8.20, "cv": 0.35, "classificacao": "Moderado"}
       },
       "finalizacoes_gol": {
-        "feitas": {"media": 4.50, "cv": 0.30, "classificacao": "Moderado"},
-        "sofridas": {"media": 2.80, "cv": 0.40, "classificacao": "Moderado"}
+        "feitos": {"media": 4.50, "cv": 0.30, "classificacao": "Moderado"},
+        "sofridos": {"media": 2.80, "cv": 0.40, "classificacao": "Moderado"}
       },
-      "cartoes": {
-        "amarelos": {"media": 1.29, "cv": 0.55, "classificacao": "Instável"},
-        "vermelhos": {"media": 0.12, "cv": 0.85, "classificacao": "Muito Instável"}
-      }
+      "cartoes_amarelos": {"media": 1.29, "cv": 0.55, "classificacao": "Instável"},
+      "faltas": {"media": 12.4, "cv": 0.40, "classificacao": "Moderado"}
     }
   },
   "visitante": {
@@ -227,17 +231,15 @@ GET /api/partida/f4vscquffy37afgv0arwcbztg/stats?filtro=10
         "sofridos": {"media": 1.40, "cv": 0.48, "classificacao": "Moderado"}
       },
       "finalizacoes": {
-        "feitas": {"media": 8.50, "cv": 0.38, "classificacao": "Moderado"},
-        "sofridas": {"media": 9.80, "cv": 0.42, "classificacao": "Moderado"}
+        "feitos": {"media": 8.50, "cv": 0.38, "classificacao": "Moderado"},
+        "sofridos": {"media": 9.80, "cv": 0.42, "classificacao": "Moderado"}
       },
       "finalizacoes_gol": {
-        "feitas": {"media": 3.20, "cv": 0.45, "classificacao": "Moderado"},
-        "sofridas": {"media": 3.50, "cv": 0.38, "classificacao": "Moderado"}
+        "feitos": {"media": 3.20, "cv": 0.45, "classificacao": "Moderado"},
+        "sofridos": {"media": 3.50, "cv": 0.38, "classificacao": "Moderado"}
       },
-      "cartoes": {
-        "amarelos": {"media": 1.80, "cv": 0.62, "classificacao": "Instável"},
-        "vermelhos": {"media": 0.20, "cv": 0.90, "classificacao": "Muito Instável"}
-      }
+      "cartoes_amarelos": {"media": 1.80, "cv": 0.62, "classificacao": "Instável"},
+      "faltas": {"media": 11.1, "cv": 0.42, "classificacao": "Moderado"}
     }
   }
 }
@@ -269,25 +271,31 @@ GET /api/partida/f4vscquffy37afgv0arwcbztg/stats?filtro=10
 
 #### Behavior
 
-- **Período `geral`**: Todas as partidas da temporada
-- **Período `5`**: Últimas 5 partidas do time
-- **Período `10`**: Últimas 10 partidas do time
-- **Observação:** filtros `5/10` dependem de partidas já disputadas. Quando não há histórico suficiente, o backend usa dados agregados da temporada (CV estimado).
-- Cache: **6 horas** por matchId + filtro
-- Timeout: **15 segundos** (multiple API calls)
+- **Período `geral`**: Até 50 partidas disputadas (com placar) **de cada time**
+- **Período `5`**: Últimas 5 partidas **de cada time** (mandante e visitante)
+- **Período `10`**: Últimas 10 partidas **de cada time** (mandante e visitante)
+- **Observação:** se houver menos jogos do que o limite (5/10/50), o backend calcula com as partidas disponíveis.
+- **Subfiltro `periodo` (integral/1T/2T):** quando a VStats fornece estatísticas por tempo, o backend recorta 1T/2T; caso contrário, faz fallback para o total do jogo (integral) e registra `periodo_fallback_integral` em `contexto.ajustes_aplicados`.
+- **Fallback `seasonstats` (agregado):** se não houver partidas individuais suficientes (ou a VStats falhar ao retornar stats por partida), o backend usa agregados da temporada e registra `seasonstats_fallback` em `contexto.ajustes_aplicados`. Nesse modo, `partidas_analisadas_*` e `partidas_analisadas` podem refletir `matchesPlayed` da temporada e, portanto, podem ser maiores do que `5`/`10` (o filtro solicitado continua sendo útil como “intenção”, mas o payload deixa explícito que a fonte virou agregado).
+- **Regras de seleção de partidas (base do filtro):** entram apenas partidas com `localDate` válida e **placar disponível** (já disputadas). Isso inclui jogos de hoje que já terminaram e evita que jogos adiados/sem placar “roubem” slots do “últimos N”.
+- **Amostra no payload:**
+  - `partidas_analisadas_mandante` e `partidas_analisadas_visitante` refletem a amostra real por lado (pode divergir por subfiltros/erros best-effort).
+  - `partidas_analisadas` é o **n efetivo** (menor lado) usado para previsões/intervalos.
+- Cache: **6 horas** por combinação de `matchId` + `filtro` + `periodo` + `home_mando` + `away_mando`
 
 #### Fluxo Interno
 
 ```
 1. Valida matchId (não vazio)
 2. Valida filtro (geral/5/10)
-3. Verifica cache: "stats:{matchId}:{filtro}"
+3. Verifica cache: "stats:{matchId}:{filtro}:{periodo}:{home_mando}:{away_mando}"
 4. Se não encontrado:
-   a. Busca detalhes da partida
-   b. Busca histórico do time mandante (últimas 5/10 ou todas)
-   c. Busca histórico do time visitante
-   d. Calcula CV e médias para cada categoria (por partida quando disponível)
-   e. Armazena em cache por 6h
+   a. Busca metadados da partida (preferencialmente a partir do cache criado em `/api/partidas`)
+   b. Busca schedule do torneio (com cache)
+   c. Busca histórico do time mandante (últimas até N ou até 50, conforme filtro)
+   d. Busca histórico do time visitante (últimas até N ou até 50, conforme filtro)
+   e. Calcula CV e médias para cada categoria (por partida quando disponível)
+   f. Armazena em cache por 6h
 5. Retorna StatsResponse
 ```
 
@@ -309,7 +317,52 @@ curl -X GET "http://localhost:8000/api/partida/f4vscquffy37afgv0arwcbztg/stats?f
 
 ---
 
-### 2.3 GET /api/competicoes
+### 2.3 GET /api/partida/{matchId}/analysis
+
+Retorna uma análise consolidada em um único payload:
+- estatísticas (`/stats`)
+- previsões
+- probabilidades over/under
+
+#### Request
+
+**Parâmetros:**
+
+| Nome | Tipo | Localização | Obrigatório | Descrição | Valores |
+|------|------|-------------|-------------|-----------|---------|
+| `matchId` | string | path | ✅ Sim | ID da partida | ex: `f4vscquffy37afgv0arwcbztg` |
+| `filtro` | string | query | ❌ Não (default: geral) | Quantidade máxima de jogos disputados por time | `geral` (até 50), `5` (até 5), `10` (até 10) |
+| `periodo` | string | query | ❌ Não (default: integral) | Recorte do jogo | `integral`, `1T`, `2T` |
+| `home_mando` | string | query | ❌ Não | Subfiltro de mando do mandante | `casa`, `fora` |
+| `away_mando` | string | query | ❌ Não | Subfiltro de mando do visitante | `casa`, `fora` |
+| `debug` | boolean | query | ❌ Não (default: false) | Quando `true`/`1`, inclui `debug_amostra` (IDs/datas/pesos usados no recorte). Útil para auditoria/envio para IA. | `0/1`, `false/true` |
+
+**Exemplos:**
+
+```http
+GET /api/partida/f4vscquffy37afgv0arwcbztg/analysis
+GET /api/partida/f4vscquffy37afgv0arwcbztg/analysis?filtro=5&periodo=integral
+GET /api/partida/f4vscquffy37afgv0arwcbztg/analysis?filtro=10&periodo=2T&home_mando=casa&away_mando=fora
+GET /api/partida/f4vscquffy37afgv0arwcbztg/analysis?filtro=10&debug=1
+```
+
+#### Response
+
+**Status 200 - OK**
+
+Retorna tudo que o endpoint `/stats` retorna, mais:
+- `previsoes`
+- `over_under`
+
+Quando `debug=1`, também inclui:
+- `debug_amostra` (por lado: mandante/visitante)
+  - `match_ids`, `match_dates` e `weights` usados no cálculo
+
+**Nota de performance:** com `debug=1` o backend evita cache para não inflar payload/cache keys.
+
+---
+
+### 2.4 GET /api/competicoes
 
 Lista todas as competições disponíveis.
 
@@ -328,20 +381,23 @@ GET /api/competicoes
 **Status 200 - OK**
 
 ```json
-[
-  {
-    "id": "51r6ph2woavlbbpk8f29nynf8",
-    "nome": "Premier League 2025/26",
-    "pais": "Inglaterra",
-    "tipo": "Liga"
-  },
-  {
-    "id": "tournament_id_2",
-    "nome": "La Liga 2025/26",
-    "pais": "Espanha",
-    "tipo": "Liga"
-  }
-]
+{
+  "total": 2,
+  "competicoes": [
+    {
+      "id": "51r6ph2woavlbbpk8f29nynf8",
+      "nome": "Premier League 2025/26",
+      "pais": "Inglaterra",
+      "tipo": "Liga"
+    },
+    {
+      "id": "tournament_id_2",
+      "nome": "La Liga 2025/26",
+      "pais": "Espanha",
+      "tipo": "Liga"
+    }
+  ]
+}
 ```
 
 **Status 500 - Server Error**
@@ -360,7 +416,7 @@ GET /api/competicoes
 
 ---
 
-### 2.4 GET /api/time/{teamId}/escudo
+### 2.5 GET /api/time/{teamId}/escudo
 
 Obtém escudo/logo de um time.
 
@@ -386,8 +442,10 @@ GET /api/time/4dsgumo7d4zupm2ugsvm4zm4d/escudo?nome=Arsenal
 
 ```json
 {
-  "escudo": "https://r2.thesportsdb.com/images/media/team/badge/uyhbfe1612467038.png",
-  "nome_time": "Arsenal"
+  "team_id": "4dsgumo7d4zupm2ugsvm4zm4d",
+  "team_name": "Arsenal",
+  "escudo_url": "https://r2.thesportsdb.com/images/media/team/badge/uyhbfe1612467038.png",
+  "fonte": "TheSportsDB"
 }
 ```
 
@@ -431,9 +489,6 @@ User-Agent: Frontend/1.0
 ```http
 Content-Type: application/json; charset=utf-8
 Cache-Control: max-age=3600  (varia por endpoint)
-X-RateLimit-Limit: 100
-X-RateLimit-Remaining: 99
-X-RateLimit-Reset: 1234567890
 ```
 
 ---
@@ -443,7 +498,8 @@ X-RateLimit-Reset: 1234567890
 **Origens Permitidas:**
 - `http://localhost:3000` (dev frontend)
 - `http://localhost:5173` (Vite dev server)
-- `https://palpitremestre.com` (produção)
+- `http://localhost:5174` (Vite dev server alt)
+- `http://localhost:5175` (Vite dev server alt)
 
 **Métodos Permitidos:** GET
 
@@ -451,32 +507,15 @@ X-RateLimit-Reset: 1234567890
 
 ---
 
-## 5. Rate Limiting
-
-- **Limite:** 100 requisições por minuto por IP
-- **Headers de Resposta:**
-  - `X-RateLimit-Limit: 100`
-  - `X-RateLimit-Remaining: 99`
-  - `X-RateLimit-Reset: 1609459200` (timestamp Unix)
-
-**Status 429 - Too Many Requests:**
-
-```json
-{
-  "detail": "Rate limit excedido. Tente novamente em 30 segundos."
-}
-```
-
----
-
-## 6. Estratégia de Cache
+## 5. Estratégia de Cache
 
 | Endpoint | TTL | Cache Key |
 |----------|-----|-----------|
-| `/api/partidas` | 1 hora | `partidas:{data}` |
-| `/api/partida/{id}/stats` | 6 horas | `stats:{matchId}:{filtro}` |
-| `/api/competicoes` | 12 horas | `competicoes:list` |
-| `/api/time/{id}/escudo` | 7 dias | `escudo:{teamId}` |
+| `/api/partidas` | 1 hora | `v{cache_version}:partidas:{data}` |
+| `/api/partida/{id}/stats` | 6 horas | `v{cache_version}:stats:{matchId}:{filtro}:{periodo}:{home_mando}:{away_mando}` |
+| `/api/partida/{id}/analysis` | (indireto) | usa o mesmo cache do `/stats` (exceto `debug=1`, que evita cache) |
+| `/api/competicoes` | 12 horas | `v{cache_version}:competicoes:list` |
+| `/api/time/{id}/escudo` | 7 dias | `v{cache_version}:escudo:{teamId}` |
 
 **Invalidação Manual:**
 - Limpar cache de partida ao editar dados
@@ -484,7 +523,7 @@ X-RateLimit-Reset: 1234567890
 
 ---
 
-## 7. Tratamento de Erros
+## 6. Tratamento de Erros
 
 ### 7.1 Código de Erro Padrão
 
@@ -507,8 +546,6 @@ async function fetchAPI(endpoint, params = {}) {
       throw new Error('Parâmetro inválido');
     } else if (response.status === 404) {
       throw new Error('Recurso não encontrado');
-    } else if (response.status === 429) {
-      throw new Error('Muitas requisições. Aguarde...');
     } else {
       throw new Error('Erro no servidor');
     }
@@ -585,15 +622,15 @@ Para implementar e testar esses endpoints, consulte:
 - **[MODELOS_DE_DADOS.md](MODELOS_DE_DADOS.md)** - Definição completa de todos os schemas de request/response
 - **[ARQUITETURA_BACKEND.md](ARQUITETURA_BACKEND.md)** - Como a API é estruturada internamente em camadas
 - **[ENDPOINTS_EXTERNOS_COMPLETO.md](ENDPOINTS_EXTERNOS_COMPLETO.md)** - TODOS endpoints externos (VStats, TheSportsDB, Opta, Wikidata)
-- **[openapi.yaml](../openapi.yaml)** - Especificação OpenAPI 3.0 completa (use em Swagger UI: http://localhost:8000/docs)
+- **[openapi.yaml](../openapi.yaml)** - Contrato OpenAPI exportado do projeto (o `/docs` do FastAPI é gerado em runtime)
 - **[TESTING_STRATEGY.md](TESTING_STRATEGY.md)** - Como testar os endpoints com integration tests
 - **[LOCAL_SETUP.md](LOCAL_SETUP.md)** - Como rodar a API localmente para testar
 - **[tests/README.md](../tests/README.md)** - Exemplos práticos de testes para endpoints HTTP
-- **[CONTRIBUTING.md](../CONTRIBUTING.md)** - Como contribuir com novos endpoints
+- **[AGENTS.md](../AGENTS.md)** - Diretrizes do repositório (workflow e padrões)
 
 **Próximos Passos Recomendados:**
 1. Entenda a estrutura interna consultando [ARQUITETURA_BACKEND.md](ARQUITETURA_BACKEND.md)
 2. Implemente os schemas segundo [MODELOS_DE_DADOS.md](MODELOS_DE_DADOS.md)
 3. Configure seu ambiente com [LOCAL_SETUP.md](LOCAL_SETUP.md)
 4. Implemente os endpoints e teste usando padrões em [TESTING_STRATEGY.md](TESTING_STRATEGY.md)
-5. Verifique a documentação interativa em http://localhost:8000/docs (gerada de [openapi.yaml](../openapi.yaml))
+5. Verifique a documentação interativa em http://localhost:8000/docs (gerada pelo FastAPI em runtime)

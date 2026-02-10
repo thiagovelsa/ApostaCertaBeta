@@ -497,9 +497,15 @@ class VStatsRepository:
 ```python
 # app/utils/cv_calculator.py
 from typing import List
+from dataclasses import dataclass
 from statistics import mean, stdev
 
-def calcular_cv(valores: List[float]) -> float:
+@dataclass(frozen=True)
+class CVResult:
+    cv: float
+    classificacao: str
+
+def calcular_cv(valores: List[float]) -> CVResult:
     """
     Calcula Coeficiente de Variação.
 
@@ -509,19 +515,23 @@ def calcular_cv(valores: List[float]) -> float:
         valores: Lista de números
 
     Returns:
-        CV arredondado a 2 casas decimais
+        CV arredondado a 2 casas decimais + classificação.
+
+        Observação (regra conservadora do sistema):
+        - Se houver amostra insuficiente (<2) ou média == 0, o CV é tratado como "N/A" para evitar confiança falsa.
     """
     if not valores or len(valores) < 2:
-        return 0.0
+        return CVResult(cv=1.0, classificacao="N/A")
 
     media = mean(valores)
     if media == 0:
-        return 0.0
+        return CVResult(cv=1.0, classificacao="N/A")
 
     desvio = stdev(valores)
     cv = desvio / media
 
-    return round(cv, 2)
+    cv = round(cv, 2)
+    return CVResult(cv=cv, classificacao=classificar_cv(cv))
 
 def classificar_cv(cv: float) -> str:
     """Classifica o CV em categorias."""
@@ -942,7 +952,7 @@ Para entender melhor este documento e seu contexto no sistema, consulte:
 - **[API_SPECIFICATION.md](API_SPECIFICATION.md)** - Documentação dos 4 endpoints que usam essa arquitetura
 - **[TESTING_STRATEGY.md](TESTING_STRATEGY.md)** - Como testar cada camada da arquitetura
 - **[LOCAL_SETUP.md](LOCAL_SETUP.md)** - Como rodar o backend localmente
-- **[CONTRIBUTING.md](../CONTRIBUTING.md)** - Guia de contribuição seguindo esses padrões
+- **[AGENTS.md](../AGENTS.md)** - Diretrizes do repositório (workflow e padrões)
 - **[tests/README.md](../tests/README.md)** - Guia prático de testes com exemplos
 
 **Próximos Passos Recomendados:**

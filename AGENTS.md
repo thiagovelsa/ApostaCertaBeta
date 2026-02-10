@@ -48,7 +48,7 @@
 - PRs should include a clear summary, linked issues, and screenshots for UI changes; run `pytest`, `black`, and `ruff` before opening.
 
 ## Configuration & Security Notes
-- Backend reads `.env` from the working directory; copy `/.env.example` to `backend/.env` and keep secrets out of git.
+- Backend reads `.env` from the current working directory; copy `.env.example` to `backend/.env` and keep secrets out of git.
 - If API schemas change, update `openapi.yaml` and relevant docs in `docs/`.
 
 ## Agent Notes

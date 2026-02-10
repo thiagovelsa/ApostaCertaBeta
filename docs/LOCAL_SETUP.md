@@ -1,7 +1,7 @@
 # Setup Local - Guia Completo
 
 **Versão:** 1.0
-**Data:** 24 de dezembro de 2025
+**Data:** 07 de fevereiro de 2026
 **Plataformas:** Windows, macOS, Linux
 
 Guia passo-a-passo para configurar o ambiente de desenvolvimento localmente.
@@ -27,7 +27,10 @@ python3 --version
 - **macOS:** `brew install python@3.11`
 - **Linux:** `sudo apt-get install python3.11`
 
-### 1.2 Git
+### 1.2 Git (Opcional)
+
+Você pode trabalhar sem Git (por exemplo, baixando o projeto como `.zip`).
+Se quiser clonar/atualizar via linha de comando:
 
 ```bash
 git --version
@@ -60,13 +63,12 @@ redis-cli ping
 # Resposta esperada: PONG
 ```
 
-### 1.4 Docker (Recomendado)
+### 1.4 Docker (Opcional)
 
 **Verificar instalação:**
 
 ```bash
 docker --version
-docker-compose --version
 ```
 
 **Instalar:** https://www.docker.com/products/docker-desktop
@@ -79,24 +81,30 @@ docker-compose --version
 
 ```bash
 # Clonar
-git clone https://github.com/thiagovelsa/ApostaCertaBeta.git
+git clone <url-do-repositorio>
 
 # Entrar no diretório
-cd ApostaCertaBeta
+cd ApostaMestre
 ```
+
+Alternativa sem Git:
+- Baixe o repositório como `.zip` e extraia; depois entre na pasta `ApostaMestre`.
 
 ### 2.2 Criar Ambiente Virtual Python
 
 ```bash
+# Ir para o backend
+cd backend
+
 # Criar venv
-python -m venv venv
+python -m venv .venv
 
 # Ativar venv
 # Windows:
-venv\Scripts\activate
+.venv\Scripts\activate
 
 # macOS/Linux:
-source venv/bin/activate
+source .venv/bin/activate
 ```
 
 **Verificar se está ativado:**
@@ -133,12 +141,10 @@ pytest --version
 
 ```bash
 # Copiar arquivo de exemplo
-cp .env.example .env
+cp ../.env.example .env
 
 # Editar .env e preencher valores:
 # - VSTATS_API_URL (já está correto)
-# - VSTATS_CLIENT_ID (pegar do suporte)
-# - VSTATS_CLIENT_SECRET (pegar do suporte)
 # - REDIS_URL (deixar como localhost:6379 para dev)
 ```
 
@@ -146,10 +152,11 @@ cp .env.example .env
 
 ```env
 VSTATS_API_URL=https://vstats-back-bbdfdf0bfd16.herokuapp.com/api
-VSTATS_CLIENT_ID=seu_client_id_aqui
-VSTATS_CLIENT_SECRET=seu_client_secret_aqui
+VSTATS_API_TIMEOUT=30
 ENV=development
 REDIS_URL=redis://localhost:6379/0
+CACHE_ENABLED=true
+ALLOWED_ORIGINS=http://localhost:3000,http://localhost:5173
 ```
 
 ### 2.5 Iniciar Redis (se não estiver rodando)
@@ -197,37 +204,28 @@ INFO:     Waiting for application startup.
 ### 3.1 Pré-requisitos
 
 ```bash
-node --version   # Requer Node 18+ (compat: Node 16+)
+node --version   # Requer Node 20.19+ ou 22.12+ (Vite 7)
 npm --version    # npm 8+ (vem com Node)
 ```
 
+Nota: o `frontend/package.json` define `engines.node >= 20.19.0`. Se a versao do Node for menor, o `npm` pode exibir avisos e o build pode falhar em alguns ambientes.
+
 **Instalar Node:** https://nodejs.org/
 
-### 3.2 Criar Projeto Frontend (Se não existir)
+### 3.2 Instalar Dependências do Frontend
+
+O frontend já existe em `frontend/`.
 
 ```bash
-# Criar novo projeto Vite + React + TypeScript
-npm create vite@latest frontend -- --template react-ts
-
 cd frontend
-
-# Instalar dependências
 npm install
 ```
 
-**Dependências Principais a Instalar:**
-```bash
-npm install react-router-dom @tanstack/react-query zustand axios
-npm install -D tailwindcss postcss autoprefixer
-```
+Observacao: `frontend/dist/` e apenas o build local (saida do Vite). Nao use como fonte de verdade; para limpar, rode:
 
-**Configuração Tailwind:**
 ```bash
-npx tailwindcss init -p
-# Gera tailwind.config.js e postcss.config.js
+npm run clean
 ```
-
-Edite `tailwind.config.js` conforme especificado em [docs/frontend/DESIGN_SYSTEM.md](../frontend/DESIGN_SYSTEM.md#1-estrutura-de-pastas).
 
 ### 3.3 Configurar Variáveis de Ambiente
 
@@ -295,59 +293,13 @@ npm run preview
 ```bash
 # ESLint (verificar erros)
 npm run lint
-
-# Prettier (formatar código)
-npm run format
 ```
 
 ---
 
 ## 4. Usando Docker (Alternativa)
 
-### 4.1 Com Docker Compose (Simplificado)
-
-```bash
-# Build e rodar tudo
-docker-compose up -d
-
-# Verificar status
-docker-compose ps
-
-# Ver logs
-docker-compose logs -f backend
-docker-compose logs -f redis
-
-# Parar
-docker-compose down
-```
-
-**Serviços iniciados:**
-- Backend: http://localhost:8000
-- Redis: localhost:6379
-- Frontend (se configurado): http://localhost:3000
-
-### 4.2 Build Manual
-
-```bash
-# Build imagem
-docker build -t palpitremestre-backend .
-
-# Rodar container
-docker run -d \
-  -p 8000:8000 \
-  -e VSTATS_API_URL=https://vstats-back-bbdfdf0bfd16.herokuapp.com/api \
-  -e VSTATS_CLIENT_ID=seu_id \
-  -e VSTATS_CLIENT_SECRET=seu_secret \
-  -e REDIS_URL=redis://host.docker.internal:6379/0 \
-  --name palpitremestre-backend \
-  palpitremestre-backend
-
-# Verificar
-docker logs -f palpitremestre-backend
-
-# Acessar
-curl http://localhost:8000/docs
-```
+No estado atual do repositório, não há `Dockerfile`/`docker-compose.yml` prontos para uso.
 
 ---
 
@@ -444,7 +396,7 @@ pre-commit run --all-files
 Após setup, você terá:
 
 ```
-ApostaCertaBeta/
+ApostaMestre/
 ├── venv/                          # Ambiente virtual (criar)
 ├── app/
 │   ├── main.py                    # FastAPI app
@@ -464,12 +416,9 @@ ApostaCertaBeta/
 │   └── vite.config.ts
 ├── docs/                          # Documentação
 ├── scripts/
-├── .env                           # Criar a partir de .env.example
 ├── .env.example
 ├── requirements.txt
 ├── requirements-dev.txt
-├── Dockerfile
-├── docker-compose.yml
 ├── README.md
 └── openapi.yaml
 ```
@@ -520,7 +469,8 @@ docker ps                   # ✓ Containers rodando
 # Windows/macOS/Linux
 which python3
 # Use python3 em vez de python
-python3 -m venv venv
+cd backend
+python3 -m venv .venv
 python3 -m pip install -r requirements.txt
 ```
 
@@ -529,8 +479,9 @@ python3 -m pip install -r requirements.txt
 **Solução:**
 ```bash
 # Verificar se venv está ativado (deve ver (venv) no prompt)
-source venv/bin/activate  # macOS/Linux
-venv\Scripts\activate      # Windows
+cd backend
+source .venv/bin/activate  # macOS/Linux
+.venv\Scripts\activate      # Windows
 
 # Reinstalar
 pip install -r requirements.txt
@@ -554,11 +505,10 @@ CACHE_ENABLED=false
 
 **Solução:**
 ```bash
-# Garantir que está na raiz do projeto (onde app/ está)
+# Garantir que está no diretório do backend (onde app/ está)
+cd backend
 ls app/  # Deve listar arquivos do app
 
-# Se estiver em subdirectório
-cd /path/to/ApostaCertaBeta
 uvicorn app.main:app --reload
 ```
 
@@ -688,12 +638,9 @@ ALLOWED_ORIGINS=https://palpitremestre.com
 
 ```bash
 # Iniciar desenvolvimento completo
-source venv/bin/activate && \
+cd backend && source .venv/bin/activate && \
 redis-server & \
 uvicorn app.main:app --reload
-
-# Ou com Docker Compose
-docker-compose up -d && docker-compose logs -f
 
 # Rodar testes
 pytest --cov=app --cov-report=html
@@ -741,14 +688,13 @@ Para aprofundar sua compreensão do projeto após a configuração local:
 - **[API_SPECIFICATION.md](API_SPECIFICATION.md)** - Documentação dos 4 endpoints principais
 - **[TESTING_STRATEGY.md](TESTING_STRATEGY.md)** - Como rodar testes (seção 5)
 - **[../tests/README.md](../tests/README.md)** - Exemplos práticos de testes
-- **[../openapi.yaml](../openapi.yaml)** - Especificação OpenAPI (acessível em http://localhost:8000/docs)
-- **[../CONTRIBUTING.md](../CONTRIBUTING.md)** - Como contribuir após entender a estrutura
-- **[../PROJETO_SISTEMA_ANALISE.md](../PROJETO_SISTEMA_ANALISE.md)** - Requisitos do sistema
-- **[../DOCUMENTACAO_VSTATS_COMPLETA.md](../DOCUMENTACAO_VSTATS_COMPLETA.md)** - API externa VStats
+- **[../openapi.yaml](../openapi.yaml)** - Contrato OpenAPI exportado do projeto (o `/docs` do FastAPI é gerado em runtime)
+- **[../AGENTS.md](../AGENTS.md)** - Diretrizes do repositório (workflow e padrões)
+- **[DOCUMENTACAO_VSTATS_COMPLETA.md](DOCUMENTACAO_VSTATS_COMPLETA.md)** - API externa VStats
 
 **Próximos Passos Recomendados:**
 1. Acesse http://localhost:8000/docs para ver a documentação interativa da API
 2. Estude [ARQUITETURA_BACKEND.md](ARQUITETURA_BACKEND.md) para entender as camadas
 3. Implemente seu primeiro endpoint seguindo exemplos em [MODELOS_DE_DADOS.md](MODELOS_DE_DADOS.md)
 4. Escreva testes seguindo [TESTING_STRATEGY.md](TESTING_STRATEGY.md)
-5. Consulte [../CONTRIBUTING.md](../CONTRIBUTING.md) para o fluxo de trabalho
+5. Consulte [../AGENTS.md](../AGENTS.md) para o fluxo de trabalho

@@ -107,11 +107,11 @@ export function SmartSearchSettings({ isOpen, onToggle }: SmartSearchSettingsPro
       <button
         type="button"
         onClick={onToggle}
-        className="w-full flex items-center justify-between p-4 hover:bg-dark-tertiary/50 transition-colors rounded-xl"
+        className="focus-ring w-full flex items-center justify-between p-4 hover:bg-dark-tertiary/50 transition-colors rounded-xl"
       >
         <div className="flex items-center gap-2">
           <Icon name="settings" size="sm" className="text-gray-400" />
-          <span className="text-sm text-gray-400">Configurar filtros</span>
+          <span className="text-sm text-gray-400">Ajustar critérios</span>
         </div>
         <Icon
           name="chevron-right"
@@ -125,8 +125,8 @@ export function SmartSearchSettings({ isOpen, onToggle }: SmartSearchSettingsPro
         <div className="p-4 pt-0 space-y-6">
           {/* Seção: Tipos de Oportunidade */}
           <div className="space-y-3">
-            <h4 className="text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Tipos de Oportunidade
+            <h4 className="text-xs font-medium text-gray-400 uppercase tracking-wider">
+              Tipos de mercado
             </h4>
             <ToggleSwitch
               label="Mostrar Over"
@@ -144,11 +144,11 @@ export function SmartSearchSettings({ isOpen, onToggle }: SmartSearchSettingsPro
 
           {/* Seção: Limiares Globais */}
           <div className="space-y-3">
-            <h4 className="text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Limiares Globais
+            <h4 className="text-xs font-medium text-gray-400 uppercase tracking-wider">
+              Critérios gerais
             </h4>
             <SliderInput
-              label="Corte Óbvio"
+              label="Corte de probabilidade"
               value={globalThresholds.probabilityCutoff}
               onChange={(v) => setGlobalThreshold('probabilityCutoff', v)}
               min={0.90}
@@ -156,7 +156,7 @@ export function SmartSearchSettings({ isOpen, onToggle }: SmartSearchSettingsPro
               step={0.01}
             />
             <SliderInput
-              label="Dif. Mínima"
+              label="Margem mínima"
               value={globalThresholds.minEdge}
               onChange={(v) => setGlobalThreshold('minEdge', v)}
               min={0.10}
@@ -172,7 +172,7 @@ export function SmartSearchSettings({ isOpen, onToggle }: SmartSearchSettingsPro
             <button
               type="button"
               onClick={() => setShowAdvanced(!showAdvanced)}
-              className="flex items-center gap-2 text-xs text-gray-500 hover:text-gray-300 transition-colors"
+              className="focus-ring flex items-center gap-2 text-xs text-gray-400 hover:text-white transition-colors rounded-lg px-2 py-1 -mx-2"
             >
               <Icon
                 name="chevron-right"
@@ -241,7 +241,7 @@ export function SmartSearchSettings({ isOpen, onToggle }: SmartSearchSettingsPro
             onClick={resetToDefaults}
             className="w-full py-2 text-sm text-gray-400 hover:text-white hover:bg-dark-tertiary rounded-lg transition-colors"
           >
-            Restaurar padrões
+            Restaurar padrão
           </button>
         </div>
       )}

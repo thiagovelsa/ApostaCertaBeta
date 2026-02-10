@@ -13,17 +13,17 @@ const options: { value: PeriodoFilter; label: string }[] = [
 
 export function PeriodoToggle({ value, onChange }: PeriodoToggleProps) {
   return (
-    <div className="inline-flex bg-dark-tertiary rounded-lg p-1 gap-1">
+    <div className="inline-flex bg-dark-tertiary rounded-full p-1 gap-1">
       {options.map((option) => (
         <button
           key={option.value}
           onClick={() => onChange(option.value)}
+          type="button"
           className={`
-            px-4 py-2 rounded-md text-sm font-medium transition-all duration-200
-            ${
-              value === option.value
-                ? 'bg-info text-dark-primary shadow-glow'
-                : 'text-gray-400 hover:text-white hover:bg-dark-quaternary'
+            focus-ring px-5 py-2 rounded-full text-sm font-medium transition-all duration-200
+            ${value === option.value
+              ? 'bg-primary-500 text-dark-primary shadow-glow'
+              : 'text-gray-400 hover:text-white hover:bg-dark-quaternary'
             }
           `}
         >

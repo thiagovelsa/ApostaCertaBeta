@@ -45,7 +45,7 @@ function DisciplineMetricRow({
   const avgEstabilidade = (home.estabilidade + away.estabilidade) / 2;
   const badgeLabel: EstabilidadeLabel =
     avgEstabilidade >= 70 ? 'Alta' :
-    avgEstabilidade >= 50 ? 'Média' : 'Baixa';
+      avgEstabilidade >= 50 ? 'Média' : 'Baixa';
 
   const total = home.media + away.media;
   const percentHome = total > 0 ? (home.media / total) * 100 : 50;
@@ -55,7 +55,7 @@ function DisciplineMetricRow({
       {/* Header com label e badge - altura fixa */}
       <div className="flex items-center justify-between mb-2 h-6">
         <span className="text-sm text-gray-300">{label}</span>
-        <Badge estabilidade={badgeLabel} label="Estabilidade" size="sm" />
+        <Badge estabilidade={badgeLabel} label="Consistência" size="sm" />
       </div>
 
       {/* Valores comparativos - altura fixa */}
@@ -65,7 +65,10 @@ function DisciplineMetricRow({
       </div>
 
       {/* Barra de comparação - altura fixa */}
-      <div className="h-1.5 bg-dark-quaternary rounded-full overflow-hidden flex mb-3">
+      <div
+        className="h-1.5 bg-dark-quaternary rounded-full overflow-hidden flex mb-3"
+        title="Comparação relativa entre as médias. Não representa probabilidade."
+      >
         <div
           className="bg-primary-500 transition-all duration-500"
           style={{ width: `${percentHome}%` }}
@@ -79,7 +82,7 @@ function DisciplineMetricRow({
       {/* Estabilidade por time - layout vertical para consistência */}
       <div className="space-y-2">
         <div className="flex items-center gap-2">
-          <span className="text-xs text-gray-500 truncate w-24" title={homeTeamName}>
+          <span className="text-xs text-gray-400 truncate w-24" title={homeTeamName}>
             {homeTeamName}
           </span>
           <div className="flex-1 h-1 bg-dark-quaternary rounded-full overflow-hidden">
@@ -91,7 +94,7 @@ function DisciplineMetricRow({
           <span className="text-xs text-gray-400 w-8 text-right">{home.estabilidade}%</span>
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-xs text-gray-500 truncate w-24" title={awayTeamName}>
+          <span className="text-xs text-gray-400 truncate w-24" title={awayTeamName}>
             {awayTeamName}
           </span>
           <div className="flex-1 h-1 bg-dark-quaternary rounded-full overflow-hidden">
@@ -122,7 +125,7 @@ function RefereeInfo({ arbitro }: { arbitro: ArbitroInfo }) {
         <Icon name="whistle" size="md" className="text-warning" />
       </div>
       <p className="text-sm font-medium text-white">{arbitro.nome}</p>
-      <p className="text-xs text-gray-500">
+      <p className="text-xs text-gray-400">
         {arbitro.partidas} jogos · {arbitro.media_cartoes_amarelos.toFixed(1)} cartões/jogo (competição)
       </p>
       <p className="text-xs text-gray-400">
@@ -149,6 +152,10 @@ export const DisciplineCard = memo(function DisciplineCard({
         <Icon name="card" size="sm" className="text-primary-400" />
         <h3 className="text-sm font-medium text-white">Disciplina</h3>
       </div>
+
+      <p className="text-[11px] text-gray-400 mb-4">
+        Barras mostram comparação relativa entre médias (não é probabilidade).
+      </p>
 
       {/* Árbitro (se disponível) */}
       {arbitro && (

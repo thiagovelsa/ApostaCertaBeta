@@ -85,6 +85,7 @@ function analisarEstatistica(
         linha: line.line,
         probabilidade: line.over,
         confianca: stat.confidence,
+        uncertainty: typeof line.uncertainty === 'number' ? line.uncertainty : undefined,
         confiancaLabel: stat.confidenceLabel,
         score,
       });
@@ -105,6 +106,7 @@ function analisarEstatistica(
         linha: line.line,
         probabilidade: line.under,
         confianca: stat.confidence,
+        uncertainty: typeof line.uncertainty === 'number' ? line.uncertainty : undefined,
         confiancaLabel: stat.confidenceLabel,
         score,
       });

@@ -6,20 +6,21 @@ interface FilterToggleProps {
 }
 
 const options: { value: FiltroEstatisticas; label: string }[] = [
-  { value: 'geral', label: 'Temporada' },
+  { value: 'geral', label: 'Até 50 jogos' },
   { value: '10', label: 'Últimos 10' },
   { value: '5', label: 'Últimos 5' },
 ];
 
 export function FilterToggle({ value, onChange }: FilterToggleProps) {
   return (
-    <div className="inline-flex bg-dark-tertiary rounded-lg p-1 gap-1">
+    <div className="inline-flex bg-dark-tertiary rounded-full p-1 gap-1">
       {options.map((option) => (
         <button
           key={option.value}
           onClick={() => onChange(option.value)}
+          type="button"
           className={`
-            px-4 py-2 rounded-md text-sm font-medium transition-all duration-200
+            focus-ring px-5 py-2 rounded-full text-sm font-medium transition-all duration-200
             ${
               value === option.value
                 ? 'bg-primary-500 text-dark-primary shadow-glow'

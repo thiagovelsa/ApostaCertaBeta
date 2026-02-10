@@ -21,7 +21,9 @@ export type IconName =
   | 'whistle'
   | 'plane'
   | 'close'
-  | 'settings';
+  | 'settings'
+  | 'live'
+  | 'check';
 
 interface IconProps extends SVGProps<SVGSVGElement> {
   name: IconName;
@@ -184,6 +186,16 @@ const icons: Record<IconName, ReactNode> = {
       />
       <circle cx="12" cy="12" r="3" />
     </>
+  ),
+  live: (
+    <circle cx="12" cy="12" r="6" fill="currentColor" />
+  ),
+  check: (
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      d="M4.5 12.75l6 6 9-13.5"
+    />
   ),
 };
 

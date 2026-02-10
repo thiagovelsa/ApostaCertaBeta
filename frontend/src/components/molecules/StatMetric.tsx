@@ -37,7 +37,10 @@ export function StatMetric({ label, home, away, showCV = true }: StatMetricProps
       </div>
 
       {/* Comparison Bar */}
-      <div className="h-2 bg-dark-tertiary rounded-full overflow-hidden flex">
+      <div
+        className="h-2 bg-dark-tertiary rounded-full overflow-hidden flex"
+        title="Comparação relativa entre as médias. Não representa probabilidade."
+      >
         <div
           className="bg-primary-500 transition-all duration-500"
           style={{ width: `${percentHome}%` }}
@@ -48,9 +51,13 @@ export function StatMetric({ label, home, away, showCV = true }: StatMetricProps
         />
       </div>
 
+      <div className="mt-1 text-[10px] text-gray-400 text-center">
+        Comparação relativa (não é probabilidade).
+      </div>
+
       {/* CV Values */}
       {showCV && (
-        <div className="flex justify-between mt-1 text-xs text-gray-500">
+        <div className="flex justify-between mt-1 text-xs text-gray-400">
           <span>CV: {(home.cv * 100).toFixed(0)}%</span>
           <span>CV: {(away.cv * 100).toFixed(0)}%</span>
         </div>

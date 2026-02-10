@@ -6,8 +6,6 @@
 import { useState, useCallback } from 'react';
 import { getPartidasByDate } from '@/services/partidasService';
 import { getMatchStats } from '@/services/statsService';
-import { calcularPrevisoes } from '@/utils/predictions';
-import { calcularOverUnder } from '@/utils/overUnder';
 import { analisarPartida, criarResultado, type AnalysisConfig } from '@/utils/smartSearch';
 import { useSmartSearchSettingsStore } from '@/stores';
 import type {
@@ -169,7 +167,8 @@ export function useSmartSearch(): UseSmartSearchReturn {
         partidas,
         async (partida) => {
           try {
-            const stats = await getMatchStats(partida.id, 'geral');
+            // Preferimos "10 corridos" por velocidade (menos chamadas/menos dados).
+            const stats = await getMatchStats(partida.id, '10');
             return { partida, stats };
           } catch {
             // Ignora partidas com erro (ex: sem dados suficientes)
@@ -195,20 +194,10 @@ export function useSmartSearch(): UseSmartSearchReturn {
         const { partida, stats } = resultado;
 
         try {
-          // Calcular previsões
-          const previsoes = calcularPrevisoes(
-            stats.mandante,
-            stats.visitante,
-            stats.partidas_analisadas
-          );
-
-          // Calcular Over/Under
-          const overUnder = calcularOverUnder(
-            previsoes,
-            stats.mandante.estatisticas,
-            stats.visitante.estatisticas,
-            stats.partidas_analisadas
-          );
+          const overUnder = stats.over_under;
+          if (!overUnder) {
+            continue;
+          }
 
           // Analisar e extrair oportunidades
           const oportunidades = analisarPartida(partida, stats, overUnder, config);

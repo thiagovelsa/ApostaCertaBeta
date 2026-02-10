@@ -3,6 +3,7 @@ node_modules/
 __pycache__/
 *.pyc
 .venv/
+.venv_linux/
 venv/
 env/
 
@@ -43,3 +44,10 @@ htmlcov/
 # Temporary
 *.tmp
 *.temp
+
+# Codex/agent artifacts (local tooling)
+.agent/
+.codex/
+
+# Export artifacts (downloaded bundles)
+partida_*.json

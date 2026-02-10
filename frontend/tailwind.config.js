@@ -43,10 +43,16 @@ export default {
           instavel: '#f97316',
           muitoInstavel: '#ef4444',
         },
+        // Accent Colors for Status Badges
+        accent: {
+          gold: '#f59e0b',    // Partidas destaque
+          live: '#ef4444',    // Jogos ao vivo
+          soon: '#8b5cf6',    // Jogos em breve (< 30min)
+        },
       },
       fontFamily: {
-        sans: ['Outfit', 'Inter', 'system-ui', 'sans-serif'],
-        mono: ['Space Mono', 'monospace'],
+        sans: ['Outfit', ...defaultTheme.fontFamily.sans],
+        mono: ['Space Mono', ...defaultTheme.fontFamily.mono],
       },
       boxShadow: {
         'glow': '0 0 20px rgba(132, 204, 22, 0.3)',
@@ -57,6 +63,7 @@ export default {
         'slide-up': 'slideUp 0.3s ease-out',
         'scale-up': 'scaleUp 0.2s ease-out',
         'pulse-glow': 'pulseGlow 2s infinite',
+        'shimmer': 'shimmer 2s infinite linear',
       },
       keyframes: {
         fadeIn: {
@@ -74,6 +81,10 @@ export default {
         pulseGlow: {
           '0%, 100%': { boxShadow: '0 0 20px rgba(132, 204, 22, 0.3)' },
           '50%': { boxShadow: '0 0 30px rgba(132, 204, 22, 0.5)' },
+        },
+        shimmer: {
+          '0%': { backgroundPosition: '-200% 0' },
+          '100%': { backgroundPosition: '200% 0' },
         },
       },
     },

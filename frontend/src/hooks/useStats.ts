@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, keepPreviousData } from '@tanstack/react-query';
 import { getMatchStats, getCompeticoes, getTeamBadge } from '@/services/statsService';
 import type { FiltroEstatisticas, MandoFilter, PeriodoFilter } from '@/types';
 
@@ -25,6 +25,7 @@ export function useStats(
     // Usa defaults do QueryClient: staleTime=5min, gcTime=30min
     // Permite cache ao trocar filtros (ex: Geral → Últimos 5 → Geral = instantâneo)
     enabled: Boolean(matchId),
+    placeholderData: keepPreviousData, // mantém dados visíveis durante troca de filtros
   });
 }
 

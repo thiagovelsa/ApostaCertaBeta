@@ -22,19 +22,27 @@ export function ComparisonBar({
   return (
     <div className="w-full">
       {label && (
-        <div className="flex justify-between items-center mb-1">
-          {showValues && (
-            <span className="text-white font-medium text-sm">{home}</span>
-          )}
-          <span className="text-gray-400 text-xs uppercase tracking-wider flex-1 text-center">
-            {label}
-          </span>
-          {showValues && (
-            <span className="text-white font-medium text-sm">{away}</span>
-          )}
+        <div className="mb-1">
+          <div className="flex justify-between items-center">
+            {showValues && (
+              <span className="text-white font-medium text-sm">{home}</span>
+            )}
+            <span className="text-gray-400 text-xs uppercase tracking-wider flex-1 text-center">
+              {label}
+            </span>
+            {showValues && (
+              <span className="text-white font-medium text-sm">{away}</span>
+            )}
+          </div>
+          <div className="text-[10px] text-gray-400 text-center">
+            Relativo (não é probabilidade).
+          </div>
         </div>
       )}
-      <div className={`${heightClass} bg-dark-quaternary rounded-full overflow-hidden flex`}>
+      <div
+        className={`${heightClass} bg-dark-quaternary rounded-full overflow-hidden flex`}
+        title="Comparação relativa entre as médias. Não representa probabilidade."
+      >
         <div
           className="bg-primary-500 rounded-l-full transition-all duration-500"
           style={{ width: `${percentHome}%` }}

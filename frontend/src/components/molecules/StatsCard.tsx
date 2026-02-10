@@ -78,19 +78,22 @@ function MetricColumn({
 
   return (
     <div className="flex-1">
-      <p className="text-xs text-gray-500 uppercase tracking-wider mb-2 text-center">
+      <p className="text-xs text-gray-400 uppercase tracking-wider mb-2 text-center">
         {label}
       </p>
 
       {/* Valores comparativos */}
       <div className="flex items-center justify-center gap-3 mb-3">
         <span className="text-lg font-bold text-white">{homeValue.toFixed(1)}</span>
-        <span className="text-gray-600 text-sm">vs</span>
+        <span className="text-gray-400 text-sm">vs</span>
         <span className="text-lg font-bold text-white">{awayValue.toFixed(1)}</span>
       </div>
 
       {/* Barra de comparação */}
-      <div className="h-1.5 bg-dark-quaternary rounded-full overflow-hidden flex mb-3">
+      <div
+        className="h-1.5 bg-dark-quaternary rounded-full overflow-hidden flex mb-3"
+        title="Comparação relativa entre as médias. Não representa probabilidade."
+      >
         <div
           className="bg-primary-500 transition-all duration-500"
           style={{ width: `${percentHome}%` }}
@@ -140,7 +143,7 @@ export const StatsCard = memo(function StatsCard({
   // Determina o label simplificado baseado na estabilidade média
   const cardLabel: EstabilidadeLabel =
     avgEstabilidade >= 70 ? 'Alta' :
-    avgEstabilidade >= 50 ? 'Média' : 'Baixa';
+      avgEstabilidade >= 50 ? 'Média' : 'Baixa';
 
   return (
     <div className="bg-dark-secondary rounded-xl p-4 border border-dark-tertiary hover:border-dark-quaternary transition-colors">
@@ -150,11 +153,17 @@ export const StatsCard = memo(function StatsCard({
           <Icon name={icon} size="sm" className="text-primary-400" />
           <h3 className="text-sm font-medium text-white">{title}</h3>
         </div>
-        <Badge estabilidade={cardLabel} label="Estabilidade" size="sm" />
+        <div className="flex items-center gap-2">
+          <Badge estabilidade={cardLabel} label="Consistência" size="sm" />
+        </div>
       </div>
 
       {/* Divisor */}
       <div className="h-px bg-dark-tertiary mb-4" />
+
+      <p className="text-[11px] text-gray-400 mb-4">
+        Barras mostram comparação relativa entre médias (não é probabilidade).
+      </p>
 
       {/* Grid Feitos | Sofridos */}
       <div className="flex gap-4">

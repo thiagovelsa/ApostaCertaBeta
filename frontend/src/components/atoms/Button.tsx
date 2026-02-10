@@ -33,8 +33,10 @@ export function Button({
   return (
     <button
       className={`
-        inline-flex items-center justify-center rounded-lg font-medium
+        focus-ring inline-flex items-center justify-center rounded-lg font-medium
+        min-h-[44px] sm:min-h-[36px]
         transition-all duration-200 active:scale-95
+        motion-reduce:transition-none motion-reduce:transform-none motion-reduce:active:scale-100
         disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100
         ${variantStyles[variant]}
         ${sizeStyles[size]}
@@ -46,7 +48,7 @@ export function Button({
       {isLoading ? (
         <span className="flex items-center gap-2">
           <svg
-            className="animate-spin h-4 w-4"
+            className="animate-spin motion-reduce:animate-none h-4 w-4"
             xmlns="http://www.w3.org/2000/svg"
             fill="none"
             viewBox="0 0 24 24"

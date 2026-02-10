@@ -7,9 +7,9 @@ Logica de negocio para busca e listagem de partidas.
 
 import asyncio
 import logging
-from datetime import date, datetime
+import re
+from datetime import date, time
 from typing import List, Tuple
-from zoneinfo import ZoneInfo
 
 from ..config import settings
 from ..models import PartidaResumo, PartidaListResponse, TimeInfo
@@ -21,6 +21,51 @@ logger = logging.getLogger(__name__)
 
 class PartidasService:
     """Servico para operacoes com partidas."""
+
+    def _parse_match_date(self, date_str: str) -> date:
+        """Parse robusto de data para YYYY-MM-DD (aceita ISO com 'T...')."""
+        if not date_str:
+            return date.today()
+
+        raw = str(date_str).strip()
+        if "T" in raw:
+            raw = raw.split("T", 1)[0]
+
+        try:
+            return date.fromisoformat(raw)
+        except ValueError:
+            return date.today()
+
+    def _parse_match_time(self, time_str: str) -> time:
+        """Parse robusto de horario.
+
+        Aceita:
+        - HH:MM:SS
+        - HH:MM
+        - timestamps ISO contendo 'T' e/ou 'Z' e/ou offset (extrai apenas HH:MM[:SS]).
+
+        Observacao:
+        Os endpoints de schedule da VStats ja retornam 'localTime' no horario do Brasil,
+        entao NAO fazemos conversao de timezone aqui.
+        """
+        if not time_str:
+            return time(0, 0, 0)
+
+        raw = str(time_str).strip()
+        if "T" in raw:
+            raw = raw.split("T")[-1]
+        raw = raw.replace("Z", "")
+
+        m = re.search(r"(\d{2}:\d{2})(?::(\d{2}))?", raw)
+        if not m:
+            return time(0, 0, 0)
+
+        hhmm = m.group(1)
+        ss = m.group(2) or "00"
+        try:
+            return time.fromisoformat(f"{hhmm}:{ss}")
+        except ValueError:
+            return time(0, 0, 0)
 
     def __init__(
         self,
@@ -217,22 +262,13 @@ class PartidasService:
         self, match: dict, competition: str, tournament_id: str
     ) -> PartidaResumo:
         """Converte dados brutos da VStats para PartidaResumo."""
-        # Extrai data e horario brutos
-        local_time_str = match.get("localTime", "00:00:00")
-        local_date_str = match.get("localDate", "2000-01-01")
-        
-        try:
-            # Converte para datetime ingênuo (assumido como local da competição)
-            dt_nave = datetime.strptime(f"{local_date_str} {local_time_str[:8]}", "%Y-%m-%d %H:%M:%S")
-        except Exception:
-            # Fallback seguro
-            dt_nave = datetime.combine(date.today(), datetime.min.time())
+        # Observacao importante:
+        # Os endpoints de schedule da VStats retornam localDate/localTime ja no horario do Brasil.
+        local_time_str = match.get("localTime") or match.get("time") or "00:00:00"
+        local_date_str = match.get("localDate") or match.get("date") or "2000-01-01"
 
-        # Converte para o fuso horário do Brasil
-        dt_brazil = self._apply_timezone_conversion(dt_nave, competition)
-        
-        date_obj = dt_brazil.date()
-        time_obj = dt_brazil.time()
+        date_obj = self._parse_match_date(local_date_str)
+        time_obj = self._parse_match_time(local_time_str)
 
         return PartidaResumo(
             id=match.get("id"),
@@ -258,43 +294,6 @@ class PartidasService:
                 escudo=None,
             ),
         )
-
-    def _apply_timezone_conversion(self, dt: datetime, competition: str) -> datetime:
-        """Converte um datetime do fuso local da competição para o fuso brasileiro."""
-        # Mapeamento de regiões para fusos horários
-        # Default: Europe/London (Premier League, Championship, cups)
-        tz_map = {
-            "Premier League": "Europe/London",
-            "Championship": "Europe/London",
-            "League Cup": "Europe/London",
-            "FA Cup": "Europe/London",
-            "La Liga": "Europe/Madrid",
-            "Serie A": "Europe/Rome",
-            "Bundesliga": "Europe/Berlin",
-            "Ligue 1": "Europe/Paris",
-            "Eredivisie": "Europe/Amsterdam",
-            "Primeira Liga": "Europe/Lisbon",
-            "Brasileirão": "America/Sao_Paulo",
-            "Copa do Brasil": "America/Sao_Paulo",
-            "Libertadores": "America/Asuncion", # Fallback para CONMEBOL
-            "Sudamericana": "America/Asuncion",
-        }
-
-        # Tenta encontrar o fuso pelo nome da competição
-        source_tz_name = "Europe/London"  # Default seguro para maioria das ligas monitoradas
-        for key, tz in tz_map.items():
-            if key.lower() in competition.lower():
-                source_tz_name = tz
-                break
-        
-        try:
-            # Atribui o fuso de origem
-            dt_source = dt.replace(tzinfo=ZoneInfo(source_tz_name))
-            # Converte para o fuso alvo (Brasil)
-            return dt_source.astimezone(ZoneInfo(settings.target_timezone))
-        except Exception as e:
-            logger.warning(f"Erro na conversão de timezone ({competition}): {str(e)}")
-            return dt
 
     def _format_competition_name(self, name: str) -> str:
         """Formata nome da competicao para exibicao."""

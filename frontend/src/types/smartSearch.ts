@@ -40,6 +40,11 @@ export interface Oportunidade {
   probabilidade: number;
   /** Confiança da previsão (0-1) */
   confianca: number;
+  /**
+   * Incerteza da linha (0-1), quando disponível no payload de Over/Under.
+   * Quanto maior, mais o ajuste puxa a chance para 50%.
+   */
+  uncertainty?: number;
   /** Label de confiança */
   confiancaLabel: ConfiancaLabel;
   /** Score de ranqueamento (confiança × probabilidade) */

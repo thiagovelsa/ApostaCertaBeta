@@ -1,9 +1,9 @@
 # Componentes React - Catálogo Atomic Design
 
-**Versão:** 1.6
-**Data:** 28 de dezembro de 2025
+**Versão:** 1.7
+**Data:** 07 de fevereiro de 2026
 **Pattern:** Atomic Design (Atoms → Molecules → Organisms → Pages)
-**Total de Componentes:** 26 (v1.5 - inclui StatFilter interno)
+**Total de Componentes:** variável (ver `frontend/src/components`)
 
 Catálogo completo de componentes React + TypeScript para implementação do frontend.
 
@@ -11,11 +11,11 @@ Catálogo completo de componentes React + TypeScript para implementação do fro
 
 ## 📋 Índice
 
-1. [ATOMS (6)](#atoms---6-componentes)
-2. [MOLECULES (7)](#molecules---7-componentes) *(+1 novo: OpportunityCard)*
-3. [ORGANISMS (7)](#organisms---7-componentes) *(+1 novo: SmartSearchResults)*
-4. [LAYOUT (3)](#layout---3-componentes)
-5. [PAGES (2)](#pages---2-páginas-v1)
+1. [ATOMS](#atoms---6-componentes)
+2. [MOLECULES](#molecules---7-componentes)
+3. [ORGANISMS](#organisms---7-componentes)
+4. [LAYOUT](#layout---3-componentes)
+5. [PAGES](#pages---2-páginas-v1)
 6. [Padrões de Implementação](#padrões-de-implementação)
 7. [Ver Também](#ver-também)
 
@@ -748,7 +748,7 @@ export function PeriodoToggle({ value, onChange }: PeriodoToggleProps) {
 
 **Uso no Sistema de Filtros:**
 Este componente faz parte do sistema de 3 filtros:
-1. **FilterToggle**: Filtro principal (Temporada/Últimos 5/Últimos 10)
+1. **FilterToggle**: Filtro principal (Até 50/Últimos até 5/Últimos até 10)
 2. **PeriodoToggle**: Sub-filtro de período (Integral/1T/2T)
 3. **MandoToggle**: Sub-filtro casa/fora (por time)
 
@@ -949,89 +949,35 @@ export const MatchCard: React.FC<MatchCardProps> = ({
 
 Painel de estatísticas comparando mandante e visitante.
 
-**Otimização v1.5:** Usa `useMemo` para memoizar cálculos de `calcularPrevisoes()` e `calcularOverUnder()`, evitando recálculos desnecessários em re-renders.
+**Fonte de verdade:** o backend. A UI consome `GET /api/partida/{matchId}/analysis`, que já inclui `previsoes` e `over_under`.
+Para auditoria/envio para IA, o endpoint também suporta `debug=1` (inclui `debug_amostra` com IDs/datas/pesos usados no recorte).
+
+O componente faz apenas cálculos de **apresentação/UX** (amostra efetiva, badges e mensagens didáticas), com destaque para:
+- `periodo_fallback_integral` em `contexto.ajustes_aplicados` (recorte 1T/2T indisponível em parte da amostra; usamos integral).
+- `seasonstats_fallback` em `contexto.ajustes_aplicados` (sem partidas individuais suficientes; usamos agregado da temporada).
 
 ```typescript
-// src/components/organisms/StatsPanel.tsx
+// src/components/organisms/StatsPanel.tsx (trecho relevante)
 
-import { StatMetric } from '@/components/molecules';
-import { LoadingSpinner, TeamBadge, Icon } from '@/components/atoms';
-import type { StatsResponse, EstatisticaFeitos } from '@/types';
+const sampleHome = (stats.partidas_analisadas_mandante ?? stats.partidas_analisadas) || 0;
+const sampleAway = (stats.partidas_analisadas_visitante ?? stats.partidas_analisadas) || 0;
+const minSideSample = Math.min(sampleHome, sampleAway);
 
-interface StatsPanelProps {
-  stats: StatsResponse | undefined;
-  isLoading: boolean;
-  error: Error | null;
-}
+const targetSample = stats.filtro_aplicado === 'geral' ? 50 : Number(stats.filtro_aplicado);
+const shortSample = minSideSample > 0 && minSideSample < targetSample;
 
-export function StatsPanel({ stats, isLoading, error }: StatsPanelProps) {
-  if (isLoading) return <LoadingSpinner size="lg" />;
-  if (error) return <p className="text-danger">Erro: {error.message}</p>;
-  if (!stats) return <p className="text-gray-500">Nenhuma estatística</p>;
+const hasPeriodFallback = Boolean(
+  stats.contexto?.ajustes_aplicados?.includes('periodo_fallback_integral')
+);
+const hasSeasonFallback = Boolean(
+  stats.contexto?.ajustes_aplicados?.includes('seasonstats_fallback')
+);
 
-  const { mandante, visitante, filtro_aplicado, partidas_analisadas } = stats;
-
-  return (
-    <div className="card">
-      {/* Team Headers */}
-      <div className="flex items-center justify-between mb-6 pb-4 border-b border-dark-tertiary">
-        <div className="flex items-center gap-3">
-          <TeamBadge src={mandante.escudo ?? undefined} alt={mandante.nome} size="md" />
-          <div>
-            <p className="font-semibold text-white">{mandante.nome}</p>
-            <p className="text-xs text-gray-500">Mandante</p>
-          </div>
-        </div>
-
-        <div className="text-center">
-          <span className="text-xs text-gray-500 uppercase tracking-wider">
-            {filtro_aplicado === 'geral' ? 'Temporada' : `Últimos ${filtro_aplicado}`}
-          </span>
-          <p className="text-xs text-gray-600 mt-1">{partidas_analisadas} jogos analisados</p>
-        </div>
-
-        <div className="flex items-center gap-3 flex-row-reverse">
-          <TeamBadge src={visitante.escudo ?? undefined} alt={visitante.nome} size="md" />
-          <div className="text-right">
-            <p className="font-semibold text-white">{visitante.nome}</p>
-            <p className="text-xs text-gray-500">Visitante</p>
-          </div>
-        </div>
-      </div>
-
-      {/* Stats Categories */}
-      <div className="divide-y divide-dark-tertiary">
-        <StatsCategory title="Gols" icon="goal"
-          homeFeitos={mandante.estatisticas.gols} awayFeitos={visitante.estatisticas.gols} />
-        <StatsCategory title="Escanteios" icon="corner"
-          homeFeitos={mandante.estatisticas.escanteios} awayFeitos={visitante.estatisticas.escanteios} />
-        <StatsCategory title="Finalizações" icon="shot"
-          homeFeitos={mandante.estatisticas.finalizacoes} awayFeitos={visitante.estatisticas.finalizacoes} />
-        <StatsCategory title="Finalizações no Gol" icon="target"
-          homeFeitos={mandante.estatisticas.finalizacoes_gol} awayFeitos={visitante.estatisticas.finalizacoes_gol} />
-
-        {/* Disciplina - Simple Metrics */}
-        <div className="pt-4">
-          <div className="flex items-center gap-2 mb-3">
-            <Icon name="card" size="sm" className="text-primary-400" />
-            <h3 className="text-sm font-medium text-gray-400 uppercase">Disciplina</h3>
-          </div>
-          <div className="space-y-1">
-            <StatMetric label="Cartões Amarelos"
-              home={mandante.estatisticas.cartoes_amarelos} away={visitante.estatisticas.cartoes_amarelos} />
-            <StatMetric label="Cartões Vermelhos"
-              home={mandante.estatisticas.cartoes_vermelhos} away={visitante.estatisticas.cartoes_vermelhos} />
-            <StatMetric label="Faltas"
-              home={mandante.estatisticas.faltas} away={visitante.estatisticas.faltas} />
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// Exemplo de Uso:
-// <StatsPanel stats={stats} isLoading={isLoading} error={error} />
+// UX rules:
+// - hasSeasonFallback: base vira "Temporada (agregado)" e a UI evita mostrar "Abaixo do filtro",
+//   porque `partidas_analisadas_*` pode refletir a temporada (e ser > 5/10).
+// - filtro_aplicado === 'geral': se shortSample, usar copy neutro ("Base parcial") em vez de warning.
+// - hasPeriodFallback: mostrar observação sobre o recorte 1T/2T ter sido resolvido via integral.
 ```
 
 ---
@@ -1099,65 +1045,13 @@ export function StatsCategory({ title, icon, homeStats, awayStats }: StatsCatego
 
 ---
 
-### 17. RaceBadges (v1.1)
+### 17. Forma Recente (RaceRow + RaceDot)
 
-Badges de sequência de resultados (V/E/D) para exibir forma recente dos times.
+A forma recente é exibida via:
+- `RaceDot` (atom): um ponto W/D/L com cor e tooltip.
+- `RaceRow` (molecule): lista horizontal de `RaceDot`.
 
-```typescript
-// src/components/organisms/StatsPanel.tsx (componente interno)
-
-type FormResult = 'W' | 'D' | 'L';
-
-interface RaceBadgesProps {
-  results?: FormResult[];
-  limit?: number;  // Máximo de badges a exibir
-}
-
-function RaceBadges({ results, limit }: RaceBadgesProps) {
-  if (!results?.length) return null;
-
-  const colors: Record<FormResult, string> = {
-    W: 'bg-success',   // Verde - Vitória
-    D: 'bg-warning',   // Amarelo - Empate
-    L: 'bg-danger',    // Vermelho - Derrota
-  };
-
-  const labels: Record<FormResult, string> = {
-    W: 'V',  // Vitória
-    D: 'E',  // Empate
-    L: 'D',  // Derrota
-  };
-
-  // Aplica limite se especificado
-  const displayResults = limit ? results.slice(0, limit) : results;
-
-  return (
-    <div className="flex gap-0.5 mt-1">
-      {displayResults.map((r, i) => (
-        <span
-          key={i}
-          className={`${colors[r]} text-[10px] font-bold text-white px-1.5 py-0.5 rounded`}
-        >
-          {labels[r]}
-        </span>
-      ))}
-    </div>
-  );
-}
-
-// Exemplo de Uso:
-// <RaceBadges results={mandante.recent_form} limit={5} />
-// Renderiza: V V E D V (badges coloridos)
-```
-
-**Props:**
-- `results`: Array de resultados ('W' | 'D' | 'L')
-- `limit`: Número máximo de badges (Temporada/5 partidas → 5, 10 partidas → 10)
-
-**Cores:**
-- **V (Vitória)**: `bg-success` (verde)
-- **E (Empate)**: `bg-warning` (amarelo)
-- **D (Derrota)**: `bg-danger` (vermelho)
+Observação: versões anteriores tinham um helper interno chamado `RaceBadges`. Hoje o padrão é `RaceRow` para manter consistência visual.
 
 ---
 
@@ -1665,44 +1559,68 @@ Página de estatísticas detalhadas com previsões e sequência de resultados.
 ```typescript
 // src/pages/EstatisticasPage.tsx
 
-export const EstatisticasPage: React.FC = () => {
+export function EstatisticasPage() {
   const { matchId } = useParams<{ matchId: string }>();
-  const [filtro, setFiltro] = useState<'geral' | '5' | '10'>('geral');
+  const {
+    filtro, setFiltro,
+    periodo, setPeriodo,
+    homeMando, awayMando,
+    toggleHomeMando, toggleAwayMando
+  } = useFilterStore();
 
-  const { data: partida } = usePartidas(new Date().toISOString().split('T')[0]);
-  const { data: stats, isLoading } = useStats(matchId!, filtro);
+  const { data: stats, isLoading, error } = useStats(matchId, filtro, periodo, homeMando, awayMando);
 
-  const selectedPartida = partida?.partidas.find((p) => p.id === matchId);
+  // Export JSON (3 recortes; usa /analysis com debug=1)
+  const [isExporting, setIsExporting] = useState(false);
 
-  if (!selectedPartida || !stats) {
-    return <LoadingSpinner size="lg" message="Carregando estatísticas..." />;
+  async function handleExport() {
+    if (!matchId || isExporting) return;
+    setIsExporting(true);
+    try {
+      const bundle = await buildMatchExportBundle(matchId, { filtro, periodo, homeMando, awayMando });
+      downloadJson('partida_export.json', bundle);
+    } finally {
+      setIsExporting(false);
+    }
   }
 
   return (
-    <PageLayout>
-      <div className="space-y-6">
-        {/* Back Button */}
-        <Button
-          variant="ghost"
-          size="sm"
-          icon={<Icon name="arrow_back" />}
-          onClick={() => navigate('/')}
-        >
-          Voltar
-        </Button>
+    <PageLayout title="Análise da Partida" showBackButton backTo="/">
+      <Container size="md">
+        <div className="sticky top-16 z-40 mb-6">
+          <FilterToggle value={filtro} onChange={setFiltro} />
+          <PeriodoToggle value={periodo} onChange={setPeriodo} />
 
-        {/* Stats Panel */}
+          <Button
+            variant="secondary"
+            size="sm"
+            isLoading={isExporting}
+            onClick={handleExport}
+            disabled={!matchId}
+          >
+            <Icon name="stats" size="sm" className="mr-2" />
+            Exportar JSON
+          </Button>
+        </div>
+
         <StatsPanel
-          partida={selectedPartida}
           stats={stats}
-          filtro={filtro}
-          onFiltroChange={setFiltro}
+          isLoading={isLoading}
+          error={error}
+          homeMando={homeMando}
+          awayMando={awayMando}
+          onToggleHomeMando={toggleHomeMando}
+          onToggleAwayMando={toggleAwayMando}
         />
-      </div>
+      </Container>
     </PageLayout>
   );
-};
+}
 ```
+
+**Exportar JSON (IA):**
+- Faz 3 chamadas ao endpoint `GET /api/partida/{matchId}/analysis` com `debug=1` (recorte atual + 10 corridos + 5 casa/fora)
+- Baixa um `.json` com `contexts[]`, preservando `analysis` completo por recorte e `error` quando algum recorte falha
 
 ---
 
@@ -1781,7 +1699,6 @@ src/
 │   │   ├── MatchCard.tsx
 │   │   ├── StatsPanel.tsx
 │   │   ├── StatsCategory.tsx
-│   │   ├── RaceBadges.tsx
 │   │   ├── PredictionsCard.tsx
 │   │   ├── DisciplineCard.tsx
 │   │   ├── SmartSearchResults.tsx # Container busca inteligente (v1.4)

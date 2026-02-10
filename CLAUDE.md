@@ -4,70 +4,18 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is a **football (soccer) statistics analysis system** that integrates with the VStats API to provide detailed match statistics, team performance analysis, and predictive insights for football betting and analysis.
+This is a **football (soccer) statistics analysis system** that integrates with the VStats API to provide detailed match statistics, team performance analysis, and predictive insights.
 
-**Core Purpose:** Enable users to visualize scheduled matches, analyze detailed statistics for each game, and compare home vs. away team performance with stability metrics.
+**Core Purpose:** Enable users to visualize scheduled matches, analyze detailed statistics for each game, and compare home vs. away team performance with stability metrics (CV - Coefficient of Variation).
 
 ## Technology Stack
 
 | Layer | Technology |
 |-------|------------|
-| **Frontend** | React 18 + TypeScript 5 + Vite 5 + TailwindCSS + React Query |
+| **Frontend** | React 19 + TypeScript 5 + Vite 7 + TailwindCSS + Zustand + React Query |
 | **Backend** | Python 3.11+ + FastAPI + Pydantic + Redis |
 | **External APIs** | VStats API (statistics), TheSportsDB (team logos) |
 | **Cache** | Redis (TTLs: schedule 1h, stats 6h, badges 7d) |
-
-## Directory Structure
-
-```
-API/
-├── backend/                            # FastAPI backend
-│   ├── app/
-│   │   ├── main.py                     # FastAPI app entry point
-│   │   ├── config.py                   # Pydantic settings (env vars, cache)
-│   │   ├── models/                     # Pydantic schemas
-│   │   │   └── __init__.py             # TimeComEstatisticas, StatsResponse, etc.
-│   │   ├── services/                   # Business logic
-│   │   │   ├── stats_service.py        # Statistics calculation + recent_form
-│   │   │   ├── schedule_service.py     # Match scheduling
-│   │   │   └── badge_service.py        # Team logos (TheSportsDB)
-│   │   ├── api/                        # FastAPI routes
-│   │   │   └── routes.py               # /partidas, /partida/{id}/stats
-│   │   └── utils/                      # Helpers (cache, calculations)
-│   ├── requirements.txt
-│   └── Dockerfile
-│
-├── frontend/                           # React + TypeScript frontend
-│   ├── src/
-│   │   ├── components/
-│   │   │   ├── atoms/                  # Badge, Icon, TeamBadge, LoadingSpinner
-│   │   │   ├── molecules/              # StatsCard, PredictionsCard, DisciplineCard
-│   │   │   └── organisms/              # StatsPanel (with RaceBadges)
-│   │   ├── pages/                      # HomePage, EstatisticasPage
-│   │   ├── hooks/                      # usePartidas, useStats, useSmartSearch
-│   │   ├── services/                   # API service layer
-│   │   ├── types/                      # TypeScript interfaces + smartSearch.ts
-│   │   └── utils/                      # predictions.ts, smartSearch.ts, etc.
-│   ├── package.json
-│   └── vite.config.ts
-│
-├── docs/                               # Technical documentation
-│   ├── MODELOS_DE_DADOS.md             # Pydantic schemas + SmartSearch types (v1.4)
-│   ├── API_SPECIFICATION.md            # REST API endpoints
-│   ├── ENDPOINTS_EXTERNOS_COMPLETO.md  # ALL external APIs (VStats, TheSportsDB, Opta, Wikidata)
-│   ├── frontend/
-│   │   ├── COMPONENTES_REACT.md        # 25 components (v1.4)
-│   │   └── INTEGRACAO_API.md           # Services + React Query (v1.4)
-│   └── ...
-│
-├── scripts/                            # Utility scripts
-│   ├── download_logos.py               # Download logos via Opta
-│   └── download_thesportsdb_logos.py   # Download logos via TheSportsDB
-│
-├── CLAUDE.md                           # This file
-├── README.md                           # Project overview
-└── docker-compose.yml                  # Backend + Redis + Frontend
-```
 
 ## Development Commands
 
@@ -76,20 +24,34 @@ API/
 ```bash
 cd backend
 
-# Create virtual environment
-python -m venv venv
-source venv/bin/activate  # Linux/Mac
-# ou
-venv\Scripts\activate      # Windows
+# Create and activate virtual environment
+python -m venv .venv
+.venv\Scripts\activate  # Windows
+source .venv/bin/activate  # Linux/Mac
 
 # Install dependencies
-pip install -r requirements.txt
+pip install -r requirements.txt          # Production only
+pip install -r requirements-dev.txt      # Development (includes testing, linting)
 
 # Run development server
 uvicorn app.main:app --reload --port 8000
 
-# API available at: http://localhost:8000
-# Swagger UI at: http://localhost:8000/docs
+# Testing
+pytest                                   # Run all tests
+pytest tests/unit/                       # Unit tests only
+pytest tests/unit/test_analysis_service.py -v   # Single test file
+pytest tests/unit/test_analysis_service.py::test_specific_function -v  # Single test
+pytest -v -s                            # Verbose with output
+pytest --cov=app --cov-report=html      # With coverage report
+
+# Code Quality (requires requirements-dev.txt)
+black app/ tests/                        # Format code
+ruff check app/ tests/                   # Lint code
+mypy app/                                # Type checking
+
+# API Documentation (when running)
+# Swagger UI: http://localhost:8000/docs
+# Health check: http://localhost:8000/health
 ```
 
 ### Frontend (React)
@@ -97,246 +59,210 @@ uvicorn app.main:app --reload --port 8000
 ```bash
 cd frontend
 
-# Install dependencies
+# Install dependencies (requires Node.js 20.19+)
 npm install
 
 # Run development server
 npm run dev
 
-# Build for production
-npm run build
+# Build and lint
+npm run build       # TypeScript compile + Vite build
+npm run lint        # ESLint check
+npm run clean       # Clean dist folder
 
-# Frontend available at: http://localhost:5173
-```
-
-### Docker (Recommended)
-
-```bash
-# Start all services (backend + redis + frontend)
-docker-compose up -d
-
-# View logs
-docker-compose logs -f backend
-
-# Stop services
-docker-compose down
+# Preview production build
+npm run preview
 ```
 
 ## Architecture Overview
 
-### API Integration
+### Layered Architecture (Backend)
 
-**Base URL:** `https://vstats-back-bbdfdf0bfd16.herokuapp.com/api/`
-
-**Key Endpoints Used:**
-
-| Endpoint | Purpose | Structure |
-|----------|---------|-----------|
-| `/schedule` | **Full season schedule** | `{matches: [...]}` |
-| `/get-match-stats` | Match stats (preferred) | `liveData.lineUp[].stat[]` |
-| `/get-game-played-stats` | Alternative (deprecated) | `stats{}` arrays |
-| `/calendar` | Dynamic competition IDs | Array of tournaments |
-
-**Important Limitations:**
-
-- `schedule/day?date=` → Often returns empty, use `/schedule` + client filter
-- `schedule/month` → Only returns current month, ignores parameters
-- `/get-game-played-stats` → May return empty `stats{}`, prefer `/get-match-stats`
-- Tournament IDs change each season → Use `/calendar` dynamically
-- All stats endpoints work without authentication
-
-**Authentication Note:** Credentials found in codebase (client_id, client_secret) are for premium features. Basic statistics endpoints don't require auth.
-
-### Data Flow
-
-1. **Competitions** → `/calendar` (cached 24h) + fallback to known IDs
-2. **Match Schedule** → `/schedule` (full season) + client-side date filter
-3. **Team Stats** → `/get-match-stats` per match → aggregate with CV
-4. **Referee** → `/get-match-stats` → official ID → `/referees/get-by-prsn`
-
-### Team Logos System
-
-**Local logos are preferred** over external APIs for performance and reliability.
-
-**File Structure:**
 ```
-frontend/public/logos/
-├── england/          (40 logos)
-├── italy/            (40 logos)
-├── spain/            (40 logos)
-├── germany/          (36 logos)
-├── france/           (40 logos)
-├── portugal/         (18 logos)
-├── belgium/          (19 logos)
-├── netherlands/      (38 logos)
-├── turkey/           (18 logos)
-├── greece/           (17 logos)
-├── austria/          (12 logos)
-├── scotland/         (12 logos)
-└── switzerland/      (12 logos)
+API Layer (app/api/routes/)
+├── partidas.py      # GET /api/partidas - List matches by date
+├── stats.py         # GET /api/partida/{id}/stats - Match statistics
+├── competicoes.py   # GET /api/competicoes - List competitions
+└── escudos.py       # GET /api/time/{id}/escudo - Team badges
+
+Business Logic (app/services/)
+├── partidas_service.py    # Match filtering and scheduling logic
+├── stats_service.py       # Statistics calculation, CV, predictions
+├── analysis_service.py    # Match analysis and opportunity detection
+├── cache_service.py       # Redis caching layer
+└── vstats_repository.py   # VStats API HTTP client
+
+Models (app/models/)
+├── partida.py        # TimeInfo, PartidaResumo
+├── estatisticas.py   # EstatisticaMetrica, EstatisticasTime
+├── analysis.py       # AnalysisResponse, Opportunity detection
+└── contexto.py       # ContextoVStats, match context metadata
+
+Utils (app/utils/)
+├── cv_calculator.py      # Coefficient of Variation calculation
+├── league_params.py      # League-specific adjustment parameters
+└── contexto_vstats.py    # Context enrichment utilities
 ```
 
-**Mapping:** `frontend/src/utils/teamLogos.ts` (636+ entries with aliases)
+### Key API Endpoints
 
-**External Endpoints Used:**
+| Endpoint | Description | Key Params |
+|----------|-------------|------------|
+| `GET /api/partidas?data=YYYY-MM-DD` | List matches for date | `data` (required) |
+| `GET /api/partida/{id}/stats` | Match statistics | `filtro=geral\|5\|10`, `periodo=integral\|1T\|2T`, `home_mando=casa\|fora`, `away_mando=casa\|fora` |
+| `GET /api/partida/{id}/analysis` | Full analysis with predictions | Same as stats |
+| `GET /api/competicoes` | List all competitions | - |
+| `GET /api/time/{id}/escudo` | Team badge/logo | - |
 
-| Source | URL | Usage |
-|--------|-----|-------|
-| **Opta** | `omo.akamai.opta.net/image.php` | VStats-covered leagues (uses contestantId) |
-| **TheSportsDB** | `thesportsdb.com/api/v1/json/3/` | Non-VStats leagues (Scotland, Austria, Switzerland) |
-| **Wikidata** | `query.wikidata.org/sparql` | Numeric Opta IDs (P8737 property) |
+### Statistics Filter Parameters
 
-**Scripts:**
-- `scripts/download_logos.py` - Download via Opta endpoint
-- `scripts/download_thesportsdb_logos.py` - Download via TheSportsDB
+- **`filtro`**: `geral` (up to 50 matches), `5` (last 5), `10` (last 10)
+- **`periodo`**: `integral` (full match), `1T` (first half), `2T` (second half)
+- **`home_mando`/`away_mando`**: Filter sample by home/away performance. When used, automatic home-field advantage adjustment is disabled.
 
-> **Full documentation:** See `docs/ENDPOINTS_EXTERNOS_COMPLETO.md`
+### Data Flow for Statistics
+
+1. **Route** validates input parameters
+2. **StatsService** checks cache, then calls VStatsRepository
+3. **VStatsRepository** fetches from external API (with retry logic)
+4. **StatsService** calculates metrics:
+   - Time-weighted averages (Dixon-Coles decay: recent matches weigh more)
+   - Weighted CV (coefficient of variation)
+   - Predictions with Poisson distribution + Dixon-Coles adjustment
+5. Response includes `contexto` field explaining data sources and any fallbacks applied
 
 ### Key Concepts
 
-**Coefficient of Variation (CV):** Measures team consistency/stability
+**Coefficient of Variation (CV):** Measures team consistency
 - Formula: `CV = Standard Deviation / Mean`
 - Scale: 0.00-0.15 (very stable) to 0.75+ (very unstable)
-- Used to identify predictable vs unpredictable teams
+- Calculated with time-weighting: recent matches have higher weight
 
-**Recent Form (Race):** Sequence of recent results
-- `W` = Win (Vitória), `D` = Draw (Empate), `L` = Loss (Derrota)
-- Calculated from `goals` vs `goalsConceded` per match
-- Display limit: 5 results for Temporada/Últimos 5, 10 for Últimos 10
+**Time-Weighting (Dixon-Coles Decay):**
+- Weight formula: `e^(-0.0065 × days_ago)`
+- 30 days ago = 82% weight, 60 days = 68%, 90 days = 56%
 
-**Statistics Categories:**
+**Home-Field Advantage Adjustment:**
+- Automatically applied unless `home_mando`/`away_mando` filters are used
+- Increases home team expected goals by ~10%, decreases away team
 
-- **Feitos (Made):** Goals scored, corners won, shots on target, yellow/red cards, fouls committed
-- **Sofridos (Conceded):** Goals against, corners conceded, shots conceded, defensive metrics
-
-**Referee Data (Árbitro):** Cards statistics per referee
-- `media_amarelos`: Average yellow cards per match
-- `media_vermelhos`: Average red cards per match
-- `total_jogos`: Total matches refereed in competition
-
-**Tournament IDs (Global Competitions):**
-
-> **Note:** IDs change each season! Use `/stats/tournament/v1/calendar` endpoint to get all current competition IDs dynamically. See `DOCUMENTACAO_VSTATS_COMPLETA.md` Section 4.17.
-
-Examples (2025/26 season):
-- Premier League: `51r6ph2woavlbbpk8f29nynf8`
-- La Liga: `80zg2v1cuqcfhphn56u4qpyqc`
-- Serie A: `emdmtfr1v8rey2qru3xzfwges`
-- Bundesliga: `2bchmrj23l9u42d68ntcekob8`
-- Ligue 1: `dbxs75cag7zyip5re0ppsanmc`
-- All 33+ competitions documented in `DOCUMENTACAO_VSTATS_COMPLETA.md` Section 3
-
-## System Design
-
-### User Workflow
-
-```
-Home (Date Selection)
-    ↓
-    ├─→ [Buscar Partidas] → Match List (Cards with Teams, Time, Competition)
-    │       ↓
-    │   Click Match Card → Statistics Panel
-    │       ├─ Filter Options (All Season | Last 5 | Last 10)
-    │       ├─ Sub-Filter Casa/Fora (per team, independent)
-    │       ├─ Recent Form Badges (V/E/D sequence)
-    │       ├─ CV Legend (expandable explanation)
-    │       ├─ Predictions Card (calculated insights)
-    │       ├─ Team Stats (Goals, Corners, Shots, etc.)
-    │       ├─ Discipline Card (Cards, Fouls + Referee data)
-    │       └─ Stability Metrics (CV for predictability)
-    │
-    └─→ [Busca Inteligente] → Smart Search Results
-            ├─ Progress bar (analyzing X of Y matches)
-            ├─ Grid of OpportunityCards (ranked by score)
-            │   └─ Click → Statistics Panel for that match
-            └─ Summary (matches analyzed, opportunities found)
-```
-
-**Smart Search Flow (useSmartSearch hook):**
-1. Fetch all matches for selected date
-2. Process in batches of 5 (rate limiting)
-3. For each match: fetch stats → calculate predictions → analyze over/under
-4. Filter by thresholds (Over ≥60%, Under ≥70%, Confidence ≥70%, Edge ≥30%)
-5. Rank by score (confidence × probability)
-6. Display all opportunities (MAX_OPPORTUNITIES = 999)
-
-### Data Required Per Component
-
-**Match Card:**
-- Team names, logos, IDs
-- Match time, date, venue
-- Competition name
-
-**Statistics Panel:**
-- Season-long aggregates (from `seasonstats`)
-- Recent match details (filtered from `get-match-stats`)
-- CV calculations (from utility scripts)
-- Home/Away breakdowns
-
-## Important Notes
-
-### File Organization
-
-- **Documentation files are the single source of truth** for API endpoints, IDs, and structure
-  - `DOCUMENTACAO_VSTATS_COMPLETA.md` - VStats API reference (v5.5)
-  - `PROJETO_SISTEMA_ANALISE.md` - System design & implementation guide
-  - `ALINHAMENTO_DOCUMENTACAO.md` - Cross-reference consistency analysis
-
-- **Technical documentation** in `docs/` folder:
-  - Backend architecture and models (`docs/ARQUITETURA_BACKEND.md`, `docs/MODELOS_DE_DADOS.md`)
-  - Frontend architecture and components (`docs/frontend/`)
-  - Testing strategy and local setup
-
-- **Python scripts are reference implementations** for:
-  - Data validation (confirming API response structure)
-  - Calculations (CV, statistics filtering)
-  - Data extraction (field mapping)
+**Period Extraction:**
+- When `periodo=1T|2T` requested, attempts to extract half-time stats
+- Falls back to `integral` with `periodo_fallback_integral: true` in contexto
 
 ### Cache Strategy
 
-- Schedule data: Cache for 1 hour (matches don't change frequently)
-- Season stats: Cache for 6 hours
-- Team logos: Cache indefinitely (TheSportsDB data is stable)
+- **Schedule data**: 1 hour (matches don't change frequently)
+- **Season stats**: 6 hours
+- **Match stats**: 6 hours
+- **Team logos**: 7 days (TheSportsDB data is stable)
+- **Calendar/competitions**: 24 hours (IDs change seasonally)
 
-### Testing Data
+### External API Integration (VStats)
 
-Sample JSON files in `data/samples/` represent real API responses:
-- `arsenal_detailed_true.json` - Detailed match data
-- `arsenal_full_data.json` - Complete dataset
-- `arsenal_seasonstats.json` - Aggregated season statistics
-- `premier_league_teams.json` - Team listings
+**Base URL:** `https://vstats-back-bbdfdf0bfd16.herokuapp.com/api/`
 
-These are used for:
-- Script validation without live API calls
-- Understanding response structure
-- Testing data transformation logic
+**Key Endpoints:**
+- `/stats/tournament/v1/calendar` - Competition IDs (change each season!)
+- `/stats/tournament/v1/schedule` - Full season schedule (preferred over /schedule/day)
+- `/stats/matchstats/v1/get-match-stats` - Match stats via `liveData.lineUp[].stat[]`
+- `/stats/seasonstats/v1/team` - Season aggregates
+- `/stats/referees/v1/get-by-prsn` - Referee statistics
 
-## Development Notes
+**Important Limitations:**
+- `/schedule/day?date=` often returns empty - use `/schedule` + client filter
+- `/schedule/month` only returns current month, ignores parameters
+- Tournament IDs change each season - use `/calendar` dynamically
 
-### Common Tasks
+### Team Logos System
 
-1. **Understanding API Structure:** Reference `DOCUMENTACAO_VSTATS_COMPLETA.md` Section 6 (Data Structure)
-2. **Finding Team/Tournament IDs:** See `DOCUMENTACAO_VSTATS_COMPLETA.md` Section 12 (Reference IDs)
-3. **Implementing New Features:** Check `PROJETO_SISTEMA_ANALISE.md` for requirements
-4. **Validating Implementation:** Run scripts in `validacao/` directory
-5. **Debugging API Issues:** Common issues documented in `DOCUMENTACAO_VSTATS_COMPLETA.md` Section 13
+Local logos preferred over external APIs. Located at `frontend/public/logos/` (13 leagues, 350+ logos).
 
-### Code Patterns
+**Mapping:** `frontend/src/utils/teamLogos.ts` (636+ entries with aliases)
 
-- Python scripts use `requests` library with `BASE_URL` constant
-- JSON response parsing expects specific field names (documented in dataclass fields)
-- Match filtering is always client-side due to API limitations
-- Statistics calculations leverage pandas/statistics libraries where needed
+External sources (fallback):
+- Opta image endpoint (VStats-covered leagues)
+- TheSportsDB API (non-VStats leagues)
 
-### Performance Considerations
+## Project Structure
 
-- Minimize API calls via caching strategy
-- Filter large match arrays on client-side to reduce data transfer
-- Pre-calculate CVs for frequently-accessed teams
-- Use date filtering to reduce response sizes
+```
+├── backend/
+│   ├── app/
+│   │   ├── main.py                 # FastAPI entry point
+│   │   ├── config.py               # Pydantic settings
+│   │   ├── dependencies.py         # DI container
+│   │   ├── api/routes/             # HTTP routes
+│   │   ├── services/               # Business logic
+│   │   ├── models/                 # Pydantic schemas
+│   │   ├── repositories/           # External API clients
+│   │   └── utils/                  # Helpers
+│   ├── tests/
+│   │   ├── conftest.py             # Pytest fixtures
+│   │   └── unit/                   # Unit tests
+│   ├── requirements.txt            # Production deps
+│   └── requirements-dev.txt        # Development deps
+│
+├── frontend/
+│   ├── src/
+│   │   ├── components/             # Atomic design (atoms, molecules, organisms)
+│   │   ├── pages/                  # Route pages
+│   │   ├── hooks/                  # React Query hooks
+│   │   ├── services/               # API clients
+│   │   ├── stores/                 # Zustand stores
+│   │   ├── types/                  # TypeScript interfaces
+│   │   └── utils/                  # Helpers (predictions, smart search)
+│   └── package.json
+│
+└── docs/                           # Technical documentation
+    ├── ARQUITETURA_BACKEND.md
+    ├── MODELOS_DE_DADOS.md
+    ├── API_SPECIFICATION.md
+    ├── TESTING_STRATEGY.md
+    └── frontend/
+```
 
-## Related Resources
+## Testing
 
-- **VStats API:** Opta/Stats Perform football data provider
-- **TheSportsDB:** Free API for team logos and metadata
-- **Sample Data:** Located in `data/samples/` for testing without API calls
+The project uses pytest with the following structure:
+- **Unit tests**: `tests/unit/` - Test business logic in isolation (with mocks)
+- **Fixtures**: `tests/conftest.py` - Shared test data and fixtures
+
+Key fixtures available:
+- `sample_match_data` - Sample match dictionary
+- `sample_stats_values` - CV test values (stable, moderate, unstable)
+- `vstats_schedule_response` - Mock VStats schedule response
+- `vstats_seasonstats_response` - Mock VStats season stats response
+
+Test naming convention: `test_<function>_<behavior>()` or `test_<Class>_<method>_<behavior>()`
+
+## Environment Configuration
+
+Backend reads `.env` from the current working directory. When running from `backend/`, place `.env` there.
+
+Key variables:
+- `VSTATS_API_URL` - VStats API base URL
+- `REDIS_URL` - Redis connection string (optional, disables cache if not set)
+- `CORS_ORIGINS` - Allowed origins for CORS
+- `DEBUG` - Enable debug mode (shows docs, detailed errors)
+
+Template at `.env.example` (copy to `backend/.env`).
+
+## Common Issues
+
+| Problem | Solution |
+|---------|----------|
+| Stats endpoint timeout | Frontend `.env` with `VITE_API_TIMEOUT=60000` |
+| `/schedule/day?date=` empty | Use `/schedule` and filter client-side |
+| Tournament IDs invalid | Call `/competicoes` to get current IDs |
+| Redis connection error | Set `REDIS_URL=` empty to disable cache, or run `docker run -d -p 6379:6379 redis` |
+| CORS error | Add origin to `CORS_ORIGINS` in `.env` |
+| Test fails with import error | Run `pip install -r requirements-dev.txt` |
+
+## Documentation References
+
+- `docs/ARQUITETURA_BACKEND.md` - Detailed backend architecture
+- `docs/MODELOS_DE_DADOS.md` - Pydantic schemas and validation
+- `docs/API_SPECIFICATION.md` - Complete API documentation
+- `docs/TESTING_STRATEGY.md` - Testing patterns and best practices
+- `docs/DOCUMENTACAO_VSTATS_COMPLETA.md` - VStats API reference

@@ -12,10 +12,22 @@ from .estatisticas import (
     EstatisticasTime,
     TimeComEstatisticas,
     ArbitroInfo,
+    DebugAmostraTime,
+    DebugAmostra,
     StatsResponse,
 )
+from .contexto import ClassificacaoTimeInfo, ContextoPartida, ContextoTime, H2HInfo
 from .competicao import CompeticaoInfo, CompeticaoListResponse
 from .escudo import EscudoResponse
+from .analysis import (
+    PrevisaoValor,
+    PrevisaoEstatistica,
+    PrevisaoPartida,
+    OverUnderLine,
+    OverUnderStat,
+    OverUnderPartida,
+    StatsAnalysisResponse,
+)
 
 __all__ = [
     # Partida
@@ -28,10 +40,25 @@ __all__ = [
     "EstatisticasTime",
     "TimeComEstatisticas",
     "ArbitroInfo",
+    "DebugAmostraTime",
+    "DebugAmostra",
     "StatsResponse",
+    # Contexto
+    "ClassificacaoTimeInfo",
+    "ContextoPartida",
+    "ContextoTime",
+    "H2HInfo",
     # Competicao
     "CompeticaoInfo",
     "CompeticaoListResponse",
     # Escudo
     "EscudoResponse",
+    # Analysis
+    "PrevisaoValor",
+    "PrevisaoEstatistica",
+    "PrevisaoPartida",
+    "OverUnderLine",
+    "OverUnderStat",
+    "OverUnderPartida",
+    "StatsAnalysisResponse",
 ]

@@ -1,8 +1,8 @@
 # Arquitetura Frontend - Sistema de Análise de Estatísticas de Futebol
 
-**Versão:** 1.2
-**Data:** 28 de dezembro de 2025
-**Framework:** React 18 + TypeScript 5 + Vite 5
+**Versão:** 1.3
+**Data:** 07 de fevereiro de 2026
+**Framework:** React 19 + TypeScript 5 + Vite 7
 
 Guia técnico completo da arquitetura frontend, organização de código, state management, routing e otimizações de performance.
 
@@ -13,117 +13,37 @@ Guia técnico completo da arquitetura frontend, organização de código, state 
 ```
 frontend/
 ├── public/
-│   ├── favicon.ico
-│   ├── manifest.json           # PWA manifest
-│   └── assets/
-│       ├── icons/              # PWA icons (192x192, 512x512)
-│       └── fonts/              # Local font files (Outfit, Inter, Space Mono)
-│
+│   ├── logos/index.json
+│   ├── placeholder-badge.svg
+│   └── vite.svg
 ├── src/
-│   ├── assets/
-│   │   ├── images/             # Imagens estáticas (backgrounds, etc)
-│   │   └── icons/              # Ícones customizados (se houver)
-│   │
-│   ├── components/             # Atomic Design - Organização Principal
+│   ├── components/             # Atomic Design + motion helpers
 │   │   ├── atoms/
-│   │   │   ├── Badge.tsx
-│   │   │   ├── Button.tsx
-│   │   │   ├── Icon.tsx
-│   │   │   ├── LoadingSpinner.tsx
-│   │   │   ├── RaceDot.tsx
-│   │   │   └── TeamBadge.tsx
-│   │   │
 │   │   ├── molecules/
-│   │   │   ├── ComparisonBar.tsx
-│   │   │   ├── FilterToggle.tsx
-│   │   │   ├── PeriodoToggle.tsx    # Sub-filtro de período (1T/2T/Integral)
-│   │   │   ├── RaceRow.tsx
-│   │   │   ├── StatMetric.tsx
-│   │   │   ├── TeamCard.tsx
-│   │   │   └── OpportunityCard.tsx  # Card de oportunidade (v1.2)
-│   │   │
 │   │   ├── organisms/
-│   │   │   ├── MatchCard.tsx
-│   │   │   ├── StatsCategory.tsx
-│   │   │   ├── StatsPanel.tsx
-│   │   │   ├── RaceBadges.tsx
-│   │   │   ├── PredictionsCard.tsx
-│   │   │   ├── DisciplineCard.tsx
-│   │   │   └── SmartSearchResults.tsx  # Container busca inteligente (v1.2)
-│   │   │
-│   │   └── layout/
-│   │       ├── Container.tsx
-│   │       ├── Grid.tsx
-│   │       ├── Header.tsx
-│   │       ├── Footer.tsx
-│   │       └── PageLayout.tsx
-│   │
-│   ├── pages/                  # Page Components (2 páginas v1)
-│   │   ├── HomePage.tsx        # Merged: DatePicker + MatchCards grid
-│   │   ├── EstatisticasPage.tsx # StatsPanel + FilterToggle
-│   │   └── NotFoundPage.tsx     # 404 (optional)
-│   │
-│   ├── hooks/                  # Custom React Hooks
-│   │   ├── usePartidas.ts      # Fetch partidas por data
-│   │   ├── useStats.ts         # Fetch stats com filtro
-│   │   ├── useCompetitions.ts  # Fetch competições
-│   │   ├── useBadge.ts         # Fetch escudo do time
-│   │   ├── useSmartSearch.ts   # Busca inteligente de oportunidades (v1.2)
-│   │   └── useLocalStorage.ts  # Persista dados locais (opcional)
-│   │
-│   ├── services/               # API Integration Layer
-│   │   ├── api.ts              # Axios client setup
-│   │   ├── partidasService.ts
-│   │   ├── statsService.ts
-│   │   ├── competicoesService.ts
-│   │   └── escudosService.ts
-│   │
-│   ├── stores/                 # Zustand State Management
-│   │   ├── filterStore.ts      # Filtro (geral/5/10)
-│   │   ├── dateStore.ts        # Data selecionada
-│   │   ├── uiStore.ts          # UI states (loading, modal)
-│   │   └── index.ts            # Barrel export
-│   │
-│   ├── types/                  # TypeScript Interfaces
-│   │   ├── index.ts            # Exports principais
-│   │   ├── partida.ts          # TimeInfo, PartidaResumo, PartidaListResponse
-│   │   ├── stats.ts            # EstatisticaMetrica, StatsResponse
-│   │   ├── competicao.ts       # CompeticaoInfo
-│   │   ├── smartSearch.ts      # Oportunidade, SmartSearchResult (v1.2)
-│   │   └── api.ts              # API types (AxiosError, etc)
-│   │
-│   ├── utils/                  # Utility Functions
-│   │   ├── dateFormatter.ts    # Formata datas (YYYY-MM-DD → 25 dez)
-│   │   ├── timeFormatter.ts    # Formata horários (HH:MM)
-│   │   ├── cvClassifier.ts     # Classifica CV (Estável, Instável)
-│   │   ├── numberFormatter.ts  # Formata números (2.5 gols)
-│   │   ├── cn.ts               # Class name merger (clsx)
-│   │   ├── smartSearch.ts      # Análise de oportunidades (v1.2)
-│   │   └── constants.ts        # Constantes globais
-│   │
-│   ├── lib/                    # External Library Setup
-│   │   ├── queryClient.ts      # React Query configuration
-│   │   ├── reactRouter.tsx     # Router setup (optional)
-│   │   └── errorHandler.ts     # Global error handling
-│   │
-│   ├── App.tsx                 # Root component + routing
-│   ├── main.tsx                # Entry point
-│   ├── index.css               # Global styles (reset + Tailwind)
-│   └── vite-env.d.ts           # Vite type definitions
-│
-├── .env                        # Local environment (NÃO commitar)
-├── .env.example                # Template (commitar)
-├── .env.production             # Production config
-├── .gitignore
+│   │   ├── layout/
+│   │   └── motion/
+│   ├── hooks/                  # usePartidas, useStats, useSmartSearch
+│   ├── lib/                    # queryClient
+│   ├── pages/                  # HomePage, EstatisticasPage
+│   ├── services/               # api.ts, partidasService.ts, statsService.ts
+│   ├── stores/                 # dateStore, filterStore, settingsStore
+│   ├── types/                  # partida, stats, smartSearch
+│   ├── utils/                  # predictions, overUnder, insights, etc.
+│   ├── App.tsx
+│   ├── main.tsx
+│   └── index.css
+├── dist/                       # Output do build
+├── .env                        # Config local (recomendado não commitar se tiver secrets)
+├── eslint.config.js            # ESLint v9 (flat config)
+├── index.html
 ├── package.json
-├── tsconfig.json               # TypeScript config
-├── vite.config.ts              # Vite build config
-├── tailwind.config.js          # Tailwind design tokens
-├── postcss.config.js           # PostCSS + Tailwind
-├── prettier.config.js          # Code formatting
-├── .eslintrc.cjs               # ESLint rules
-├── index.html                  # HTML entry
-└── README.md                   # Project-level documentation
+├── package-lock.json
+├── postcss.config.js
+├── tailwind.config.js
+├── tsconfig.json
+├── tsconfig.node.json
+└── vite.config.ts
 ```
 
 ### Convenções de Nomenclatura
@@ -148,10 +68,14 @@ import { QueryClient } from '@tanstack/react-query';
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
+      staleTime: 1000 * 60 * 5, // 5 minutes
+      gcTime: 1000 * 60 * 30, // 30 minutes (formerly cacheTime)
+      retry: 2,
       refetchOnWindowFocus: false,
+      refetchOnReconnect: true,
+    },
+    mutations: {
       retry: 1,
-      staleTime: 1000 * 60 * 5, // 5 min default
-      gcTime: 1000 * 60 * 10,   // 10 min garbage collection
     },
   },
 });
@@ -161,62 +85,36 @@ export const queryClient = new QueryClient({
 
 ```typescript
 import { create } from 'zustand';
-import { devtools, persist } from 'zustand/middleware';
+import type { FiltroEstatisticas, MandoFilter, PeriodoFilter } from '@/types';
 
-export type FilterType = 'geral' | '5' | '10';
-export type PeriodoFilter = 'integral' | '1T' | '2T';
-export type MandoFilter = 'casa' | 'fora' | null;
-
-interface FilterStore {
-  // Filtro principal (temporada/últimos 5/últimos 10)
-  filtro: FilterType;
-  setFiltro: (filtro: FilterType) => void;
-
-  // Sub-filtro de período (integral/1T/2T)
+interface FilterState {
+  filtro: FiltroEstatisticas;
   periodo: PeriodoFilter;
-  setPeriodo: (periodo: PeriodoFilter) => void;
-
-  // Sub-filtro Casa/Fora (independente por time)
   homeMando: MandoFilter;
   awayMando: MandoFilter;
+  setFiltro: (filtro: FiltroEstatisticas) => void;
+  setPeriodo: (periodo: PeriodoFilter) => void;
   setHomeMando: (mando: MandoFilter) => void;
   setAwayMando: (mando: MandoFilter) => void;
   toggleHomeMando: (mando: 'casa' | 'fora') => void;
   toggleAwayMando: (mando: 'casa' | 'fora') => void;
-
-  reset: () => void;
 }
 
-export const useFilterStore = create<FilterStore>()(
-  devtools(
-    persist(
-      (set, get) => ({
-        filtro: 'geral',
-        periodo: 'integral',
-        homeMando: null,
-        awayMando: null,
-
-        setFiltro: (filtro) => set({ filtro }),
-        setPeriodo: (periodo) => set({ periodo }),
-        setHomeMando: (mando) => set({ homeMando: mando }),
-        setAwayMando: (mando) => set({ awayMando: mando }),
-
-        // Toggle: se já está ativo, desativa (null); senão, ativa
-        toggleHomeMando: (mando) => {
-          const current = get().homeMando;
-          set({ homeMando: current === mando ? null : mando });
-        },
-        toggleAwayMando: (mando) => {
-          const current = get().awayMando;
-          set({ awayMando: current === mando ? null : mando });
-        },
-
-        reset: () => set({ filtro: 'geral', periodo: 'integral', homeMando: null, awayMando: null }),
-      }),
-      { name: 'filter-storage' }
-    )
-  )
-);
+export const useFilterStore = create<FilterState>((set) => ({
+  filtro: 'geral',
+  periodo: 'integral',
+  homeMando: null,
+  awayMando: null,
+  setFiltro: (filtro) => set({ filtro }),
+  setPeriodo: (periodo) => set({ periodo }),
+  setHomeMando: (mando) => set({ homeMando: mando }),
+  setAwayMando: (mando) => set({ awayMando: mando }),
+  // Toggle: se já está ativo, desativa; se não, ativa
+  toggleHomeMando: (mando) =>
+    set((state) => ({ homeMando: state.homeMando === mando ? null : mando })),
+  toggleAwayMando: (mando) =>
+    set((state) => ({ awayMando: state.awayMando === mando ? null : mando })),
+}));
 ```
 
 **Uso em Componentes:**
@@ -253,29 +151,52 @@ export function MandoToggle({ isHome }: { isHome: boolean }) {
 
 ```typescript
 import { create } from 'zustand';
-import { devtools, persist } from 'zustand/middleware';
 
-interface DateStore {
-  selectedDate: string;  // YYYY-MM-DD
-  setDate: (date: string) => void;
-  resetDate: () => void;
+/**
+ * Formata uma data para o formato YYYY-MM-DD
+ */
+function formatDate(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
 }
 
-export const useDateStore = create<DateStore>()(
-  devtools(
-    persist(
-      (set) => ({
-        selectedDate: new Date().toISOString().split('T')[0],
-        setDate: (date) => set({ selectedDate: date }),
-        resetDate: () => {
-          const today = new Date().toISOString().split('T')[0];
-          set({ selectedDate: today });
-        },
-      }),
-      { name: 'date-storage' }
-    )
-  )
-);
+/**
+ * Parse de string YYYY-MM-DD para Date (evita problemas de timezone)
+ */
+function parseDate(dateStr: string): Date {
+  const [year, month, day] = dateStr.split('-').map(Number);
+  return new Date(year, month - 1, day);
+}
+
+interface DateState {
+  selectedDate: string;
+  setSelectedDate: (date: string) => void;
+  goToToday: () => void;
+  goToPreviousDay: () => void;
+  goToNextDay: () => void;
+}
+
+export const useDateStore = create<DateState>((set, get) => ({
+  selectedDate: formatDate(new Date()),
+
+  setSelectedDate: (date: string) => set({ selectedDate: date }),
+
+  goToToday: () => set({ selectedDate: formatDate(new Date()) }),
+
+  goToPreviousDay: () => {
+    const current = parseDate(get().selectedDate);
+    current.setDate(current.getDate() - 1);
+    set({ selectedDate: formatDate(current) });
+  },
+
+  goToNextDay: () => {
+    const current = parseDate(get().selectedDate);
+    current.setDate(current.getDate() + 1);
+    set({ selectedDate: formatDate(current) });
+  },
+}));
 ```
 
 **Uso em DatePicker:**
@@ -305,100 +226,145 @@ export function DatePicker() {
 }
 ```
 
-### Store 3: uiStore (src/stores/uiStore.ts)
+### Store 3: settingsStore (src/stores/settingsStore.ts)
 
 ```typescript
 import { create } from 'zustand';
-import { devtools } from 'zustand/middleware';
+import { persist } from 'zustand/middleware';
+import type { StatThresholds } from '@/types/smartSearch';
 
-interface UIStore {
-  isLoading: boolean;
-  error: string | null;
-  modalOpen: boolean;
+export const DEFAULT_STAT_THRESHOLDS: Record<string, StatThresholds> = {
+  gols: { overMin: 0.55, underMin: 0.55, confiancaMin: 0.65, lineMin: 1.5 },
+  escanteios: { overMin: 0.55, underMin: 0.55, confiancaMin: 0.65, lineMin: 7.5 },
+  finalizacoes: { overMin: 0.55, underMin: 0.55, confiancaMin: 0.65, lineMin: 20.5 },
+  finalizacoes_gol: { overMin: 0.55, underMin: 0.55, confiancaMin: 0.65, lineMin: 4.5 },
+  cartoes_amarelos: { overMin: 0.55, underMin: 0.55, confiancaMin: 0.65, lineMin: 2.5 },
+  faltas: { overMin: 0.55, underMin: 0.55, confiancaMin: 0.65, lineMin: 18.5 },
+};
 
-  setLoading: (loading: boolean) => void;
-  setError: (error: string | null) => void;
-  openModal: () => void;
-  closeModal: () => void;
-  reset: () => void;
+export const DEFAULT_GLOBAL_THRESHOLDS = {
+  probabilityCutoff: 0.98,
+  minEdge: 0.15,
+};
+
+interface GlobalThresholds {
+  probabilityCutoff: number;
+  minEdge: number;
 }
 
-export const useUIStore = create<UIStore>()(
-  devtools((set) => ({
-    isLoading: false,
-    error: null,
-    modalOpen: false,
+interface SmartSearchSettingsState {
+  showOver: boolean;
+  showUnder: boolean;
+  globalThresholds: GlobalThresholds;
+  statThresholds: Record<string, StatThresholds>;
+  setShowOver: (show: boolean) => void;
+  setShowUnder: (show: boolean) => void;
+  setGlobalThreshold: <K extends keyof GlobalThresholds>(key: K, value: GlobalThresholds[K]) => void;
+  setStatThreshold: (stat: string, key: keyof StatThresholds, value: number) => void;
+  resetToDefaults: () => void;
+}
 
-    setLoading: (loading) => set({ isLoading: loading }),
-    setError: (error) => set({ error }),
-    openModal: () => set({ modalOpen: true }),
-    closeModal: () => set({ modalOpen: false }),
-    reset: () => set({ isLoading: false, error: null, modalOpen: false }),
-  }))
+export const useSmartSearchSettingsStore = create<SmartSearchSettingsState>()(
+  persist(
+    (set) => ({
+      showOver: true,
+      showUnder: true,
+      globalThresholds: { ...DEFAULT_GLOBAL_THRESHOLDS },
+      statThresholds: { ...DEFAULT_STAT_THRESHOLDS },
+
+      setShowOver: (show) => set({ showOver: show }),
+      setShowUnder: (show) => set({ showUnder: show }),
+      setGlobalThreshold: (key, value) =>
+        set((state) => ({ globalThresholds: { ...state.globalThresholds, [key]: value } })),
+      setStatThreshold: (stat, key, value) =>
+        set((state) => ({
+          statThresholds: {
+            ...state.statThresholds,
+            [stat]: { ...state.statThresholds[stat], [key]: value },
+          },
+        })),
+      resetToDefaults: () =>
+        set({
+          showOver: true,
+          showUnder: true,
+          globalThresholds: { ...DEFAULT_GLOBAL_THRESHOLDS },
+          statThresholds: { ...DEFAULT_STAT_THRESHOLDS },
+        }),
+    }),
+    { name: 'smart-search-settings', version: 2 }
+  )
 );
 ```
 
-**Uso em Error Boundary:**
+**Uso em Smart Search Settings:**
 ```typescript
-import { useUIStore } from '@/stores';
+import { useSmartSearchSettingsStore } from '@/stores';
 
-export function ErrorBoundary({ children }: { children: React.ReactNode }) {
-  const { error, setError } = useUIStore();
-
-  if (error) {
-    return (
-      <div className="p-4 bg-red-900 text-white rounded">
-        <p>{error}</p>
-        <button onClick={() => setError(null)}>Fechar</button>
-      </div>
-    );
-  }
-
-  return children;
+export function SmartSearchSettings() {
+  const { showOver, setShowOver } = useSmartSearchSettingsStore();
+  return (
+    <label>
+      <input type="checkbox" checked={showOver} onChange={(e) => setShowOver(e.target.checked)} />
+      Mostrar Overs
+    </label>
+  );
 }
 ```
 
 ### Barrel Export (src/stores/index.ts)
 
 ```typescript
-export { useFilterStore, type FilterType, type PeriodoFilter, type MandoFilter } from './filterStore';
 export { useDateStore } from './dateStore';
-export { useUIStore } from './uiStore';
+export { useFilterStore } from './filterStore';
+export {
+  useSmartSearchSettingsStore,
+  DEFAULT_STAT_THRESHOLDS,
+  DEFAULT_GLOBAL_THRESHOLDS,
+} from './settingsStore';
 ```
 
 ---
 
-## 3. Routing com React Router v6
+## 3. Routing com React Router
 
 ### App.tsx - Root Component
 
 ```typescript
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { QueryClientProvider } from '@tanstack/react-query';
-import { queryClient } from '@/lib/queryClient';
+import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
+import { HomePage } from '@/pages/HomePage';
+import { EstatisticasPage } from '@/pages/EstatisticasPage';
+import { AnimatePresence, m } from 'framer-motion';
 
-import HomePage from '@/pages/HomePage';
-import EstatisticasPage from '@/pages/EstatisticasPage';
-import NotFoundPage from '@/pages/NotFoundPage';
+function AnimatedRoutes() {
+  const location = useLocation();
 
-export default function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <Router>
-        <Routes>
-          {/* Route 1: Home + Partidas Combinadas */}
+    <AnimatePresence mode="wait" initial={false}>
+      <m.div
+        key={location.pathname}
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -8 }}
+        transition={{ duration: 0.22, ease: 'easeOut' }}
+      >
+        <Routes location={location}>
           <Route path="/" element={<HomePage />} />
-
-          {/* Route 2: Match Statistics */}
           <Route path="/partida/:matchId" element={<EstatisticasPage />} />
-
-          {/* 404 */}
-          <Route path="*" element={<NotFoundPage />} />
         </Routes>
-      </Router>
-    </QueryClientProvider>
+      </m.div>
+    </AnimatePresence>
   );
 }
+
+function App() {
+  return (
+    <BrowserRouter>
+      <AnimatedRoutes />
+    </BrowserRouter>
+  );
+}
+
+export default App;
 ```
 
 ### Route 1: HomePage (`/`) - Home + Partidas Merged
@@ -609,22 +575,30 @@ export default function EstatisticasPage() {
 │      ↓                                                  │
 │  statsService.getMatchStats(matchId, filtro, periodo...)│
 │      ↓                                                  │
-│  GET /api/partida/{matchId}/stats                       │
+│  GET /api/partida/{matchId}/analysis                    │
 │      ?filtro=geral|5|10                                 │
 │      &periodo=integral|1T|2T (opcional)                 │
 │      &home_mando=casa|fora (opcional)                   │
 │      &away_mando=casa|fora (opcional)                   │
+│      &debug=0|1 (opcional; debug_amostra)               │
 │      ↓                                                  │
 │  API Response: StatsResponse                            │
 │      ↓                                                  │
 │  StatsPanel (3 colunas: mandante | info | visitante)    │
-│  ├─ TeamCard (mandante) + RaceBadges + MandoToggle      │
+│  ├─ TeamCard (mandante) + RaceRow + MandoToggle         │
 │  ├─ Match info + FilterToggle + PeriodoToggle           │
-│  └─ TeamCard (visitante) + RaceBadges + MandoToggle     │
+│  └─ TeamCard (visitante) + RaceRow + MandoToggle        │
 │      ↓                                                  │
 │  FilterToggle onChange → setFiltro(novoFiltro)          │
 │  PeriodoToggle onChange → setPeriodo(novoPeriodo)       │
 │  MandoToggle onClick → toggleHomeMando/toggleAwayMando  │
+│                                                         │
+│  Export JSON onClick → buildMatchExportBundle()         │
+│      ↓                                                  │
+│  3x GET /api/partida/{matchId}/analysis?debug=1          │
+│      (selected + last10_corridos + last5_casa_fora)      │
+│      ↓                                                  │
+│  downloadJson() → arquivo .json                         │
 │      ↓                                                  │
 │  useStats refetch automático (mudança de query key)     │
 │                                                         │
@@ -828,26 +802,14 @@ export function MatchCard({ partida, onClick }: MatchCardProps) {
 
 ### Environment Variables
 
-**`.env.example`:**
+**`.env` (dev):**
 ```env
-VITE_API_URL=http://localhost:8000
-VITE_API_TIMEOUT=10000
-VITE_ENV=development
+# Deixe vazio para usar o proxy do Vite (ver vite.config.ts).
+VITE_API_URL=
+VITE_API_TIMEOUT=120000
 ```
 
-**`.env` (local, não commitar):**
-```env
-VITE_API_URL=http://localhost:8000
-VITE_API_TIMEOUT=10000
-VITE_ENV=development
-```
-
-**`.env.production`:**
-```env
-VITE_API_URL=https://api.palpitremestre.com
-VITE_API_TIMEOUT=10000
-VITE_ENV=production
-```
+Em produção, configure `VITE_API_URL` com a URL do backend (ou sirva o frontend no mesmo host e mantenha vazio).
 
 ### Axios Configuration
 
@@ -855,9 +817,12 @@ VITE_ENV=production
 ```typescript
 import axios from 'axios';
 
-const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL,
-  timeout: parseInt(import.meta.env.VITE_API_TIMEOUT || '10000'),
+const API_URL = import.meta.env.VITE_API_URL || '';
+const API_TIMEOUT = Number(import.meta.env.VITE_API_TIMEOUT) || 30000;
+
+export const api = axios.create({
+  baseURL: API_URL,
+  timeout: API_TIMEOUT,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -867,18 +832,17 @@ const api = axios.create({
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 404) {
-      console.error('Resource not found:', error.config?.url);
-    } else if (error.response?.status === 500) {
-      console.error('Server error:', error.response?.data?.detail);
-    } else if (error.code === 'ECONNABORTED') {
-      console.error('Request timeout after', import.meta.env.VITE_API_TIMEOUT, 'ms');
+    if (error.response) {
+      const message = error.response.data?.detail || error.response.statusText;
+      console.error(`API Error [${error.response.status}]:`, message);
+    } else if (error.request) {
+      console.error('Network Error: No response received');
+    } else {
+      console.error('Request Error:', error.message);
     }
     return Promise.reject(error);
   }
 );
-
-export default api;
 ```
 
 ---
@@ -897,14 +861,11 @@ npm run dev
 # Type checking
 npx tsc --noEmit
 
-# Linting
-npm run lint
+  # Linting
+  npm run lint
 
-# Format code
-npm run format
-
-# Build for production
-npm run build
+  # Build for production
+  npm run build
 
 # Preview production build
 npm run preview
@@ -924,16 +885,23 @@ npm run preview
 
 ### main.tsx
 ```typescript
-import React from 'react'
-import ReactDOM from 'react-dom/client'
-import App from './App.tsx'
-import './index.css'
+import React from 'react';
+import ReactDOM from 'react-dom/client';
+import { QueryClientProvider } from '@tanstack/react-query';
+import { queryClient } from '@/lib/queryClient';
+import { MotionProvider } from '@/components/motion/MotionProvider';
+import App from './App';
+import './index.css';
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <App />
-  </React.StrictMode>,
-)
+    <QueryClientProvider client={queryClient}>
+      <MotionProvider>
+        <App />
+      </MotionProvider>
+    </QueryClientProvider>
+  </React.StrictMode>
+);
 ```
 
 ### index.html
@@ -942,13 +910,12 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
 <html lang="pt-BR">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.ico" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#84cc16" />
-    <meta name="description" content="Sistema de análise de estatísticas de futebol" />
-    <title>Palpite Mestre - Análise de Futebol</title>
+    <meta name="description" content="Sistema de Analise de Estatisticas de Futebol" />
+    <title>Palpite Mestre - Estatisticas de Futebol</title>
   </head>
-  <body>
+  <body class="bg-dark-primary text-white">
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
@@ -962,22 +929,18 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
 Para aprofundar na arquitetura após ler este documento:
 
 - **[DESIGN_SYSTEM.md](DESIGN_SYSTEM.md)** - Tokens de design (cores, tipografia, spacing, animações)
-- **[COMPONENTES_REACT.md](COMPONENTES_REACT.md)** - Catálogo completo de 25 componentes
+- **[COMPONENTES_REACT.md](COMPONENTES_REACT.md)** - Catálogo de componentes (pode evoluir)
 - **[INTEGRACAO_API.md](INTEGRACAO_API.md)** - Services, hooks React Query, type mappings
 - **[../ARQUITETURA_BACKEND.md](../ARQUITETURA_BACKEND.md)** - Arquitetura do backend FastAPI
 - **[../MODELOS_DE_DADOS.md](../MODELOS_DE_DADOS.md)** - Schemas Pydantic (que mapeiam para TypeScript)
-- **[../API_SPECIFICATION.md](../API_SPECIFICATION.md)** - Documentação dos 4 endpoints
+- **[../API_SPECIFICATION.md](../API_SPECIFICATION.md)** - Endpoints do backend
 - **[../LOCAL_SETUP.md](../LOCAL_SETUP.md)** - Setup completo (backend + frontend)
 
 **Próximos Passos Recomendados:**
-1. Setup projeto Vite + TypeScript (npm create vite@latest frontend -- --template react-ts)
-2. Instalar dependências: npm install react-router-dom @tanstack/react-query zustand axios
-3. Configurar Tailwind com design tokens em tailwind.config.js
-4. Criar folder structure baseado em "Seção 1" deste documento
-5. Implementar 3 Zustand stores conforme "Seção 2"
-6. Configurar Router conforme "Seção 3"
-7. Implementar componentes seguindo [COMPONENTES_REACT.md](COMPONENTES_REACT.md)
-8. Integrar services e hooks seguindo [INTEGRACAO_API.md](INTEGRACAO_API.md)
+1. Rode o frontend: `cd frontend && npm install && npm run dev`
+2. Ajuste `VITE_API_URL`/`VITE_API_TIMEOUT` no `frontend/.env` se necessário
+3. Consulte [INTEGRACAO_API.md](INTEGRACAO_API.md) para requests e cache
+4. Consulte [COMPONENTES_REACT.md](COMPONENTES_REACT.md) para padrões de UI
 
 ---
 
