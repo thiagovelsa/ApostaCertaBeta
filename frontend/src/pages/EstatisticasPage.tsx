@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { useFilterStore } from '@/stores';
 import { useStats } from '@/hooks';
@@ -15,9 +15,15 @@ export function EstatisticasPage() {
     filtro, setFiltro,
     periodo, setPeriodo,
     homeMando, awayMando,
-    toggleHomeMando, toggleAwayMando
+    toggleHomeMando, toggleAwayMando,
+    resetFilters,
   } = useFilterStore();
   const { data: stats, isLoading, error } = useStats(matchId, filtro, periodo, homeMando, awayMando);
+
+  // Reset filters when navigating to a different match
+  useEffect(() => {
+    resetFilters();
+  }, [matchId, resetFilters]);
 
   const [isExporting, setIsExporting] = useState(false);
   const [exportError, setExportError] = useState<string | null>(null);

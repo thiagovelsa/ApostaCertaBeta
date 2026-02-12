@@ -1,7 +1,7 @@
 # VStats API - Documentacao Unificada
 
-**Data:** 25 de Dezembro de 2025
-**Versao:** 5.6 - Busca dinamica de competicoes via /calendar
+**Data:** 11 de Fevereiro de 2026
+**Versao:** 5.7 - Análise preditiva com modelos estatísticos
 **Status:** Documentacao Completa e Validada
 
 ---

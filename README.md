@@ -349,16 +349,29 @@ Este projeto está licenciado sob MIT License - veja [LICENSE](LICENSE) para det
 - ✅ **Documentação técnica** (✓ 14+ docs completamente interconectadas)
   - ✅ Backend: 6 documentações + arquitetura profissional
   - ✅ Frontend: 5 documentações + design system completo
-  - ✅ Cross-references: 10/10 engenharia de contexto
-- ✅ **Backend** (Funcional - FastAPI + Redis cache)
-- ✅ **Frontend** (Funcional - React + TypeScript + TailwindCSS)
+  - ✅ Cross-references: 10/10 engenharia de contexte
+- ✅ **Backend** (Funcional - FastAPI + Redis cache + Modelos Preditivos)
+- ✅ **Frontend** (Funcional - React 19 + TypeScript 5 + Vite 7 + TailwindCSS)
+- ✅ **Análise Preditiva** (Poisson + Dixon-Coles + Negative Binomial)
 - 🔄 Deploy em produção (Próximo)
 
-**Última atualização:** 07 de fevereiro de 2026
+**Última atualização:** 11 de fevereiro de 2026
 
 ---
 
 ## 📝 Changelog Recente
+
+### v1.8 (11/02/2026)
+- **feat:** Análise consolidada com previsões e over/under no endpoint `/analysis`
+- **feat:** Modelo de previsão com ataque/defesa relativo à média da liga
+- **feat:** Ajuste de Dixon-Coles para gols (correção de placares baixos)
+- **feat:** Negative Binomial para métricas com overdispersion (escanteios, cartões, etc.)
+- **feat:** Intervalos de confiança via simulação Monte Carlo
+- **feat:** Contexto pré-jogo (descanso, classificação, H2H) nos responses
+- **feat:** Debug mode (`debug=1`) para auditoria de amostras
+- **feat:** Subfiltros de mando (casa/fora) para mandante e visitante
+- **feat:** Análise automática de oportunidades (Smart Search) no frontend
+- **feat:** Exportação JSON completa para IA (recorte + 10 corridos + 5 casa/fora)
 
 ### v1.7 (31/12/2025)
 - **fix:** Endpoint de stats corrigido - usa `/get-match-stats` com `liveData.lineUp[].stat[]`

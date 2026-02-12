@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manual de Interpretacao de Risco - ApostaMestre</title>
+    <style>
+        /* Reset e Configuracoes Base */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            font-size: 10.5pt;
+            line-height: 1.6;
+            color: #2d3748;
+            text-align: justify;
+            text-align-last: left;
+        }
+        
+        /* Configuracao de Pagina */
+        @page {
+            size: A4;
+            margin: 2cm 2cm 2.5cm 2cm;
+            @top-center {
+                content: string(doctitle);
+                font-size: 9pt;
+                color: #718096;
+            }
+            @bottom-center {
+                content: counter(page);
+                font-size: 9pt;
+                color: #718096;
+            }
+        }
+        
+        @page :first {
+            margin: 0;
+            @top-center { content: none; }
+            @bottom-center { content: none; }
+        }
+        
+        @page cover {
+            margin: 0;
+            @top-center { content: none; }
+            @bottom-center { content: none; }
+        }
+        
+        body {
+            string-set: doctitle "";
+        }
+        
+        h1 {
+            string-set: doctitle "Manual de Interpretacao de Risco - ApostaMestre";
+        }
+        
+        /* Capa - Estilo Swiss/Profissional */
+        .cover {
+            page: cover;
+            width: 210mm;
+            height: 297mm;
+            margin: 0;
+            position: relative;
+            overflow: hidden;
+            background: linear-gradient(135deg, #1a365d 0%, #2c5282 50%, #2b6cb0 100%);
+            page-break-after: always;
+        }
+        
+        /* Elementos Decorativos da Capa */
+        .cover::before {
+            content: '';
+            position: absolute;
+            top: -50mm;
+            right: -30mm;
+            width: 180mm;
+            height: 180mm;
+            background: radial-gradient(circle, rgba(255,255,255,0.08) 0%, transparent 70%);
+            border-radius: 50%;
+        }
+        
+        .cover::after {
+            content: '';
+            position: absolute;
+            bottom: -40mm;
+            left: -40mm;
+            width: 150mm;
+            height: 150mm;
+            background: radial-gradient(circle, rgba(255,255,255,0.05) 0%, transparent 70%);
+            border-radius: 50%;
+        }
+        
+        .cover-accent-1 {
+            position: absolute;
+            top: 30mm;
+            left: 20mm;
+            width: 60mm;
+            height: 3px;
+            background: rgba(255,255,255,0.4);
+        }
+        
+        .cover-accent-2 {
+            position: absolute;
+            bottom: 50mm;
+            right: 20mm;
+            width: 40mm;
+            height: 40mm;
+            border: 2px solid rgba(255,255,255,0.15);
+            transform: rotate(45deg);
+        }
+        
+        .cover-accent-3 {
+            position: absolute;
+            top: 80mm;
+            right: 30mm;
+            width: 8mm;
+            height: 8mm;
+            background: rgba(255,255,255,0.2);
+            border-radius: 50%;
+        }
+        
+        .cover-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            width: 80%;
+            z-index: 10;
+            color: white;
+        }
+        
+        .cover-badge {
+            display: inline-block;
+            padding: 0.4cm 1cm;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.3);
+            border-radius: 3px;
+            font-size: 9pt;
+            font-weight: 500;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin-bottom: 1.5cm;
+        }
+        
+        .cover-title {
+            font-size: 32pt;
+            font-weight: 700;
+            margin-bottom: 0.5cm;
+            letter-spacing: -0.5px;
+            line-height: 1.2;
+        }
+        
+        .cover-subtitle {
+            font-size: 14pt;
+            font-weight: 400;
+            opacity: 0.9;
+            margin-bottom: 2cm;
+        }
+        
+        .cover-meta {
+            font-size: 10pt;
+            opacity: 0.8;
+            line-height: 1.8;
+        }
+        
+        .cover-footer {
+            position: absolute;
+            bottom: 25mm;
+            left: 50%;
+            transform: translateX(-50%);
+            text-align: center;
+            color: rgba(255,255,255,0.6);
+            font-size: 9pt;
+            z-index: 10;
+        }
+        
+        /* Conteudo Principal */
+        .content {
+            padding-top: 0;
+        }
+        
+        h1 {
+            font-size: 20pt;
+            font-weight: 700;
+            color: #1a365d;
+            margin-bottom: 0.8cm;
+            padding-bottom: 0.3cm;
+            border-bottom: 2px solid #e2e8f0;
+            page-break-after: avoid;
+        }
+        
+        h2 {
+            font-size: 14pt;
+            font-weight: 600;
+            color: #2d3748;
+            margin-top: 0.8cm;
+            margin-bottom: 0.4cm;
+            page-break-after: avoid;
+        }
+        
+        h3 {
+            font-size: 11pt;
+            font-weight: 600;
+            color: #4a5568;
+            margin-top: 0.5cm;
+            margin-bottom: 0.3cm;
+            page-break-after: avoid;
+        }
+        
+        p {
+            margin-bottom: 0.4cm;
+        }
+        
+        /* Tabelas - Estilo Three-Line */
+        table {
+            width: 100%;
+            max-width: 100%;
+            border-collapse: collapse;
+            margin: 0.5cm 0;
+            font-size: 9.5pt;
+            page-break-inside: auto;
+        }
+        
+        thead {
+            display: table-header-group;
+        }
+        
+        tr {
+            page-break-inside: avoid;
+        }
+        
+        th {
+            border-top: 2px solid #2d3748;
+            border-bottom: 1px solid #2d3748;
+            padding: 0.3cm 0.25cm;
+            text-align: left;
+            font-weight: 600;
+            background: #f7fafc;
+            color: #1a365d;
+        }
+        
+        td {
+            padding: 0.25cm;
+            border-bottom: 1px solid #e2e8f0;
+            vertical-align: top;
+        }
+        
+        tbody tr:last-child td {
+            border-bottom: 2px solid #2d3748;
+        }
+        
+        /* Indicadores de Status */
+        .status-verde {
+            color: #22543d;
+            font-weight: 600;
+        }
+        
+        .status-amarelo {
+            color: #744210;
+            font-weight: 600;
+        }
+        
+        .status-laranja {
+            color: #c05621;
+            font-weight: 600;
+        }
+        
+        .status-vermelho {
+            color: #c53030;
+            font-weight: 600;
+        }
+        
+        /* Caixas de Destaque */
+        .highlight-box {
+            background: #f7fafc;
+            border-left: 4px solid #3182ce;
+            padding: 0.4cm 0.5cm;
+            margin: 0.5cm 0;
+            page-break-inside: avoid;
+        }
+        
+        .highlight-box.warning {
+            border-left-color: #dd6b20;
+            background: #fffaf0;
+        }
+        
+        .highlight-box.danger {
+            border-left-color: #e53e3e;
+            background: #fff5f5;
+        }
+        
+        .highlight-box.success {
+            border-left-color: #38a169;
+            background: #f0fff4;
+        }
+        
+        .highlight-box-title {
+            font-weight: 600;
+            font-size: 10pt;
+            margin-bottom: 0.2cm;
+            color: #2d3748;
+        }
+        
+        /* Codigo e Protocolos */
+        .code-block {
+            background: #1a202c;
+            color: #e2e8f0;
+            padding: 0.4cm;
+            border-radius: 4px;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 8.5pt;
+            line-height: 1.5;
+            margin: 0.4cm 0;
+            page-break-inside: avoid;
+            overflow-x: auto;
+        }
+        
+        .code-comment {
+            color: #68d391;
+        }
+        
+        .code-keyword {
+            color: #63b3ed;
+        }
+        
+        /* Lista de Verificacao */
+        .checklist {
+            list-style: none;
+            padding-left: 0;
+            margin: 0.3cm 0;
+        }
+        
+        .checklist li {
+            padding-left: 1.2em;
+            position: relative;
+            margin-bottom: 0.2cm;
+        }
+        
+        .checklist li::before {
+            content: '[ ]';
+            position: absolute;
+            left: 0;
+            color: #718096;
+            font-family: monospace;
+        }
+        
+        /* Tabela Resumo Executivo */
+        .summary-table th {
+            background: #1a365d;
+            color: white;
+        }
+        
+        .summary-table tbody tr:last-child td {
+            border-bottom: 2px solid #1a365d;
+        }
+        
+        /* Prevencao de Overflow */
+        pre, table, figure, img, svg, blockquote {
+            max-width: 100%;
+            box-sizing: border-box;
+        }
+        
+        a {
+            word-break: break-all;
+            color: #2b6cb0;
+            text-decoration: none;
+        }
+        
+        /* Secao de Rodape */
+        .document-footer {
+            margin-top: 1cm;
+            padding-top: 0.5cm;
+            border-top: 1px solid #e2e8f0;
+            font-size: 8.5pt;
+            color: #718096;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <!-- CAPA -->
+    <div class="cover">
+        <div class="cover-accent-1"></div>
+        <div class="cover-accent-2"></div>
+        <div class="cover-accent-3"></div>
+        <div class="cover-content">
+            <div class="cover-badge">Documento Tecnico v1.0</div>
+            <h1 class="cover-title">Manual de Interpretacao<br>de Risco</h1>
+            <p class="cover-subtitle">ApostaMestre — Dicionario Estatistico de Analise</p>
+            <div class="cover-meta">
+                <p>Base de Conhecimento para Sistemas RAG</p>
+                <p>Fevereiro 2026</p>
+            </div>
+        </div>
+        <div class="cover-footer">
+            Documento para uso em sistemas de analise esportiva automatizada
+        </div>
+    </div>
+
+    <!-- CONTEUDO -->
+    <div class="content">
+        <h1>1. Coeficiente de Variacao (CV)</h1>
+        
+        <p>O CV mede a estabilidade dos dados historicos. Quanto maior o valor, mais imprevisivel e o comportamento do time. E calculado como o desvio padrao dividido pela media, expresso em valor absoluto.</p>
+        
+        <table>
+            <thead>
+                <tr>
+                    <th>Valor do CV</th>
+                    <th>Classificacao</th>
+                    <th>Interpretacao Tecnica</th>
+                    <th>Recomendacao</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>&lt; 0.3</strong></td>
+                    <td class="status-verde">Muito Estavel</td>
+                    <td>Baixa dispersao dos dados. O time repete padroes com alta consistencia (ex: sempre 4-6 escanteios por jogo).</td>
+                    <td class="status-verde">APROVADO — Apostas seguras neste mercado.</td>
+                </tr>
+                <tr>
+                    <td><strong>0.3 — 0.6</strong></td>
+                    <td class="status-amarelo">Moderado</td>
+                    <td>Oscilacao controlada. O time varia, mas dentro de limites previsiveis.</td>
+                    <td class="status-amarelo">ANALISE NECESSARIA — Requer contexto adicional (clima, desfalques).</td>
+                </tr>
+                <tr>
+                    <td><strong>0.6 — 1.0</strong></td>
+                    <td class="status-laranja">Instavel</td>
+                    <td>Alta variabilidade. Resultados imprevisiveis; a media nao reflete bem a realidade.</td>
+                    <td class="status-laranja">EVITAR — Risco elevado de quebra de expectativa.</td>
+                </tr>
+                <tr>
+                    <td><strong>&gt; 1.0</strong></td>
+                    <td class="status-vermelho">Caos / Incerteza Total</td>
+                    <td>Dispersao extrema. Exemplo: 0 escanteios num jogo, 14 no outro. A media matematica diz "7", mas e loteria pura.</td>
+                    <td class="status-vermelho">BLOQUEADO — Nao apostar neste mercado.</td>
+                </tr>
+            </tbody>
+        </table>
+        
+        <div class="highlight-box warning">
+            <div class="highlight-box-title">Exemplo Pratico</div>
+            <p><strong>Time A:</strong> Media de 7 escanteios, CV = 1.2 (fez 0, 2, 14, 12, 8 nos ultimos 5 jogos)</p>
+            <p><strong>Erro comum:</strong> Apostar Over 6.5 achando que "faz de media 7"</p>
+            <p><strong>Realidade:</strong> 40% dos jogos ficam abaixo de 3 escanteios. E uma moeda viciada.</p>
+        </div>
+
+        <h1>2. Tamanho da Amostra (n_used)</h1>
+        
+        <p>Representa quantos jogos foram usados para calcular as estatisticas. Afeta diretamente a confiabilidade dos modelos preditivos.</p>
+        
+        <table>
+            <thead>
+                <tr>
+                    <th>n_used</th>
+                    <th>Status</th>
+                    <th>Peso na Decisao</th>
+                    <th>Acao do Modelo</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>&ge; 15 jogos</strong></td>
+                    <td class="status-verde">Amostra Robusta</td>
+                    <td>100% peso estatistico</td>
+                    <td>Usar dados puramente matematicos</td>
+                </tr>
+                <tr>
+                    <td><strong>10-14 jogos</strong></td>
+                    <td class="status-amarelo">Amostra Aceitavel</td>
+                    <td>80% dados / 20% contexto</td>
+                    <td>Pesquisar escalações recentes</td>
+                </tr>
+                <tr>
+                    <td><strong>5-9 jogos</strong></td>
+                    <td class="status-laranja">Amostra Fraca</td>
+                    <td>40% dados / 60% noticias</td>
+                    <td>Priorizar analise tatica e pesquisa web</td>
+                </tr>
+                <tr>
+                    <td><strong>&le; 4 jogos</strong></td>
+                    <td class="status-vermelho">Dados Insuficientes</td>
+                    <td>10% dados / 90% contexto</td>
+                    <td>SUSPENDER ANALISE ESTATISTICA — Usar apenas dados de elenco e noticias recentes</td>
+                </tr>
+            </tbody>
+        </table>
+        
+        <div class="highlight-box">
+            <div class="highlight-box-title">Regra de Ouro</div>
+            <p>"n_used &le; 3 significa que o calculo de media e matematicamente irrelevante para predicao. O desvio padrao nao tem significancia estatistica."</p>
+        </div>
+
+        <h1>3. Estrategia: Casa vs. Fora</h1>
+        
+        <h2>3.1 Quando priorizar last5_casa / last5_fora (especificos)</h2>
+        <ul>
+            <li>Times com <strong>mando de campo forte</strong> (ex: Fortaleza na Serie A, Galatasaray na Turquia)</li>
+            <li>Ligas com <strong>viagens longas</strong> (MLS, campeonatos asiaticos)</li>
+            <li>Times que jogam <strong>taticas diferentes</strong> em casa vs. fora (ex: time retranqueiro fora, ofensivo em casa)</li>
+        </ul>
+        
+        <h2>3.2 Quando priorizar last10_corridos (gerais)</h2>
+        <ul>
+            <li><strong>Classicos e rivais:</strong> O historico especifico de mando pode ser irrelevante devido a intensidade emocional</li>
+            <li><strong>Finais de temporada:</strong> Motivacao supera estatistica de local</li>
+            <li><strong>Times instaveis (CV &gt; 0.8):</strong> A amostra geral dilui o "ruido" dos outliers</li>
+            <li><strong>Estreantes em ligas:</strong> Sem historico suficiente em casa/especifico</li>
+        </ul>
+        
+        <h2>3.3 Formula de Ponderacao Dinamica</h2>
+        <div class="code-block">
+<span class="code-comment"># Logica de decisao para peso casa vs. geral</span>
+<span class="code-keyword">SE</span> (rivalidade == <span class="code-keyword">"alta"</span> <span class="code-keyword">OU</span> CV_geral &gt; 0.8):
+    peso_casa = 30%
+    peso_geral = 70%
+<span class="code-keyword">SENAO SE</span> (distancia_viagem &gt; 1000km):
+    peso_casa = 70%
+    peso_geral = 30%
+<span class="code-keyword">SENAO</span>:
+    peso_casa = 50%
+    peso_geral = 50%
+        </div>
+
+        <h1>4. Verificacao Anti-Alucinacao de Elenco</h1>
+        
+        <p>JSONs desatualizados podem conter jogadores que ja foram vendidos, machucados ou sairam do clube. Esta verificacao e obrigatoria antes de qualquer recomendacao de aposta.</p>
+        
+        <h2>4.1 Checklist de Validacao</h2>
+        <ol class="checklist">
+            <li>Pesquisar: "[Nome do Time] elenco atual [Ano]"</li>
+            <li>Fontes confiaveis: Site oficial do clube, Transfermarkt, GE.globo, SofaScore</li>
+            <li>Comparar: Cruzar jogadores citados no JSON com lista oficial atual</li>
+        </ol>
+        
+        <h2>4.2 Tratamento de Divergencias</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Situacao</th>
+                    <th>Status</th>
+                    <th>Acao</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Jogador "chave" nao consta no elenco oficial</td>
+                    <td class="status-vermelho">DADO DESATUALIZADO</td>
+                    <td>Ignorar estatisticas relacionadas a este jogador</td>
+                </tr>
+                <tr>
+                    <td>Jogador suspenso/lesionado confirmado na fonte oficial</td>
+                    <td class="status-amarelo">ALERTA ATIVO</td>
+                    <td>Ajustar analise ofensiva/defensiva considerando ausencia</td>
+                </tr>
+                <tr>
+                    <td>Time com &gt;3 alteracoes no elenco titular vs. JSON</td>
+                    <td class="status-vermelho">ELENCO RECONSTRUIDO</td>
+                    <td>Priorizar analise tatica sobre estatisticas historicas</td>
+                </tr>
+            </tbody>
+        </table>
+        
+        <h2>4.3 Template de Consulta Obrigatoria</h2>
+        <div class="highlight-box danger">
+            <div class="highlight-box-title">ANTES de sugerir aposta baseada em forca ofensiva:</div>
+            <p>"Elenco atual [Time] 2025/2026 Transfermarkt"</p>
+            <p>"Escalação provavel [Time] [Data do Jogo]"</p>
+            <p>"Desfalques confirmados [Time] globoesporte"</p>
+            <p><strong>SE</strong> jogador citado no JSON NAO aparecer em nenhuma fonte atual:</p>
+            <p style="margin-left: 1em;">→ Marcar: "[DADO DESATUALIZADO - IGNORAR]"</p>
+        </div>
+
+        <h1>5. Integracao na Persona (RAG)</h1>
+        
+        <p>Quando o modelo receber o JSON de estatisticas, deve consultar este manual antes de gerar a analise final:</p>
+        
+        <div class="code-block">
+<span class="code-comment"># PROTOCOLO DE ANALISE OBRIGATORIO:</span>
+
+<span class="code-comment"># 1. Verifique CV do mercado escolhido:</span>
+<span class="code-keyword">SE</span> CV &gt; 1.0 → RECUSAR APOSTA, independente de valor esperado
+<span class="code-keyword">SE</span> 0.6 &lt; CV &lt; 1.0 → Solicitar confirmacao de contexto favoravel
+
+<span class="code-comment"># 2. Valide n_used:</span>
+<span class="code-keyword">SE</span> n &lt; 5 → Ativar modo "Analise Qualitativa", suspender calculos Poisson
+<span class="code-keyword">SE</span> n &lt; 10 → Adicionar disclaimer "Dados limitados - alta variancia"
+
+<span class="code-comment"># 3. Determine peso Casa/Fora:</span>
+Classico? Use 70% last10_corridos
+Viagem longa? Use 70% last5_especifico
+CV alto (&gt;0.8)? Sempre priorize amostra maior
+
+<span class="code-comment"># 4. Execute Anti-Alucinacao:</span>
+Validar top 3 jogadores ofensivos mencionados
+Confirmar lesoes/suspensoes nas ultimas 24h
+
+<span class="code-comment"># 5. Output final deve incluir:</span>
+<span class="code-keyword">-</span> "Risco Estatistico: [Baixo/Medio/Alto] baseado em CV=X.XX"
+<span class="code-keyword">-</span> "Confianca dos Dados: [Alta/Media/Baixa] (n=X jogos)"
+<span class="code-keyword">-</span> "Validacao de Elenco: [Confirmada/Pendente/Desatualizada]"
+        </div>
+
+        <h1>6. Resumo Executivo para o Modelo</h1>
+        
+        <table class="summary-table">
+            <thead>
+                <tr>
+                    <th>Indicador JSON</th>
+                    <th>Limite Critico</th>
+                    <th>Acao Automatica</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>CV</strong></td>
+                    <td>&gt; 1.0</td>
+                    <td class="status-vermelho">Bloquear entrada no mercado</td>
+                </tr>
+                <tr>
+                    <td><strong>CV</strong></td>
+                    <td>&gt; 0.6</td>
+                    <td class="status-laranja">Alerta de cautela maxima</td>
+                </tr>
+                <tr>
+                    <td><strong>n_used</strong></td>
+                    <td>&lt; 5</td>
+                    <td class="status-vermelho">Ignorar modelo matematico, usar so noticias</td>
+                </tr>
+                <tr>
+                    <td><strong>n_used</strong></td>
+                    <td>&lt; 10</td>
+                    <td class="status-amarelo">Reduzir stake sugerida em 50%</td>
+                </tr>
+                <tr>
+                    <td><strong>Data do JSON</strong></td>
+                    <td>&gt; 30 dias</td>
+                    <td class="status-amarelo">Executar validacao de elenco obrigatoria</td>
+                </tr>
+            </tbody>
+        </table>
+        
+        <div class="highlight-box success">
+            <div class="highlight-box-title">Principio Fundamental</div>
+            <p>"O JSON fornece a matematica. A Web Search fornece o tempo real. Este manual fornece a sabedoria para unir ambos."</p>
+        </div>
+        
+        <div class="document-footer">
+            <p>Documento tecnico para uso em sistemas RAG (Retrieval-Augmented Generation) de analise esportiva.</p>
+            <p>ApostaMestre — Versao 1.0 | Fevereiro 2026</p>
+        </div>
+    </div>
+</body>
+</html>

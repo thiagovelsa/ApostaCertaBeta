@@ -1,7 +1,7 @@
 # Setup Local - Guia Completo
 
-**Versão:** 1.0
-**Data:** 07 de fevereiro de 2026
+**Versão:** 1.1
+**Data:** 11 de fevereiro de 2026
 **Plataformas:** Windows, macOS, Linux
 
 Guia passo-a-passo para configurar o ambiente de desenvolvimento localmente.
@@ -120,8 +120,12 @@ pip install --upgrade pip
 # Instalar requirements
 pip install -r requirements.txt
 
-# Instalar dev dependencies (testes, linting)
+# Instalar dev dependencies (testes, linting, type checking)
 pip install -r requirements-dev.txt
+
+# Verificar instalação de dependências científicas (para análise)
+python -c "import math; print('✓ Math OK')"
+python -c "import random; print('✓ Random OK')"
 ```
 
 **Verificar instalação:**
@@ -154,9 +158,12 @@ cp ../.env.example .env
 VSTATS_API_URL=https://vstats-back-bbdfdf0bfd16.herokuapp.com/api
 VSTATS_API_TIMEOUT=30
 ENV=development
+DEBUG=true
+LOG_LEVEL=INFO
 REDIS_URL=redis://localhost:6379/0
 CACHE_ENABLED=true
-ALLOWED_ORIGINS=http://localhost:3000,http://localhost:5173
+CACHE_VERSION=1
+ALLOWED_ORIGINS=http://localhost:3000,http://localhost:5173,http://localhost:5174
 ```
 
 ### 2.5 Iniciar Redis (se não estiver rodando)
@@ -261,15 +268,11 @@ npm run dev
 ### 3.5 Rodar Testes (Frontend)
 
 ```bash
-# Instalar testing dependencies
-npm install -D vitest @testing-library/react @testing-library/jest-dom
-
-# Rodar testes
-npm run test
-
-# Com coverage
-npm run test:coverage
+# Testes ainda não configurados no frontend
+# npm run test  # Não disponível ainda
 ```
+
+**Nota:** Testes do frontend estão planejados para futura implementação. O backend possui cobertura completa de testes com pytest.
 
 ### 3.6 Build Produção
 

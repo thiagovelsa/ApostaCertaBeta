@@ -186,6 +186,7 @@ export interface StatsResponse {
   contexto?: ContextoPartida | null;
   h2h_all_comps?: H2HInfo | null;
   debug_amostra?: DebugAmostra | null;
+  amostra_suficiente?: boolean;
   previsoes?: PrevisaoPartida;
   over_under?: OverUnderPartida;
 }

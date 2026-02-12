@@ -22,7 +22,15 @@ echo.
 :: Iniciar Backend
 echo [2/3] Iniciando Backend (FastAPI) na porta %BACKEND_PORT%...
 cd /d "%~dp0backend"
-start "Palpite Mestre - Backend" cmd /k "call .venv\Scripts\activate 2>nul & uvicorn app.main:app --reload --port %BACKEND_PORT%"
+
+:: Verificar/instalar h2 no venv (requerido para HTTP/2)
+".venv\Scripts\python.exe" -c "import h2" >nul 2>&1
+if errorlevel 1 (
+    echo       Instalando dependencia h2 no venv...
+    ".venv\Scripts\python.exe" -m pip install h2
+)
+
+start "Palpite Mestre - Backend" cmd /k ".venv\Scripts\python.exe -m uvicorn app.main:app --reload --port %BACKEND_PORT%"
 cd /d "%~dp0"
 echo       Backend iniciado.
 echo.

@@ -19,6 +19,7 @@ export function FilterToggle({ value, onChange }: FilterToggleProps) {
           key={option.value}
           onClick={() => onChange(option.value)}
           type="button"
+          aria-pressed={value === option.value}
           className={`
             focus-ring px-5 py-2 rounded-full text-sm font-medium transition-all duration-200
             ${

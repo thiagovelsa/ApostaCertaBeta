@@ -9,6 +9,8 @@ interface SmartSearchResultsProps {
   progress: SmartSearchProgress | null;
   isAnalyzing: boolean;
   onClose?: () => void;
+  error?: Error | null;
+  onRetry?: () => void;
 }
 
 /**
@@ -51,6 +53,8 @@ function StatFilter({
             <button
               key={key}
               onClick={() => onToggle(key)}
+              type="button"
+              aria-pressed={isActive}
               className={`
                 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium
                 border transition-all duration-200
@@ -192,6 +196,32 @@ function ResultHeader({
 }
 
 /**
+ * Componente de erro da Análise Automática
+ */
+function ErrorState({ error, onRetry }: { error: Error | null; onRetry?: () => void }) {
+  return (
+    <div className="bg-dark-secondary rounded-xl p-8 border border-danger/30 text-center">
+      <Icon name="warning" size="lg" className="text-danger mx-auto mb-4" />
+      <h3 className="text-white font-medium mb-2">
+        Erro na análise automática
+      </h3>
+      <p className="text-sm text-gray-400 max-w-md mx-auto mb-6">
+        {error?.message || 'Não foi possível realizar a análise. Tente novamente.'}
+      </p>
+      {onRetry && (
+        <button
+          type="button"
+          onClick={onRetry}
+          className="px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors"
+        >
+          Tentar novamente
+        </button>
+      )}
+    </div>
+  );
+}
+
+/**
  * Container de resultados da Análise Automática
  */
 export function SmartSearchResults({
@@ -199,6 +229,8 @@ export function SmartSearchResults({
   progress,
   isAnalyzing,
   onClose,
+  error,
+  onRetry,
 }: SmartSearchResultsProps) {
   // Estado dos filtros (todas as estatísticas ativas por padrão)
   const [filtrosAtivos, setFiltrosAtivos] = useState<Set<string>>(ALL_STATS);
@@ -246,6 +278,11 @@ export function SmartSearchResults({
   // Mostra barra de progresso durante análise
   if (isAnalyzing && progress) {
     return <ProgressBar progress={progress} />;
+  }
+
+  // Mostra erro se houver
+  if (error) {
+    return <ErrorState error={error} onRetry={onRetry} />;
   }
 
   // Sem resultado ainda

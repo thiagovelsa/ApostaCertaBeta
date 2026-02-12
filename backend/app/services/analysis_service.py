@@ -125,7 +125,7 @@ def _calc_confidence_cv(cv: float, n: int) -> float:
     elif n >= 10:
         confianca *= 1.1
 
-    return _clamp(confianca, 0.30, 0.95)
+    return round(_clamp(confianca, 0.30, 0.95), 3)
 
 
 def _round1(v: float) -> float:

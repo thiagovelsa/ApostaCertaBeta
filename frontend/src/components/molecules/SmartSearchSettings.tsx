@@ -23,6 +23,7 @@ function SliderInput({
   min,
   max,
   step = 0.05,
+  id: inputId,
 }: {
   label: string;
   value: number;
@@ -30,12 +31,15 @@ function SliderInput({
   min: number;
   max: number;
   step?: number;
+  id?: string;
 }) {
+  const resolvedId = inputId || `slider-${label.replace(/\s+/g, '-').toLowerCase()}`;
   return (
     <div className="flex items-center justify-between gap-4">
-      <label className="text-sm text-gray-400 min-w-[100px]">{label}</label>
+      <label htmlFor={resolvedId} className="text-sm text-gray-400 min-w-[100px]">{label}</label>
       <div className="flex items-center gap-2 flex-1">
         <input
+          id={resolvedId}
           type="range"
           min={min}
           max={max}
@@ -64,11 +68,15 @@ function ToggleSwitch({
   checked: boolean;
   onChange: (checked: boolean) => void;
 }) {
+  const switchId = `toggle-${label.replace(/\s+/g, '-').toLowerCase()}`;
   return (
-    <label className="flex items-center justify-between cursor-pointer">
-      <span className="text-sm text-gray-400">{label}</span>
+    <div className="flex items-center justify-between">
+      <label htmlFor={switchId} className="text-sm text-gray-400 cursor-pointer">{label}</label>
       <button
+        id={switchId}
         type="button"
+        role="switch"
+        aria-checked={checked}
         onClick={() => onChange(!checked)}
         className={`
           relative w-11 h-6 rounded-full transition-colors
@@ -82,7 +90,7 @@ function ToggleSwitch({
           `}
         />
       </button>
-    </label>
+    </div>
   );
 }
 
@@ -214,9 +222,10 @@ export function SmartSearchSettings({ isOpen, onToggle }: SmartSearchSettingsPro
                       max={0.90}
                     />
                     <div className="flex items-center justify-between gap-4">
-                      <label className="text-sm text-gray-400 min-w-[100px]">Linha Mín.</label>
+                      <label htmlFor={`linemin-${stat}`} className="text-sm text-gray-400 min-w-[100px]">Linha Mín.</label>
                       <div className="flex items-center gap-2 flex-1">
                         <input
+                          id={`linemin-${stat}`}
                           type="number"
                           min={0}
                           max={50}

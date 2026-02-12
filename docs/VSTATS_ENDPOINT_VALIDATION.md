@@ -4,7 +4,18 @@ Este documento registra os testes *em runtime* feitos antes de alterar endpoints
 
 ## Execução
 
-Data: 2026-02-07
+Data: 2026-02-11
+
+## Endpoints Validados e em Uso
+
+### Match Preview
+- `GET /stats/match/v1/preview?Fx={match_id}` → Usado para contexto pré-jogo (H2H, forma, standings)
+
+### Standings  
+- `GET /stats/standings/v1/season?tmcl={tournament_id}` → Classificação da competição
+
+### Referee Stats
+- `GET /stats/referees/v1/get-by-prsn?Prsn={referee_id}` → Estatísticas do árbitro
 
 Estratégia:
 

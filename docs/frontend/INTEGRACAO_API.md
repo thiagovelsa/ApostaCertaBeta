@@ -1,7 +1,7 @@
 # Integração API - Services e React Query Hooks
 
-**Versão:** 1.7
-**Data:** 07 de fevereiro de 2026
+**Versão:** 1.8
+**Data:** 11 de fevereiro de 2026
 **Framework:** React Query 5 (TanStack Query)
 **HTTP Client:** Axios 1.6+
 

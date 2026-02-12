@@ -1,8 +1,8 @@
 # Arquitetura Frontend - Sistema de Análise de Estatísticas de Futebol
 
-**Versão:** 1.3
-**Data:** 07 de fevereiro de 2026
-**Framework:** React 19 + TypeScript 5 + Vite 7
+**Versão:** 1.4
+**Data:** 11 de fevereiro de 2026
+**Framework:** React 19 + TypeScript 5 + Vite 7 + TailwindCSS + Framer Motion
 
 Guia técnico completo da arquitetura frontend, organização de código, state management, routing e otimizações de performance.
 
@@ -18,18 +18,18 @@ frontend/
 │   └── vite.svg
 ├── src/
 │   ├── components/             # Atomic Design + motion helpers
-│   │   ├── atoms/
-│   │   ├── molecules/
-│   │   ├── organisms/
-│   │   ├── layout/
-│   │   └── motion/
-│   ├── hooks/                  # usePartidas, useStats, useSmartSearch
-│   ├── lib/                    # queryClient
+│   │   ├── atoms/              # Button, Badge, Icon, LoadingSpinner
+│   │   ├── molecules/          # DatePicker, FilterToggle, RaceRow
+│   │   ├── organisms/          # MatchCard, StatsPanel, TeamCard, SmartSearchPanel
+│   │   ├── layout/             # PageLayout, Container, Grid
+│   │   └── motion/             # MotionProvider, AnimatedRoutes
+│   ├── hooks/                  # usePartidas, useStats, useAnalysis, useSmartSearch
+│   ├── lib/                    # queryClient, utils
 │   ├── pages/                  # HomePage, EstatisticasPage
-│   ├── services/               # api.ts, partidasService.ts, statsService.ts
+│   ├── services/               # api.ts, partidasService.ts, statsService.ts, analysisService.ts
 │   ├── stores/                 # dateStore, filterStore, settingsStore
-│   ├── types/                  # partida, stats, smartSearch
-│   ├── utils/                  # predictions, overUnder, insights, etc.
+│   ├── types/                  # partida.ts, stats.ts, analysis.ts, smartSearch.ts
+│   ├── utils/                  # predictions.ts, overUnder.ts, insights.ts, exportJson.ts
 │   ├── App.tsx
 │   ├── main.tsx
 │   └── index.css
@@ -949,8 +949,10 @@ Para aprofundar na arquitetura após ler este documento:
 ---
 
 **Status do Projeto:**
-- ✅ Documentação técnica (✓ Frontend Arquitetura)
-- ✅ Backend (Implementado)
-- ✅ Frontend (Implementado - inclui Busca Inteligente v1.2)
+- ✅ Documentação técnica (✓ Frontend Arquitetura v1.4)
+- ✅ Backend (Implementado - FastAPI + Modelos Preditivos)
+- ✅ Frontend (Implementado - React 19 + Análise Completa)
+- ✅ Smart Search (Busca Inteligente de Oportunidades)
+- ✅ Exportação JSON para IA
 
-**Última atualização:** 28 de dezembro de 2025
+**Última atualização:** 11 de fevereiro de 2026

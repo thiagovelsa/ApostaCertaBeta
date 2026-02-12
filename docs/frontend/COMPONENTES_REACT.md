@@ -1,7 +1,7 @@
 # Componentes React - Catálogo Atomic Design
 
-**Versão:** 1.7
-**Data:** 07 de fevereiro de 2026
+**Versão:** 1.8
+**Data:** 11 de fevereiro de 2026
 **Pattern:** Atomic Design (Atoms → Molecules → Organisms → Pages)
 **Total de Componentes:** variável (ver `frontend/src/components`)
 

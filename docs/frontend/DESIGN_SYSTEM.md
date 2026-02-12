@@ -1,7 +1,7 @@
 # Design System - Sistema de Análise de Estatísticas de Futebol
 
-**Versão:** 1.1
-**Data:** 07 de fevereiro de 2026
+**Versão:** 1.2
+**Data:** 11 de fevereiro de 2026
 **Status:** ✅ Completo
 
 Sistema completo de design tokens e componentes visuais para a implementação do frontend em React + TypeScript.

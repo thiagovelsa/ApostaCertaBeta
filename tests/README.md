@@ -1,7 +1,7 @@
 # Testes - Documentação
 
-**Versão:** 1.0
-**Data:** 24 de dezembro de 2025
+**Versão:** 1.1
+**Data:** 11 de fevereiro de 2026
 **Framework:** Pytest
 
 ---
@@ -19,13 +19,17 @@ tests/
 ├── pytest.ini                    # Configuração do pytest
 ├── unit/                         # Testes unitários (70%)
 │   ├── __init__.py
-│   ├── test_cv_calculator.py    # Testes de cálculos
+│   ├── test_cv_calculator.py    # Testes de CV e estabilidade
+│   ├── test_analysis_service.py # Testes de previsões e over/under
+│   ├── test_league_params.py    # Testes de parâmetros por liga
+│   ├── test_contexto_vstats.py  # Testes de extração de contexto
 │   ├── test_models.py           # Testes de validação Pydantic
 │   ├── test_services.py         # Testes de lógica (com mocks)
 │   └── test_validators.py       # Testes de validadores customizados
 ├── integration/                  # Testes de integração (20%)
 │   ├── __init__.py
 │   ├── test_routes.py           # Testes de endpoints HTTP
+│   ├── test_stats_route.py      # Testes de /stats e /analysis
 │   ├── test_vstats_client.py    # Testes de cliente VStats (mock)
 │   ├── test_cache.py            # Testes de cache Redis (mock)
 │   └── test_end_to_end.py       # Testes de fluxo completo

@@ -1,7 +1,7 @@
 # Estratégia de Testes
 
-**Versão:** 1.0
-**Data:** 24 de dezembro de 2025
+**Versão:** 1.1
+**Data:** 11 de fevereiro de 2026
 **Framework:** Pytest (backend), Vitest (frontend, futuro)
 
 ---
@@ -49,13 +49,17 @@ tests/
 ├── conftest.py                  # Fixtures globais
 ├── unit/
 │   ├── __init__.py
-│   ├── test_cv_calculator.py    # Testes de funções puras
+│   ├── test_cv_calculator.py    # Testes de CV e estabilidade
+│   ├── test_analysis_service.py # Testes de previsões e over/under
+│   ├── test_league_params.py    # Testes de parâmetros por liga
 │   ├── test_models.py           # Testes de validação Pydantic
 │   ├── test_services.py         # Testes de lógica (com mocks)
+│   ├── test_contexto_vstats.py  # Testes de extração de contexto
 │   └── test_validators.py       # Testes de validadores
 ├── integration/
 │   ├── __init__.py
 │   ├── test_routes.py           # Testes de endpoints
+│   ├── test_stats_route.py      # Testes específicos de /stats e /analysis
 │   ├── test_vstats_client.py    # Testes com VStats API (mock)
 │   └── test_cache.py            # Testes de cache (com redis mock)
 ├── fixtures/
@@ -91,7 +95,8 @@ def test_exception_when_empty_list():          # ✓ Bom
 
 ✅ **Funções puras** (sem estado, sem I/O)
 ✅ **Validações de dados**
-✅ **Cálculos** (CV, médias, etc)
+✅ **Cálculos** (CV, médias, previsões, probabilidades)
+✅ **Modelos estatísticos** (Poisson, Negative Binomial, Dixon-Coles)
 ✅ **Tratamento de exceções**
 ✅ **Lógica condicional**
 
@@ -104,53 +109,9 @@ def test_exception_when_empty_list():          # ✓ Bom
 ```python
 # tests/unit/test_cv_calculator.py
 import pytest
-from app.utils.cv_calculator import calcular_cv, classificar_cv
+from app.utils.cv_calculator import classify_cv, calculate_estabilidade
 
-class TestCalcularCV:
-    """Testes para cálculo de Coeficiente de Variação."""
-
-    def test_calcular_cv_com_valores_validos(self):
-        """CV calculado corretamente para valores válidos."""
-        valores = [1, 2, 3, 4, 5]
-        resultado = calcular_cv(valores)
-
-        assert isinstance(resultado, float)
-        assert resultado > 0
-        assert resultado < 1  # CV típico de dados normalizados
-
-    def test_calcular_cv_com_lista_vazia(self):
-        """Retorna 0.0 para lista vazia."""
-        resultado = calcular_cv([])
-        assert resultado == 0.0
-
-    def test_calcular_cv_com_um_elemento(self):
-        """Retorna 0.0 com um elemento (impossível calcular desvio)."""
-        resultado = calcular_cv([5.0])
-        assert resultado == 0.0
-
-    def test_calcular_cv_com_media_zero(self):
-        """Retorna 0.0 quando média é zero."""
-        resultado = calcular_cv([0, 0, 0])
-        assert resultado == 0.0
-
-    def test_calcular_cv_com_valores_negativos(self):
-        """Calcula corretamente com valores negativos."""
-        valores = [-5, -3, -1, 1, 3, 5]
-        resultado = calcular_cv(valores)
-
-        # Não deve lançar erro
-        assert isinstance(resultado, float)
-        assert resultado >= 0
-
-    def test_cv_arredondado_duas_casas(self):
-        """CV é arredondado a 2 casas decimais."""
-        resultado = calcular_cv([1.111, 2.222, 3.333])
-
-        # Não deve ter mais de 2 casas decimais
-        assert len(str(resultado).split('.')[-1]) <= 2
-
-
-class TestClassificarCV:
+class TestClassifyCV:
     """Testes para classificação de CV."""
 
     @pytest.mark.parametrize("cv,esperado", [
@@ -162,14 +123,94 @@ class TestClassificarCV:
     ])
     def test_classificacao_por_faixas(self, cv, esperado):
         """Classifica corretamente por faixas de CV."""
-        resultado = classificar_cv(cv)
+        resultado = classify_cv(cv)
         assert resultado == esperado
 
-    def test_cv_negativo_retorna_muito_estavel(self):
-        """CVs negativos (impossível) são tratados como Muito Estável."""
-        # Isso não deve acontecer, mas caso aconteça...
-        resultado = classificar_cv(-0.5)
-        assert resultado == "Muito Estável"  # Ou lançar exceção
+
+class TestCalculateEstabilidade:
+    """Testes para cálculo de estabilidade (0-100%)."""
+
+    @pytest.mark.parametrize("cv,esperado", [
+        (0.00, 100),  # Perfeito
+        (0.15, 85),   # Muito Estável
+        (0.30, 70),   # Estável
+        (0.45, 55),   # Moderado
+        (0.60, 40),   # Instável
+        (0.75, 25),   # Muito Instável
+        (1.00, 0),    # Máximo caos
+    ])
+    def test_estabilidade_por_cv(self, cv, esperado):
+        """Estabilidade inversamente proporcional ao CV."""
+        resultado = calculate_estabilidade(cv)
+        assert resultado == esperado
+
+
+# tests/unit/test_analysis_service.py
+import pytest
+from app.services.analysis_service import AnalysisService
+
+class TestAnalysisService:
+    """Testes para modelos preditivos."""
+
+    def test_poisson_pmf(self):
+        """PMF de Poisson calcula probabilidades corretamente."""
+        from app.services.analysis_service import _poisson_pmf
+        
+        # P(X=0) com λ=2.5 = e^(-2.5) ≈ 0.082
+        p0 = _poisson_pmf(0, 2.5)
+        assert 0.08 < p0 < 0.09
+        
+        # P(X=2) com λ=2.5
+        p2 = _poisson_pmf(2, 2.5)
+        assert 0.25 < p2 < 0.27
+
+    def test_dixon_coles_tau(self):
+        """Fator de correção Dixon-Coles aplica-se aos placares baixos."""
+        from app.services.analysis_service import _dixon_coles_tau
+        
+        rho = -0.13
+        lh, la = 1.5, 1.0
+        
+        # 0-0 tem maior correção
+        tau_00 = _dixon_coles_tau(0, 0, lh, la, rho)
+        assert tau_00 < 1.0
+        
+        # 1-1 tem correção menor
+        tau_11 = _dixon_coles_tau(1, 1, lh, la, rho)
+        assert tau_11 < 1.0
+        assert tau_11 > tau_00  # Menor correção que 0-0
+        
+        # 2-1 não tem correção
+        tau_21 = _dixon_coles_tau(2, 1, lh, la, rho)
+        assert tau_21 == 1.0
+
+    def test_negbin_cdf(self):
+        """CDF da Negative Binomial calcula probabilidades acumuladas."""
+        from app.services.analysis_service import _negbin_cdf
+        
+        # Com r=2, p=0.5
+        cdf_0 = _negbin_cdf(0, 2, 0.5)
+        assert 0.24 < cdf_0 < 0.26  # P(X<=0)
+        
+        cdf_5 = _negbin_cdf(5, 2, 0.5)
+        assert 0.88 < cdf_5 < 0.90  # P(X<=5)
+
+    def test_confidence_calculation(self):
+        """Confiança baseada no CV e tamanho da amostra."""
+        from app.services.analysis_service import _calc_confidence_cv
+        
+        # CV baixo = alta confiança
+        conf_low_cv = _calc_confidence_cv(0.2, 10)
+        assert conf_low_cv > 0.7
+        
+        # CV alto = baixa confiança
+        conf_high_cv = _calc_confidence_cv(0.6, 10)
+        assert conf_high_cv < 0.5
+        
+        # Amostra pequena reduz confiança
+        conf_small_n = _calc_confidence_cv(0.3, 3)
+        conf_large_n = _calc_confidence_cv(0.3, 15)
+        assert conf_small_n < conf_large_n
 ```
 
 ### 3.3 Fixtures (Reutilizáveis)

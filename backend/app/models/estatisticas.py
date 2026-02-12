@@ -7,7 +7,7 @@ Schemas para estatisticas de times e partidas.
 
 from typing import List, Literal, Optional
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, computed_field, field_validator
 
 from .partida import PartidaResumo
 from .contexto import ContextoPartida, H2HInfo
@@ -212,6 +212,20 @@ class StatsResponse(BaseModel):
     h2h_all_comps: Optional[H2HInfo] = None
     # Transparência (quando debug=1): quais partidas entraram no cálculo por lado.
     debug_amostra: Optional[DebugAmostra] = None
+
+    @computed_field  # type: ignore[misc]
+    @property
+    def amostra_suficiente(self) -> bool:
+        """True quando a menor amostra por lado >= 3 (mínimo para CV significativo)."""
+        counts = [
+            v for v in (
+                self.partidas_analisadas_mandante,
+                self.partidas_analisadas_visitante,
+            )
+            if v is not None
+        ]
+        effective = min(counts) if counts else self.partidas_analisadas
+        return effective >= 3
 
     model_config = {
         "json_schema_extra": {

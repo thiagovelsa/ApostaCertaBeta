@@ -628,6 +628,34 @@ class StatsService:
             "_seasonstats_fallback": True,
         }
 
+    async def _seasonstats_fallback_result(
+        self,
+        tournament_id: str,
+        team_id: str,
+        limit: int,
+        periodo: str,
+        mando,
+        debug: bool,
+        reason: str,
+    ) -> dict:
+        """Retorna resultado de seasonstats quando não há partidas individuais."""
+        fallback = await self._get_season_stats(tournament_id, team_id)
+        fallback["recent_form"] = []
+        if debug:
+            n_used = int(fallback.get("matches", 0) or 0)
+            fallback["_debug_amostra"] = {
+                "source": "seasonstats_fallback",
+                "limit": limit,
+                "periodo": periodo,
+                "mando": mando,
+                "n_used": n_used,
+                "match_ids": [],
+                "match_dates": [],
+                "weights": [],
+                "reason": reason,
+            }
+        return fallback
+
     async def _get_recent_matches_stats(
         self,
         tournament_id: str,
@@ -685,23 +713,9 @@ class StatsService:
 
         if not match_ids:
             logger.warning(f"Nenhuma partida encontrada para time {team_id}")
-            # Fallback para seasonstats
-            fallback = await self._get_season_stats(tournament_id, team_id)
-            fallback["recent_form"] = []
-            if debug:
-                n_used = int(fallback.get("matches", 0) or 0)
-                fallback["_debug_amostra"] = {
-                    "source": "seasonstats_fallback",
-                    "limit": limit,
-                    "periodo": periodo,
-                    "mando": mando,
-                    "n_used": n_used,
-                    "match_ids": [],
-                    "match_dates": [],
-                    "weights": [],
-                    "reason": "no_matches",
-                }
-            return fallback
+            return await self._seasonstats_fallback_result(
+                tournament_id, team_id, limit, periodo, mando, debug, "no_matches"
+            )
 
         logger.info(
             f"[FETCH] Buscando stats de {len(match_ids)} partidas para time {team_id[:8]}..."
@@ -712,22 +726,9 @@ class StatsService:
 
         if not match_stats_list:
             logger.warning(f"Nenhuma estatistica encontrada para time {team_id}")
-            fallback = await self._get_season_stats(tournament_id, team_id)
-            fallback["recent_form"] = []
-            if debug:
-                n_used = int(fallback.get("matches", 0) or 0)
-                fallback["_debug_amostra"] = {
-                    "source": "seasonstats_fallback",
-                    "limit": limit,
-                    "periodo": periodo,
-                    "mando": mando,
-                    "n_used": n_used,
-                    "match_ids": [],
-                    "match_dates": [],
-                    "weights": [],
-                    "reason": "no_match_stats",
-                }
-            return fallback
+            return await self._seasonstats_fallback_result(
+                tournament_id, team_id, limit, periodo, mando, debug, "no_match_stats"
+            )
 
         # 3. Calcula recent_form (W/D/L) a partir dos gols de cada partida
         recent_form: List[Literal["W", "D", "L"]] = []
@@ -828,7 +829,7 @@ class StatsService:
         schedule: Optional[dict] = None,
     ) -> dict:
         """
-        Busca IDs das ultimas N partidas realizadas pelo time E calcula W/D/L.
+        Busca IDs e datas das ultimas N partidas realizadas pelo time.
 
         ATUALIZADO (28/12/2025): Agora retorna tambem match_dates para Time-Weighting.
         Partidas mais recentes recebem peso maior no calculo de estatisticas.
@@ -840,7 +841,6 @@ class StatsService:
             dict com {
                 "match_ids": List[str],
                 "match_dates": List[str],  # Formato "YYYY-MM-DD"
-                "recent_form": List[Literal["W", "D", "L"]]
             }
         """
         try:
@@ -962,10 +962,9 @@ class StatsService:
                     f"[MANDO] Filtrado para jogos FORA: {len(team_matches)} partidas"
                 )
 
-            # Extrai IDs, datas e calcula W/D/L das ultimas N
+            # Extrai IDs e datas das ultimas N
             match_ids = []
             match_dates = []  # Para Time-Weighting
-            recent_form = []
 
             # Log para debug - verificar estrutura do primeiro match
             if team_matches:
@@ -985,25 +984,6 @@ class StatsService:
                     match_ids.append(match_id)
                     match_dates.append(match_date.isoformat() if match_date else "")
 
-                # Calcula W/D/L a partir dos scores (ja validados).
-                home_score = match.get("_home_score")
-                away_score = match.get("_away_score")
-                is_home = bool(match.get("_is_home", False))
-                if isinstance(home_score, (int, float)) and isinstance(
-                    away_score, (int, float)
-                ):
-                    team_goals = float(home_score) if is_home else float(away_score)
-                    opp_goals = float(away_score) if is_home else float(home_score)
-                    if team_goals > opp_goals:
-                        recent_form.append("W")
-                    elif team_goals < opp_goals:
-                        recent_form.append("L")
-                    else:
-                        recent_form.append("D")
-
-            logger.info(
-                f"[FORM] Time {team_id[:8]}: {recent_form[:10]} (total: {len(recent_form)})"
-            )
 
             # Log de datas para verificar Time-Weighting
             if match_dates:
@@ -1014,12 +994,11 @@ class StatsService:
             return {
                 "match_ids": match_ids,
                 "match_dates": match_dates,
-                "recent_form": recent_form,
             }
 
         except Exception as e:
             logger.error(f"Erro ao buscar partidas recentes: {e}")
-            return {"match_ids": [], "match_dates": [], "recent_form": []}
+            return {"match_ids": [], "match_dates": []}
 
     async def _fetch_matches_stats(
         self,
@@ -1632,6 +1611,7 @@ class StatsService:
         1. Se referee_id fornecido, pula fetch_match_stats
         2. Busca estatisticas do arbitro via get-by-prsn
         """
+        main_referee: Optional[dict] = None
         try:
             # Se nao temos referee_id, busca da partida
             if not referee_id:
@@ -1668,10 +1648,12 @@ class StatsService:
 
             # Extrai nome
             nome = referee_stats.get("name", "")
-            if not nome:
+            if not nome and main_referee:
                 first_name = main_referee.get("firstName", "")
                 last_name = main_referee.get("lastName", "")
                 nome = f"{first_name} {last_name}".strip()
+            if not nome:
+                nome = "Arbitro nao identificado"
 
             # Extrai estatisticas do torneio
             tournament_stats = referee_stats.get("tournamentStats", [])

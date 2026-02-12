@@ -1,7 +1,7 @@
 # Arquitetura Backend - Sistema de Análise de Estatísticas de Futebol
 
-**Versão:** 1.2
-**Data:** 28 de Dezembro de 2025
+**Versão:** 1.3
+**Data:** 11 de Fevereiro de 2026
 **Stack:** Python 3.11+ | FastAPI | Pydantic | Redis (opcional)
 
 ---
@@ -93,35 +93,38 @@ backend/
 │   │   │   └── def get_partidas_por_data(data: date) -> List[PartidaResumo]
 │   │   │   └── def filtrar_por_data(todas: List, data: date) -> List
 │   │   │
-│   │   ├── stats_service.py             # Cálculos de estatísticas
-│   │   │   └── def calcular_stats(partida_id: str, filtro: str) -> StatsResponse
-│   │   │   └── def agregar_estatisticas(matches: List) -> EstatisticasTime
+│   │   ├── stats_service.py             # Cálculos de estatísticas (CV, time-weighting)
+│   │   │   └── def calcular_stats(match_id, filtro, periodo, home_mando, away_mando) -> StatsResponse
+│   │   │   └── def _calculate_time_weight(match_date) -> float
+│   │   │   └── def _weighted_mean(values, weights) -> float
+│   │   │   └── def _weighted_cv(values, weights, wmean) -> float
+│   │   │
+│   │   ├── analysis_service.py          # NOVO: Previsões e over/under
+│   │   │   └── def build_previsoes(stats, home_mando, away_mando) -> PrevisaoPartida
+│   │   │   └── def build_over_under(stats, previsoes, home_mando, away_mando) -> OverUnderPartida
+│   │   │   └── def _over_prob_goals_dc(line, lh, la, rho) -> float
+│   │   │   └── def _over_prob_negbin(line, mu, alpha) -> float
 │   │   │
 │   │   ├── competicoes_service.py       # Gerenciamento de competições
 │   │   │   └── def listar_competicoes() -> List[CompeticaoInfo]
 │   │   │
-│   │   ├── vstats_client.py             # Cliente HTTP para VStats API
-│   │   │   └── class VStatsClient
-│   │   │   └── def get_schedule_month(tournament_id: str) -> List[Match]
-│   │   │   └── def get_seasonstats(tournament_id: str, team_id: str) -> SeasonStats
-│   │   │   └── def get_match_stats(match_id: str) -> MatchStats
+│   │   ├── cache_service.py             # Gerenciamento de cache Redis
+│   │   │   └── class CacheService
+│   │   │   └── def get(key: str) -> Optional[Any]
+│   │   │   └── def set(key: str, value: Any, ttl: int) -> None
 │   │   │
-│   │   ├── thesportsdb_client.py        # Cliente HTTP para TheSportsDB
-│   │   │   └── class TheSportsDBClient
-│   │   │   └── def search_team_badge(team_name: str) -> str
-│   │   │
-│   │   └── cache_service.py             # Gerenciamento de cache
-│   │       └── class CacheService
-│   │       └── def get(key: str) -> Optional[Any]
-│   │       └── def set(key: str, value: Any, ttl: int) -> None
-│   │       └── def invalidate(pattern: str) -> None
+│   │   └── escudos_service.py           # Busca de escudos de times
+│   │       └── def get_escudo(team_id, nome) -> EscudoResponse
 │   │
 │   ├── repositories/                     # 🟡 CAMADA: Data Access/Abstraction
 │   │   ├── __init__.py
 │   │   ├── vstats_repository.py         # Abstração da VStats API
 │   │   │   └── class VStatsRepository
-│   │   │   └── def fetch_matches(date: date) -> List[Match]
-│   │   │   └── def fetch_season_stats(team: Team) -> SeasonStats
+│   │   │   └── def fetch_schedule_full(tournament_id) -> dict
+│   │   │   └── def fetch_match_stats(match_id, team_id) -> dict
+│   │   │   └── def fetch_seasonstats(tournament_id, team_id) -> dict
+│   │   │   └── def fetch_match_preview(match_id) -> dict
+│   │   │   └── def fetch_standings(tournament_id) -> dict
 │   │   │
 │   │   └── badge_repository.py          # Abstração do TheSportsDB
 │   │       └── class BadgeRepository
@@ -130,20 +133,22 @@ backend/
 │   └── utils/                            # 🟣 CAMADA: Utilities/Helpers
 │       ├── __init__.py
 │       ├── cv_calculator.py             # Cálculo de Coeficiente de Variação
-│       │   └── def calcular_cv(valores: List[float]) -> float
-│       │   └── def classificar_cv(cv: float) -> str
+│       │   └── def classify_cv(cv: float) -> str
+│       │   └── def calculate_estabilidade(cv: float) -> int
 │       │
-│       ├── date_utils.py                # Manipulação de datas
-│       │   └── def parse_date(data_str: str) -> date
-│       │   └── def formato_data(data: date) -> str
+│       ├── league_params.py             # Parâmetros por liga para modelos
+│       │   └── def get_league_params(competition) -> LeagueParams
+│       │   └── goals_mean_total, corners_mean_total, cards_mean_total
+│       │   └── home_advantage_factor, dixon_coles_rho, teams_count
 │       │
-│       ├── logger.py                    # Configuração de logging
-│       │   └── def get_logger(name: str) -> Logger
+│       ├── contexto_vstats.py           # Extração de contexto pré-jogo
+│       │   └── def compute_rest_context(schedule, team_id, match_date)
+│       │   └── def extract_h2h_any_comp(match_preview)
+│       │   └── def extract_ranking_list(standings)
+│       │   └── def extract_team_table_entry(ranking_list, team_id)
 │       │
 │       └── constants.py                 # Constantes globais
-│           └── CV_THRESHOLDS
-│           └── API_TIMEOUTS
-│           └── STAT_NAMES
+│           └── CACHE_TTL_*
 │
 ├── tests/
 │   ├── __init__.py
@@ -817,9 +822,64 @@ async def test_get_stats_endpoint(app_client):
 
 ---
 
-## 9. Otimizações de Performance
+## 9. Serviços de Análise (v1.8)
 
-### 9.1 Reutilização de Schedule (v1.1)
+### 9.1 AnalysisService
+
+Novo serviço (`app/services/analysis_service.py`) que implementa modelos preditivos para o endpoint `/analysis`.
+
+**Responsabilidades:**
+- Calcular previsões (expected values) para 6 métricas
+- Gerar probabilidades over/under com distribuições estatísticas
+- Aplicar ajustes de mando, forma, descanso e classificação
+
+**Modelos Estatísticos:**
+
+| Métrica | Distribuição | Ajustes Especiais |
+|---------|--------------|-------------------|
+| Gols | Poisson + Dixon-Coles | ρ = -0.13 a -0.075 por liga |
+| Escanteios | Negative Binomial | α estimado da variância |
+| Finalizações | Negative Binomial | α estimado da variância |
+| Finalizações no Gol | Negative Binomial | α estimado da variância |
+| Cartões Amarelos | Negative Binomial | Ajuste por árbitro |
+| Faltas | Negative Binomial | α estimado da variância |
+
+**Fórmulas:**
+
+```python
+# Dixon-Coles adjustment para gols
+_tau(h, a, lh, la, rho) = 
+    1 - lh*la*rho    if h==0 and a==0
+    1 - la*rho       if h==1 and a==0
+    1 - lh*rho       if h==0 and a==1
+    1 - rho          if h==1 and a==1
+    1.0              otherwise
+
+# Negative Binomial parametrization
+r = mu * p / (1-p)    # número de sucessos
+p = 1 / (1 + alpha*mu) # probabilidade de sucesso
+alpha = (var - mu) / mu^2  # overdispersion
+```
+
+**Ajustes Aplicados:**
+1. **Mando:** Fatores multiplicativos por métrica (ex: gols casa +8%, fora -8%)
+2. **Forma:** Fator baseado nos últimos 5 jogos (W=3pts, D=1pt, L=0pt)
+3. **Descanso:** Penalidade se ≤2 dias (-6%) ou 3 dias (-3%)
+4. **Congestão:** Penalidade se ≥4 jogos em 14 dias (-4%)
+5. **Classificação:** Ajuste leve em ataque/defesa baseado na posição
+6. **H2H:** Blend de 15-30% com média histórica quando ≥5 jogos
+7. **Árbitro:** Fator para cartões baseado na média do árbitro vs liga
+
+**Confiança:**
+- Base: `1 - CV` (quanto menor CV, maior confiança)
+- Ajuste por tamanho da amostra: n<5 (-20%), n≥10 (+10%), n≥15 (+15%)
+- Clamp: 0.30 a 0.95
+
+---
+
+## 10. Otimizações de Performance
+
+### 10.1 Reutilização de Schedule (v1.1)
 
 **Problema:** Ao calcular estatísticas de uma partida, o schedule completo do torneio (~380 partidas) era buscado **2 vezes** - uma para cada time, mesmo ambos estando no mesmo torneio.
 
@@ -861,7 +921,7 @@ async def calcular_stats(self, match_id, ...):
 | Latência estimada (schedule) | ~1000ms | ~500ms |
 | Cache hit após 1ª requisição | ✓ | ✓ (1h TTL) |
 
-### 9.2 Time-Weighting (Dixon-Coles Decay) (v1.6)
+### 10.2 Time-Weighting (Dixon-Coles Decay) (v1.6)
 
 **Conceito:** Partidas mais recentes devem ter mais peso no cálculo de médias e CV, pois refletem melhor a forma atual do time.
 
@@ -918,7 +978,7 @@ def _weighted_cv(self, values: List[float], weights: List[float], wmean: float) 
 
 ---
 
-## 10. Checklist de Implementação
+## 11. Checklist de Implementação
 
 - [ ] Criar estrutura de pastas conforme seção 2
 - [ ] Implementar models (app/models/)
@@ -941,6 +1001,8 @@ def _weighted_cv(self, values: List[float], weights: List[float], wmean: float) 
 - **Pydantic Docs:** https://docs.pydantic.dev
 - **Clean Architecture:** Robert C. Martin's principles
 - **Pytest Docs:** https://docs.pytest.org
+- **Dixon-Coles Model:** https://www.math.ku.dk/~rolf/teaching/thesis/DixonColes.pdf
+- **Negative Binomial:** https://en.wikipedia.org/wiki/Negative_binomial_distribution
 
 ---
 

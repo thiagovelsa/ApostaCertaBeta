@@ -110,9 +110,24 @@ Utils (app/utils/)
 |----------|-------------|------------|
 | `GET /api/partidas?data=YYYY-MM-DD` | List matches for date | `data` (required) |
 | `GET /api/partida/{id}/stats` | Match statistics | `filtro=geral\|5\|10`, `periodo=integral\|1T\|2T`, `home_mando=casa\|fora`, `away_mando=casa\|fora` |
-| `GET /api/partida/{id}/analysis` | Full analysis with predictions | Same as stats |
+| `GET /api/partida/{id}/analysis` | Full analysis with predictions + over/under | Same as stats + `debug=0\|1` |
 | `GET /api/competicoes` | List all competitions | - |
 | `GET /api/time/{id}/escudo` | Team badge/logo | - |
+
+### Analysis Service (New in v1.8)
+
+The `/analysis` endpoint provides predictive modeling:
+
+**Previsões (Predictions):**
+- Expected values for: gols, escanteios, finalizacoes, finalizacoes_gol, cartoes_amarelos, faltas
+- Confidence levels: Baixa (0.30-0.49), Média (0.50-0.69), Alta (0.70-0.95)
+- Attack/defense relative to league average
+
+**Over/Under Probabilities:**
+- Poisson distribution for goals (with Dixon-Coles adjustment)
+- Negative Binomial for other metrics (handles overdispersion)
+- Dynamic line generation based on expected values
+- Confidence intervals via Monte Carlo simulation (3000 runs)
 
 ### Statistics Filter Parameters
 
@@ -149,6 +164,19 @@ Utils (app/utils/)
 **Period Extraction:**
 - When `periodo=1T|2T` requested, attempts to extract half-time stats
 - Falls back to `integral` with `periodo_fallback_integral: true` in contexto
+
+**Pre-match Context (Contexto):**
+- Days of rest for each team
+- Games played in last 7/14 days
+- League position and standings
+- Head-to-head history (H2H)
+- Match phase/stage
+
+**Predictive Models:**
+- **Goals:** Poisson with Dixon-Coles adjustment (ρ = -0.13 to -0.075)
+- **Other metrics:** Negative Binomial (handles overdispersion)
+- **Confidence intervals:** Monte Carlo simulation (3000 iterations)
+- **Bayesian shrinkage:** Prior league averages with k=3 weight
 
 ### Cache Strategy
 

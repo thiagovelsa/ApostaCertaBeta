@@ -15,10 +15,13 @@
 - `/stats/matchstats/v1/get-match-stats?Fx={id}` → Match statistics
 - `/stats/seasonstats/v1/team?ctst={id}&tmcl={id}` → Season aggregates
 - `/stats/referees/v1/get-by-prsn?Prsn={id}` → Referee stats
+- `/stats/match/v1/preview?Fx={id}` → Match preview (H2H, standings)
+- `/stats/standings/v1/season?tmcl={id}` → League standings
 
 ### Internal API (FastAPI)
 - `GET /api/partidas?data={YYYY-MM-DD}` → Matches for date
-- `GET /api/partida/{id}/stats?filtro={geral|5|10}` → Match stats
+- `GET /api/partida/{id}/stats?filtro={geral|5|10}&periodo={integral|1T|2T}&home_mando={casa|fora}&away_mando={casa|fora}` → Match stats
+- `GET /api/partida/{id}/analysis?filtro={geral|5|10}&debug={0|1}` → Full analysis with predictions + over/under
 - `GET /api/competicoes` → All competitions
 - `GET /api/time/{id}/escudo` → Team badge
 
@@ -31,8 +34,9 @@
 
 ## Build, Test, and Development Commands
 - Backend (run from `backend`): `python -m venv .venv`, `pip install -r requirements.txt -r requirements-dev.txt`, `uvicorn app.main:app --reload --port 8000`.
-- Frontend (run from `frontend`): `npm install`, `npm run dev`, `npm run build`, `npm run preview`, `npm run lint`.
+- Frontend (run from `frontend`): `npm install`, `npm run dev`, `npm run build`, `npm run preview`, `npm run lint`, `npm run clean`.
 - Windows convenience: `dev.bat` starts backend + frontend on ports 8000/5173.
+- Testing: `pytest` (backend), `pytest --cov=app --cov-report=html` (with coverage).
 
 ## Coding Style & Naming Conventions
 - Python: Black + Ruff, type hints, Google-style docstrings; import order is stdlib, third-party, local.
@@ -53,3 +57,6 @@
 
 ## Agent Notes
 - For automation guidance, read `CLAUDE.md`.
+- Analysis service implements Poisson + Dixon-Coles for goals, Negative Binomial for other metrics.
+- Time-weighting uses Dixon-Coles decay (0.0065) for recent matches.
+- Context extraction includes rest days, standings, H2H from match preview.

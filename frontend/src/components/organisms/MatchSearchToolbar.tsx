@@ -64,8 +64,9 @@ export function MatchSearchToolbar({
 
           <div className="flex flex-wrap items-center gap-2 justify-between sm:justify-end">
             <div className="flex flex-wrap items-center gap-2">
-              <span className="text-xs text-gray-400">Ordenar</span>
+              <label htmlFor="sort-select" className="text-xs text-gray-400">Ordenar</label>
               <select
+                id="sort-select"
                 value={sort}
                 onChange={(e) => onSortChange(e.target.value as MatchesSort)}
                 className="bg-dark-tertiary/60 border border-dark-quaternary rounded-lg px-3 py-2 text-sm text-white focus-ring focus-visible:border-primary-500"
@@ -131,6 +132,8 @@ export function MatchSearchToolbar({
             onChange={(e) => onQueryChange(e.target.value)}
             className="input-field w-full"
             placeholder="Buscar por time, competição ou estádio…"
+            aria-label="Buscar por time, competição ou estádio"
+            type="search"
           />
         </div>
       </div>

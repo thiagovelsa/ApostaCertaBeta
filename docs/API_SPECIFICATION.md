@@ -1,7 +1,7 @@
 # Especificação da API Própria
 
-**Versão:** 1.1
-**Data:** 07 de fevereiro de 2026
+**Versão:** 1.2
+**Data:** 11 de fevereiro de 2026
 **Base URL:** `http://localhost:8000/api` (desenvolvimento)
 **OpenAPI:** `/docs` (Swagger UI) e `/redoc` (ReDoc)
 
@@ -321,7 +321,7 @@ curl -X GET "http://localhost:8000/api/partida/f4vscquffy37afgv0arwcbztg/stats?f
 
 Retorna uma análise consolidada em um único payload:
 - estatísticas (`/stats`)
-- previsões
+- previsões (expected values)
 - probabilidades over/under
 
 #### Request
@@ -351,14 +351,76 @@ GET /api/partida/f4vscquffy37afgv0arwcbztg/analysis?filtro=10&debug=1
 **Status 200 - OK**
 
 Retorna tudo que o endpoint `/stats` retorna, mais:
-- `previsoes`
-- `over_under`
+- `previsoes` - Valores esperados para cada métrica
+- `over_under` - Probabilidades over/under por linha
 
 Quando `debug=1`, também inclui:
 - `debug_amostra` (por lado: mandante/visitante)
   - `match_ids`, `match_dates` e `weights` usados no cálculo
 
 **Nota de performance:** com `debug=1` o backend evita cache para não inflar payload/cache keys.
+
+**Exemplo de Response:**
+
+```json
+{
+  "partida": { ... },
+  "filtro_aplicado": "5",
+  "partidas_analisadas": 5,
+  "mandante": { ... },
+  "visitante": { ... },
+  "previsoes": {
+    "gols": {
+      "home": { "valor": 1.8, "confianca": 0.75, "confiancaLabel": "Alta" },
+      "away": { "valor": 0.9, "confianca": 0.68, "confiancaLabel": "Média" },
+      "total": { "valor": 2.7, "confianca": 0.72, "confiancaLabel": "Alta" }
+    },
+    "escanteios": { ... },
+    "finalizacoes": { ... },
+    "finalizacoes_gol": { ... },
+    "cartoes_amarelos": { ... },
+    "faltas": { ... }
+  },
+  "over_under": {
+    "gols": {
+      "label": "Gols",
+      "icon": "goal",
+      "lambda": 2.7,
+      "lambdaHome": 1.8,
+      "lambdaAway": 0.9,
+      "predMin": 1.2,
+      "predMax": 4.2,
+      "intervalLevel": 0.9,
+      "distribution": "poisson",
+      "lines": [
+        { "line": 1.5, "over": 0.72, "under": 0.28, "ci_lower": 0.65, "ci_upper": 0.79, "uncertainty": 0.07 },
+        { "line": 2.5, "over": 0.45, "under": 0.55, "ci_lower": 0.38, "ci_upper": 0.52, "uncertainty": 0.07 }
+      ],
+      "confidence": 0.72,
+      "confidenceLabel": "Alta"
+    },
+    "escanteios": { ... },
+    ...
+  }
+}
+```
+
+#### Modelos Estatísticos
+
+| Métrica | Distribuição | Parâmetros |
+|---------|--------------|------------|
+| Gols | Poisson + Dixon-Coles | λ_home, λ_away, ρ (correlação) |
+| Escanteios | Negative Binomial | μ, α (overdispersion) |
+| Finalizações | Negative Binomial | μ, α |
+| Finalizações no Gol | Negative Binomial | μ, α |
+| Cartões Amarelos | Negative Binomial | μ, α (+ ajuste árbitro) |
+| Faltas | Negative Binomial | μ, α |
+
+**Dixon-Coles:** Ajusta a subestimação de placares baixos (0-0, 1-0, 0-1, 1-1) com fator de correlação ρ negativo.
+
+**Negative Binomial:** Melhor que Poisson para métricas com overdispersion (variância > média), comum em escanteios e cartões.
+
+**Intervalos de Confiança:** Calculados via simulação Monte Carlo (3000 iterações) amostrando da distribuição posterior.
 
 ---
 

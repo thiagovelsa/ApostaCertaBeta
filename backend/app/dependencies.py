@@ -29,6 +29,7 @@ def get_badge_repository() -> BadgeRepository:
     return BadgeRepository()
 
 
+@lru_cache
 def get_partidas_service() -> PartidasService:
     """Retorna instancia do PartidasService."""
     return PartidasService(
@@ -37,6 +38,7 @@ def get_partidas_service() -> PartidasService:
     )
 
 
+@lru_cache
 def get_stats_service() -> StatsService:
     """Retorna instancia do StatsService."""
     return StatsService(
@@ -45,6 +47,7 @@ def get_stats_service() -> StatsService:
     )
 
 
+@lru_cache
 def get_competicoes_service() -> CompeticoesService:
     """Retorna instancia do CompeticoesService."""
     return CompeticoesService(
@@ -52,6 +55,7 @@ def get_competicoes_service() -> CompeticoesService:
     )
 
 
+@lru_cache
 def get_escudos_service() -> EscudosService:
     """Retorna instancia do EscudosService."""
     return EscudosService(

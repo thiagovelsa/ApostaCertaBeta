@@ -92,13 +92,13 @@ async def get_stats(
             logger.error(f"[ERROR] Erro de validacao ao calcular stats: {error_msg}")
             raise HTTPException(
                 status_code=500,
-                detail=f"Erro de validacao: {error_msg}",
+                detail="Erro de validacao ao calcular estatisticas. Tente novamente mais tarde.",
             )
-    except Exception as e:
+    except Exception:
         logger.exception(f"❌ Erro inesperado ao calcular stats para {match_id}")
         raise HTTPException(
             status_code=500,
-            detail=f"Erro ao calcular estatisticas: {str(e)}",
+            detail="Erro interno ao calcular estatisticas. Tente novamente mais tarde.",
         )
 
 
@@ -136,6 +136,10 @@ async def get_analysis(
     service: StatsService = Depends(get_stats_service),
 ) -> StatsAnalysisResponse:
     """Retorna stats + previsões + over/under no mesmo payload."""
+    # Normaliza debug para booleano (quando chamado diretamente em testes, pode ser Query object)
+    debug_enabled = bool(debug) if not hasattr(debug, "default") else bool(debug.default)
+    # Só inclui debug kwarg quando habilitado — preserva compatibilidade com fakes antigos
+    debug_kwargs: dict = {"debug": True} if debug_enabled else {}
 
     analysis_service = AnalysisService()
 
@@ -146,17 +150,17 @@ async def get_analysis(
         if no_subfilters or same_subfilter:
             logger.info(f"[ANALYSIS] Buscando stats para {match_id[:8]}...")
             stats = await service.calcular_stats(
-                match_id, filtro, periodo, home_mando, away_mando, debug=debug
+                match_id, filtro, periodo, home_mando, away_mando, **debug_kwargs
             )
             logger.info(f"[ANALYSIS] Stats obtidas com sucesso")
         else:
             # Busca cada lado separadamente para não contaminar os filtros
             logger.info(f"[ANALYSIS] Buscando stats separados para {match_id[:8]}...")
             home_stats = await service.calcular_stats(
-                match_id, filtro, periodo, home_mando, None, debug=debug
+                match_id, filtro, periodo, home_mando, None, **debug_kwargs
             )
             away_stats = await service.calcular_stats(
-                match_id, filtro, periodo, None, away_mando, debug=debug
+                match_id, filtro, periodo, None, away_mando, **debug_kwargs
             )
             stats = home_stats
             stats.visitante = away_stats.visitante
@@ -229,10 +233,10 @@ async def get_analysis(
             logger.warning(f"[404] Partida nao encontrada: {match_id}")
             raise HTTPException(status_code=404, detail=error_msg)
         logger.error(f"[ANALYSIS ERROR] ValueError: {error_msg}")
-        raise HTTPException(status_code=500, detail=f"Erro de validacao: {error_msg}")
-    except Exception as e:
+        raise HTTPException(status_code=500, detail="Erro de validacao ao calcular analise. Tente novamente mais tarde.")
+    except Exception:
         logger.exception(f"❌ Erro inesperado ao calcular análise para {match_id}")
         raise HTTPException(
             status_code=500,
-            detail=f"Erro ao calcular análise: {str(e)}",
+            detail="Erro interno ao calcular analise. Tente novamente mais tarde.",
         )

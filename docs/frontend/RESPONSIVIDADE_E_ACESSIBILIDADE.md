@@ -1,7 +1,7 @@
 # Responsividade e Acessibilidade - Sistema de Análise de Estatísticas de Futebol
 
-**Versão:** 1.1
-**Data:** 07 de fevereiro de 2026
+**Versão:** 1.2
+**Data:** 11 de fevereiro de 2026
 **Padrões:** WCAG 2.1 AA, Mobile-First
 
 Guia completo para garantir que o sistema funciona em todos os dispositivos (mobile, tablet, desktop) e é acessível para todos os usuários, incluindo aqueles com deficiências.

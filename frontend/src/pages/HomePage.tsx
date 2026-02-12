@@ -78,7 +78,7 @@ export function HomePage() {
   };
 
   // Check if smart search is active (loading or has results)
-  const isSmartSearchActive = smartSearch.isLoading || smartSearch.isAnalyzing || smartSearch.result !== null;
+  const isSmartSearchActive = smartSearch.isLoading || smartSearch.isAnalyzing || smartSearch.result !== null || smartSearch.error !== null;
 
   const matchesFiltered = useMemo(() => {
     const partidas = data?.partidas ?? [];
@@ -211,7 +211,9 @@ export function HomePage() {
             result={smartSearch.result}
             progress={smartSearch.progress}
             isAnalyzing={smartSearch.isAnalyzing}
+            error={smartSearch.error}
             onClose={smartSearch.reset}
+            onRetry={handleSmartSearch}
           />
         )}
 

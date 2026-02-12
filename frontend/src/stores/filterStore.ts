@@ -12,6 +12,7 @@ interface FilterState {
   setAwayMando: (mando: MandoFilter) => void;
   toggleHomeMando: (mando: 'casa' | 'fora') => void;
   toggleAwayMando: (mando: 'casa' | 'fora') => void;
+  resetFilters: () => void;
 }
 
 export const useFilterStore = create<FilterState>((set) => ({
@@ -31,4 +32,10 @@ export const useFilterStore = create<FilterState>((set) => ({
   toggleAwayMando: (mando) => set((state) => ({
     awayMando: state.awayMando === mando ? null : mando
   })),
+  resetFilters: () => set({
+    filtro: 'geral',
+    periodo: 'integral',
+    homeMando: 'casa',
+    awayMando: 'fora',
+  }),
 }));

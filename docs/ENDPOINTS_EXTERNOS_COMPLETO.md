@@ -1,7 +1,7 @@
 # Endpoints Externos - Documentação Completa
 
-**Versão:** 2.0
-**Última Atualização:** 27 de Dezembro de 2025
+**Versão:** 2.1
+**Última Atualização:** 11 de Fevereiro de 2026
 
 Este documento registra **TODOS** os endpoints externos utilizados no projeto, incluindo APIs, scripts de validação, utilitários e processos de desenvolvimento.
 

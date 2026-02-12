@@ -1,7 +1,7 @@
 # Modelos de Dados - Pydantic Schemas
 
-**Versão:** 1.6
-**Data:** 07 de fevereiro de 2026
+**Versão:** 1.7
+**Data:** 11 de fevereiro de 2026
 **Framework:** Pydantic v2.x (com FastAPI)
 
 ---
@@ -16,9 +16,9 @@ Este documento define todos os modelos Pydantic (schemas/DTOs) usados na API. Py
 app/models/
 ├── __init__.py              # Importa todos os modelos
 ├── partida.py               # TimeInfo, PartidaResumo, PartidaListResponse
-├── estatisticas.py          # EstatisticaMetrica, EstatisticasTime, StatsResponse (+ contexto/H2H)
+├── estatisticas.py          # EstatisticaMetrica, EstatisticasTime, StatsResponse, ArbitroInfo, DebugAmostra
 ├── contexto.py              # ContextoPartida, ContextoTime, H2HInfo, ClassificacaoTimeInfo
-├── analysis.py              # DTOs de previsões e over/under (payload do /analysis)
+├── analysis.py              # PrevisaoPartida, PrevisaoEstatistica, OverUnderPartida, OverUnderStat, OverUnderLine
 ├── competicao.py            # CompeticaoInfo
 ├── escudo.py                # EscudoResponse
 └── vstats.py                # Modelos da API VStats (mapeamento externo)
@@ -502,7 +502,106 @@ media_cartoes_temporada = Σ(partidas × média_cartões) / Σ(partidas)
 
 ---
 
-## 4. Modelos de Competição
+## 4. Modelos de Análise (analysis.py)
+
+### 4.1 PrevisaoValor
+
+```python
+class PrevisaoValor(BaseModel):
+    """Valor previsto com confiança."""
+    
+    valor: float                    # Valor esperado (média)
+    confianca: float               # 0.0 a 1.0
+    confiancaLabel: Literal["Baixa", "Média", "Alta"]
+```
+
+### 4.2 PrevisaoEstatistica
+
+```python
+class PrevisaoEstatistica(BaseModel):
+    """Previsão para home/away/total de uma métrica."""
+    
+    home: PrevisaoValor
+    away: PrevisaoValor
+    total: PrevisaoValor
+```
+
+### 4.3 PrevisaoPartida
+
+```python
+class PrevisaoPartida(BaseModel):
+    """Todas as previsões de uma partida."""
+    
+    gols: PrevisaoEstatistica
+    escanteios: PrevisaoEstatistica
+    finalizacoes: PrevisaoEstatistica
+    finalizacoes_gol: PrevisaoEstatistica
+    cartoes_amarelos: PrevisaoEstatistica
+    faltas: PrevisaoEstatistica
+```
+
+### 4.4 OverUnderLine
+
+```python
+class OverUnderLine(BaseModel):
+    """Uma linha over/under específica."""
+    
+    line: float                    # Ex: 2.5
+    over: float                    # Probabilidade over (0-1)
+    under: float                   # Probabilidade under (0-1)
+    ci_lower: Optional[float]      # Intervalo de confiança inferior
+    ci_upper: Optional[float]      # Intervalo de confiança superior
+    uncertainty: Optional[float]   # Incerteza da simulação
+```
+
+### 4.5 OverUnderStat
+
+```python
+class OverUnderStat(BaseModel):
+    """Over/under completo para uma métrica."""
+    
+    label: str                     # Ex: "Gols"
+    icon: str                      # Ex: "goal"
+    lambda_: float                 # Taxa esperada (alias="lambda")
+    lambdaHome: float              # Taxa home
+    lambdaAway: float              # Taxa away
+    predMin: float                 # Mínimo do intervalo de previsão
+    predMax: float                 # Máximo do intervalo de previsão
+    intervalLevel: float           # Nível do intervalo (default 0.9)
+    sigma: Optional[float]         # Desvio padrão (se normal)
+    distribution: Literal["poisson", "normal", "negbin"]
+    lines: List[OverUnderLine]     # Linhas geradas dinamicamente
+    confidence: float              # Confiança geral (0-1)
+    confidenceLabel: Literal["Baixa", "Média", "Alta"]
+```
+
+### 4.6 OverUnderPartida
+
+```python
+class OverUnderPartida(BaseModel):
+    """Over/under para todas as métricas."""
+    
+    gols: OverUnderStat
+    escanteios: OverUnderStat
+    finalizacoes: OverUnderStat
+    finalizacoes_gol: OverUnderStat
+    cartoes_amarelos: OverUnderStat
+    faltas: OverUnderStat
+```
+
+### 4.7 StatsAnalysisResponse
+
+```python
+class StatsAnalysisResponse(StatsResponse):
+    """Response do GET /api/partida/{id}/analysis."""
+    
+    previsoes: PrevisaoPartida
+    over_under: OverUnderPartida
+```
+
+---
+
+## 5. Modelos de Competição
 
 ### 4.1 CompeticaoInfo
 
@@ -545,7 +644,7 @@ class CompeticaoInfo(BaseModel):
 
 ---
 
-## 5. Modelos de Escudo
+## 6. Modelos de Escudo
 
 ### 5.1 EscudoResponse
 
@@ -577,7 +676,7 @@ class EscudoResponse(BaseModel):
 
 ---
 
-## 6. Modelos da API VStats (Mapeamento Externo)
+## 7. Modelos da API VStats (Mapeamento Externo)
 
 Estes modelos mapeiam respostas da API VStats para estruturas internas.
 
@@ -642,7 +741,7 @@ class VStatsSeasonStats(BaseModel):
 
 ---
 
-## 7. Modelos de Erro
+## 8. Modelos de Erro
 
 ### 7.1 ErrorResponse
 
@@ -673,7 +772,7 @@ class ErrorResponse(BaseModel):
 
 ---
 
-## 8. Guia de Uso nos Routes
+## 9. Guia de Uso nos Routes
 
 ```python
 # app/api/routes/stats.py
@@ -714,7 +813,7 @@ async def get_stats(
 
 ---
 
-## 9. Conversão entre Modelos
+## 10. Conversão entre Modelos
 
 ```python
 # app/services/converter.py
@@ -752,7 +851,7 @@ def converter_vstats_para_partida_resumo(
 
 ---
 
-## 10. Validações Customizadas
+## 11. Validações Customizadas
 
 ### 10.1 Validar Data Válida
 
@@ -784,7 +883,7 @@ def validar_filtro(cls, v):
 
 ---
 
-## 11. Exportar Modelos
+## 12. Exportar Modelos
 
 ```python
 # app/models/__init__.py
@@ -819,7 +918,7 @@ __all__ = [
 
 ---
 
-## 12. Testes de Modelos
+## 13. Testes de Modelos
 
 ```python
 # tests/unit/test_models.py
@@ -875,7 +974,7 @@ def test_estatistica_metrica_classificacao_automatica():
 
 ---
 
-## 13. Modelos de Busca Inteligente (Frontend)
+## 14. Modelos de Busca Inteligente (Frontend)
 
 Modelos TypeScript usados exclusivamente no frontend para a funcionalidade de Busca Inteligente.
 

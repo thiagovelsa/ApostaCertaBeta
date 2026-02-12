@@ -6,8 +6,11 @@ GET /api/partidas - Lista partidas por data
 """
 
 from datetime import date
+import logging
 
 from fastapi import APIRouter, Depends, Query, HTTPException
+
+logger = logging.getLogger(__name__)
 
 from ...models import PartidaListResponse
 from ...services import PartidasService
@@ -43,8 +46,9 @@ async def listar_partidas(
     """
     try:
         return await service.get_partidas_por_data(data)
-    except Exception as e:
+    except Exception:
+        logger.exception("❌ Erro inesperado ao buscar partidas")
         raise HTTPException(
             status_code=500,
-            detail=f"Erro ao buscar partidas: {str(e)}",
+            detail="Erro interno ao buscar partidas. Tente novamente mais tarde.",
         )
